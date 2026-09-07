@@ -1,0 +1,804 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Panel privado de control operativo y económico de LITOS." />
+    <title>LITOS Control Interno</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+:root {
+  color-scheme: light;
+  --ink: #112b34;
+  --ink-soft: #547078;
+  --line: #dbe6e5;
+  --page: #f5f8f7;
+  --panel: #ffffff;
+  --deep: #0e3137;
+  --teal: #10726e;
+  --teal-light: #d9efea;
+  --amber: #bd7e27;
+  --amber-light: #fff0d6;
+  --green: #3c7d5c;
+  --green-light: #e3f2e8;
+  --lilac: #74578f;
+  --lilac-light: #eee6f6;
+  --shadow: 0 12px 35px rgba(19, 56, 58, 0.07);
+  font-family: "Manrope", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html { background: var(--page); }
+body { margin: 0; background: var(--page); color: var(--ink); font-size: 16px; line-height: 1.5; }
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+
+.app-shell { min-height: 100vh; display: grid; grid-template-columns: 254px minmax(0, 1fr); }
+.sidebar { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; padding: 1.55rem 1rem 1rem; background: var(--deep); color: white; }
+.brand { display: flex; align-items: center; gap: .75rem; margin: 0 .55rem 3rem; color: white; text-decoration: none; }
+.brand-mark { display: grid; place-items: center; width: 37px; height: 37px; border: 1px solid rgba(255,255,255,.4); border-radius: 12px; color: #d7edeb; font-family: "DM Mono", monospace; font-size: 1.25rem; }
+.brand strong, .brand small { display: block; }
+.brand strong { letter-spacing: .1em; font-size: .9rem; }
+.brand small { margin-top: -.12rem; color: #aac2c1; font-size: .72rem; }
+.primary-nav { display: grid; gap: .38rem; }
+.nav-link { display: flex; align-items: center; gap: .8rem; width: 100%; border: 0; border-radius: 10px; padding: .75rem .8rem; background: transparent; color: #bbcfce; text-align: left; font-size: .91rem; font-weight: 600; transition: background .2s, color .2s; }
+.nav-link:hover, .nav-link.active { background: rgba(239,255,253,.1); color: white; }
+.nav-icon { width: 1.35rem; color: #83beba; font-size: 1.1rem; text-align: center; }
+.sidebar-bottom { margin-top: auto; padding: 1.2rem .8rem .55rem; border-top: 1px solid rgba(255,255,255,.14); }
+.sidebar-bottom .eyebrow { color: #7ba7a5; }
+.source-name { margin: .3rem 0 .65rem; color: #e8f2f1; font-size: .83rem; font-weight: 600; }
+.text-link { padding: 0; border: 0; background: transparent; color: #8ccac5; font-size: .78rem; font-weight: 700; }
+
+.main-content { min-width: 0; }
+.topbar { height: 74px; display: flex; align-items: center; justify-content: space-between; gap: 1.2rem; padding: 0 3rem; background: rgba(245,248,247,.86); border-bottom: 1px solid var(--line); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 5; }
+.breadcrumb { color: var(--ink-soft); font-size: .85rem; }.breadcrumb strong { color: var(--ink); }.slash { margin: 0 .55rem; color: #9eb0b1; }
+.topbar-actions { display: flex; align-items: center; gap: .7rem; }
+.private-badge { display: inline-flex; align-items: center; gap: .4rem; padding: .38rem .62rem; border: 1px solid #c9dedb; border-radius: 999px; color: #2e6560; background: #eff8f6; font-size: .72rem; font-weight: 700; }
+.private-badge span { width: .38rem; height: .38rem; border-radius: 100%; background: var(--teal); }
+.mobile-menu { display: none; }
+
+.view { display: none; max-width: 1480px; margin: 0 auto; padding: 2.65rem 3rem 4rem; }
+.view.active { display: block; }
+.page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 2rem; margin-bottom: 2rem; }
+.page-heading.compact { align-items: flex-start; }
+.eyebrow { margin: 0 0 .43rem; color: var(--teal); font-family: "DM Mono", monospace; font-size: .68rem; font-weight: 500; letter-spacing: .115em; }
+h1, h2, p { margin-top: 0; }
+h1 { max-width: 720px; margin-bottom: .45rem; color: var(--deep); font-size: clamp(1.8rem, 3vw, 2.75rem); line-height: 1.12; letter-spacing: -.055em; }
+h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 1.3; letter-spacing: -.025em; }
+.page-lead { max-width: 720px; margin-bottom: 0; color: var(--ink-soft); font-size: .94rem; }
+.heading-date { align-self: center; color: var(--ink-soft); font-family: "DM Mono", monospace; font-size: .72rem; white-space: nowrap; }
+
+.button { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; min-height: 38px; padding: .52rem .83rem; border: 1px solid transparent; border-radius: 9px; font-size: .8rem; font-weight: 700; transition: transform .2s, box-shadow .2s, background .2s; }
+.button:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(22,58,60,.12); }
+.button.primary { border-color: var(--deep); background: var(--deep); color: white; }
+.button.secondary { border-color: #cbdcda; background: white; color: #264d50; }
+.button.tertiary { padding-left: 0; border-color: transparent; background: transparent; color: var(--teal); }
+.button.tertiary span { font-size: 1rem; }
+
+.kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 1rem; margin-bottom: 1rem; }
+.kpi-card { min-height: 156px; padding: 1.16rem 1.22rem 1rem; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); box-shadow: 0 2px 4px rgba(24,58,59,.015); overflow: hidden; position: relative; }
+.kpi-card::after { position: absolute; right: 0; bottom: 0; left: 0; height: 4px; content: ""; background: var(--teal); }
+.kpi-card.accent-amber::after { background: var(--amber); }.kpi-card.accent-green::after { background: var(--green); }.kpi-card.accent-lilac::after { background: var(--lilac); }
+.kpi-label { color: var(--ink-soft); font-size: .76rem; font-weight: 700; letter-spacing: .025em; text-transform: uppercase; }
+.kpi-value { margin-top: .7rem; color: var(--deep); font-family: "DM Mono", monospace; font-size: 2rem; font-weight: 500; letter-spacing: -.08em; }.kpi-value span { margin-left: .2rem; font-size: 1rem; letter-spacing: -.04em; }
+.kpi-foot { margin-top: .3rem; color: var(--ink-soft); font-size: .72rem; }
+
+.dashboard-grid { display: grid; gap: 1rem; margin-bottom: 1rem; }.overview-grid { grid-template-columns: minmax(0, 1.75fr) minmax(260px, .75fr); }.bottom-grid { grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr); }
+.panel { border: 1px solid var(--line); border-radius: 14px; background: var(--panel); box-shadow: 0 2px 4px rgba(24,58,59,.015); }
+.chart-panel { padding: 1.35rem; }.panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }.panel-head h2 { margin-bottom: 0; }.chart-note { color: var(--ink-soft); font-size: .7rem; white-space: nowrap; }.canvas-wrap { height: 254px; margin-top: 1.1rem; position: relative; }.canvas-wrap.small { height: 222px; }.canvas-wrap canvas { width: 100%; height: 100%; }
+.insight-panel { display: flex; min-height: 318px; flex-direction: column; justify-content: center; padding: 2rem; background: linear-gradient(160deg, var(--deep), #164c50); color: #e9f7f5; }.insight-panel .eyebrow { color: #91d4ce; }.insight-panel h2 { max-width: 260px; color: white; font-size: 1.45rem; }.insight-panel p:not(.eyebrow) { max-width: 300px; color: #b9d5d2; font-size: .88rem; }.insight-panel .button { margin-top: .75rem; align-self: flex-start; color: #a8e4df; }
+.action-panel { padding: 1.7rem; background: #fffdf8; }.action-panel h2 { max-width: 330px; font-size: 1.3rem; }.action-panel ul { display: grid; gap: .55rem; margin: 1.1rem 0 1.2rem; padding: 0; list-style: none; }.action-panel li { display: flex; gap: .65rem; align-items: center; color: #4b6466; font-size: .8rem; }.action-panel li span { display: inline-grid; width: 1.35rem; height: 1.35rem; place-items: center; border-radius: 6px; background: var(--amber-light); color: var(--amber); font-family: "DM Mono", monospace; font-size: .62rem; }
+
+.filter-row { display: flex; flex-wrap: wrap; gap: .75rem; }.filter-row label, .settings-panel label, .assumptions-form label { display: grid; gap: .35rem; color: var(--ink-soft); font-size: .72rem; font-weight: 700; }.filter-row select, .settings-panel input, .assumptions-form input { min-height: 38px; padding: .45rem .6rem; border: 1px solid #cfe0de; border-radius: 8px; background: white; color: var(--ink); font-size: .82rem; outline-color: var(--teal); }
+.production-metrics { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1rem; margin-bottom: 1rem; }.production-metrics article { padding: 1rem 1.15rem; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfc; }.production-metrics span, .production-metrics small { display: block; color: var(--ink-soft); font-size: .7rem; }.production-metrics strong { display: block; margin: .25rem 0; color: var(--deep); font-family: "DM Mono", monospace; font-size: 1.4rem; letter-spacing: -.06em; }
+.production-grid { grid-template-columns: 1fr 1fr; }.wide-table { grid-column: 1 / -1; }.table-panel { padding: 1.25rem; }.rank-table { display: grid; gap: .22rem; margin-top: 1rem; }.rank-row { display: grid; grid-template-columns: 1.75rem minmax(0,1fr) 2.3rem; align-items: center; gap: .6rem; padding: .47rem 0; border-bottom: 1px solid #edf2f1; }.rank-row:last-child { border-bottom: 0; }.rank-index { color: #88a19e; font-family: "DM Mono", monospace; font-size: .68rem; }.rank-label { overflow: hidden; color: #345457; font-size: .81rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }.rank-value { color: var(--deep); font-family: "DM Mono", monospace; font-size: .76rem; text-align: right; }.rank-bar { grid-column: 2 / -1; height: 3px; margin-top: -.2rem; border-radius: 99px; background: #e9f0ef; overflow: hidden; }.rank-bar > i { display: block; height: 100%; border-radius: inherit; background: var(--teal); }.sizes .rank-row { grid-template-columns: 1.75rem minmax(0,1fr) 3.5rem; }
+
+.profit-layout { display: grid; grid-template-columns: minmax(300px,.92fr) minmax(390px,1.08fr); gap: 1rem; }.assumptions-panel, .profit-result { padding: 1.45rem; }.assumptions-form { display: grid; grid-template-columns: 1fr 1fr; gap: .85rem; margin-top: 1.2rem; }.form-note { margin: 1rem 0 0; color: var(--ink-soft); font-size: .71rem; line-height: 1.55; }.profit-result { color: white; background: linear-gradient(145deg, #11373b, #155a58); }.profit-result .eyebrow { color: #92cec8; }.result-number { margin-top: .8rem; color: white; font-family: "DM Mono", monospace; font-size: clamp(2.4rem,5vw,3.8rem); letter-spacing: -.1em; }.result-label { max-width: 310px; margin: 0 0 1.3rem; color: #b4d0cd; font-size: .78rem; }.profit-bars { display: grid; gap: .7rem; }.profit-bars > div { display: grid; grid-template-columns: 1fr auto; column-gap: 1rem; color: #d8eae8; font-size: .75rem; }.profit-bars strong { color: white; font-family: "DM Mono", monospace; font-size: .78rem; font-weight: 500; }.profit-bars i { grid-column: 1 / -1; height: 5px; margin-top: .3rem; border-radius: 99px; background: rgba(255,255,255,.16); overflow: hidden; }.profit-bars b { display: block; height: 100%; border-radius: inherit; background: #9bd8d2; }.ten-year { display: grid; grid-template-columns: 1fr auto; gap: .2rem 1rem; margin-top: 1.35rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,.22); color: #b8d1ce; font-size: .75rem; }.ten-year strong { color: white; font-family: "DM Mono", monospace; font-size: 1.05rem; }.ten-year small { grid-column: 1 / -1; color: #8eb8b4; }
+.cnc-panel { display: grid; grid-template-columns: 1fr 1.15fr; gap: 2.5rem; margin-top: 1rem; padding: 1.55rem; background: #fffaf0; border-color: #f2d9ab; }.cnc-panel p:not(.eyebrow) { margin-bottom: 0; color: #70634d; font-size: .85rem; }.cnc-math { display: grid; grid-template-columns: repeat(3,1fr); gap: .65rem; align-items: stretch; }.cnc-math > div { display: flex; flex-direction: column; justify-content: center; padding: .8rem; border: 1px solid #eedbb7; border-radius: 10px; background: rgba(255,255,255,.56); }.cnc-math span { color: #806d4f; font-size: .7rem; }.cnc-math strong { margin: .2rem 0; color: #6e4d19; font-family: "DM Mono", monospace; font-size: 1.2rem; letter-spacing: -.06em; }.cnc-math small { color: #8d8067; font-size: .64rem; }.cnc-math .verdict { border-color: #dcbf8b; background: #fff4dd; }.cnc-math .verdict span { color: #aa6a17; font-weight: 800; }
+
+.data-layout { display: grid; grid-template-columns: minmax(330px,1.1fr) minmax(300px,.9fr); gap: 1rem; }.connection-panel, .settings-panel, .privacy-panel { padding: 1.55rem; }.connection-heading { display: flex; align-items: center; gap: .85rem; }.connection-heading h2, .settings-panel h2 { margin-bottom: 0; }.connection-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 11px; background: var(--teal-light); color: var(--teal); font-family: "DM Mono", monospace; font-size: 1.3rem; }.connection-panel > p { margin: 1.1rem 0; color: var(--ink-soft); font-size: .87rem; }.connection-status { display: grid; grid-template-columns: .55rem auto 1fr; align-items: center; gap: .48rem; padding: .75rem .85rem; border-radius: 9px; background: #f5f8f7; color: var(--ink); }.connection-status > span { width: .48rem; height: .48rem; border-radius: 50%; background: #b3bdbd; }.connection-status.connected > span { background: var(--green); }.connection-status b { font-size: .8rem; }.connection-status small { color: var(--ink-soft); font-size: .68rem; }.connection-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1rem; }.settings-panel { display: grid; align-content: start; gap: .75rem; }.settings-panel .eyebrow { margin-bottom: -.35rem; }.settings-panel label { gap: .27rem; }.settings-panel .button { justify-self: start; margin-top: .2rem; }
+.privacy-panel { margin-top: 1rem; background: #fbfcfc; }.privacy-rules { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.2rem; margin-top: 1rem; }.privacy-rules div { display: flex; gap: .65rem; }.privacy-rules span { display: grid; flex: 0 0 1.65rem; height: 1.65rem; place-items: center; border-radius: 6px; background: var(--teal-light); color: var(--teal); font-family: "DM Mono", monospace; font-size: .65rem; }.privacy-rules p { margin: 0; color: var(--ink-soft); font-size: .77rem; line-height: 1.55; }.privacy-rules strong { color: var(--ink); }
+
+.toast { position: fixed; z-index: 20; right: 1rem; bottom: 1rem; max-width: 360px; padding: .8rem 1rem; border-radius: 10px; background: var(--deep); box-shadow: var(--shadow); color: white; font-size: .8rem; opacity: 0; pointer-events: none; transform: translateY(8px); transition: opacity .2s, transform .2s; }.toast.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 1120px) { .kpi-grid { grid-template-columns: repeat(2,1fr); }.overview-grid, .bottom-grid, .profit-layout, .data-layout, .cnc-panel { grid-template-columns: 1fr; }.insight-panel { min-height: 230px; }.cnc-math { min-height: 155px; }.production-grid { grid-template-columns: 1fr; }.wide-table { grid-column: auto; } }
+@media (max-width: 760px) { .app-shell { display: block; }.sidebar { position: fixed; z-index: 14; left: -270px; width: 254px; transition: left .2s; }.sidebar.open { left: 0; box-shadow: 25px 0 50px rgba(0,0,0,.25); }.topbar { height: 64px; padding: 0 1rem; }.mobile-menu { display: inline-grid; width: 33px; height: 33px; place-items: center; border: 0; border-radius: 7px; background: #e6efee; color: var(--deep); }.breadcrumb { flex: 1; margin-left: .4rem; }.private-badge { display: none; }.view { padding: 1.75rem 1rem 3rem; }.page-heading { display: grid; gap: 1rem; }.heading-date { align-self: start; }.kpi-grid, .production-metrics, .privacy-rules, .assumptions-form { grid-template-columns: 1fr; }.kpi-card { min-height: 132px; }.filter-row { width: 100%; }.filter-row label { flex: 1; min-width: 125px; }.canvas-wrap { height: 220px; }.cnc-math { grid-template-columns: 1fr; }.topbar-actions .button { padding: .45rem .6rem; font-size: .72rem; }.connection-status { grid-template-columns: .55rem 1fr; }.connection-status small { grid-column: 2; }.privacy-rules { gap: .8rem; } }
+
+</style>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Navegación principal">
+        <a class="brand" href="#resumen" aria-label="LITOS Control Interno, ir al resumen">
+          <span class="brand-mark" aria-hidden="true">L</span>
+          <span>
+            <strong>LITOS</strong>
+            <small>Control interno</small>
+          </span>
+        </a>
+
+        <nav class="primary-nav">
+          <button class="nav-link active" type="button" data-view-target="summary">
+            <span class="nav-icon">◫</span> Resumen
+          </button>
+          <button class="nav-link" type="button" data-view-target="production">
+            <span class="nav-icon">◌</span> Producción
+          </button>
+          <button class="nav-link" type="button" data-view-target="profit">
+            <span class="nav-icon">↗</span> Rentabilidad
+          </button>
+          <button class="nav-link" type="button" data-view-target="data">
+            <span class="nav-icon">⌘</span> Datos y conexión
+          </button>
+        </nav>
+
+        <div class="sidebar-bottom">
+          <p class="eyebrow">FUENTE MAESTRA</p>
+          <p class="source-name">Google Sheets privado</p>
+          <button id="openSheetSide" class="text-link" type="button">Abrir libro maestro ↗</button>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <button class="mobile-menu" id="mobileMenu" type="button" aria-label="Abrir navegación">☰</button>
+          <div class="breadcrumb"><span>Control interno</span><span class="slash">/</span><strong id="viewTitle">Resumen</strong></div>
+          <div class="topbar-actions">
+            <span class="private-badge"><span></span> Privado</span>
+            <button id="refreshData" class="button secondary" type="button">Actualizar datos</button>
+          </div>
+        </header>
+
+        <section id="summary" class="view active" aria-labelledby="summaryHeading">
+          <div class="page-heading">
+            <div>
+              <p class="eyebrow">PANEL DE MANDO</p>
+              <h1 id="summaryHeading">El taller, de un vistazo.</h1>
+              <p id="dataStatus" class="page-lead">Vista de ejemplo basada en los últimos agregados. Conecta el libro maestro para actualizarla.</p>
+            </div>
+            <div class="heading-date" id="lastUpdate">Datos de referencia</div>
+          </div>
+
+          <div class="kpi-grid">
+            <article class="kpi-card accent-blue">
+              <div class="kpi-label">Pedidos registrados</div>
+              <div class="kpi-value" id="totalOrders">255</div>
+              <div class="kpi-foot" id="orderPeriod">Histórico disponible</div>
+            </article>
+            <article class="kpi-card accent-amber">
+              <div class="kpi-label">Pedidos del año</div>
+              <div class="kpi-value" id="yearOrders">101</div>
+              <div class="kpi-foot" id="yearOrdersFoot">Hasta agosto de 2026</div>
+            </article>
+            <article class="kpi-card accent-green">
+              <div class="kpi-label">Familias repetibles</div>
+              <div class="kpi-value" id="repeatShare">81<span>%</span></div>
+              <div class="kpi-foot">Tapenucho + Reforma</div>
+            </article>
+            <article class="kpi-card accent-lilac">
+              <div class="kpi-label">Mejora anual estimada</div>
+              <div class="kpi-value">4,1<span>k €</span></div>
+              <div class="kpi-foot">Caso central, antes de impuestos</div>
+            </article>
+          </div>
+
+          <div class="dashboard-grid overview-grid">
+            <article class="panel chart-panel wide">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">RITMO DE ENTRADA</p>
+                  <h2>Pedidos por mes</h2>
+                </div>
+                <span class="chart-note">Últimos 12 meses disponibles</span>
+              </div>
+              <div class="canvas-wrap"><canvas id="ordersChart" aria-label="Gráfico de pedidos por mes" role="img"></canvas></div>
+            </article>
+            <article class="panel insight-panel">
+              <p class="eyebrow">LECTURA RÁPIDA</p>
+              <h2 id="mainInsightTitle">La repetición permite estandarizar.</h2>
+              <p id="mainInsightText">La mayoría de fichas se concentra en dos familias de trabajo. La primera inversión debe ser biblioteca de plantillas, croquis y componentes.</p>
+              <button class="button tertiary" type="button" data-view-target="production">Ver producción <span>→</span></button>
+            </article>
+          </div>
+
+          <div class="dashboard-grid bottom-grid">
+            <article class="panel chart-panel">
+              <div class="panel-head">
+                <div><p class="eyebrow">MODELOS</p><h2>Más solicitados</h2></div>
+              </div>
+              <div class="canvas-wrap small"><canvas id="modelsChart" aria-label="Gráfico de modelos más solicitados" role="img"></canvas></div>
+            </article>
+            <article class="panel action-panel">
+              <p class="eyebrow">PRÓXIMA DECISIÓN</p>
+              <h2>Primero, margen. Después, máquina.</h2>
+              <ul>
+                <li><span>01</span> Registrar coste y horas por pedido.</li>
+                <li><span>02</span> Pilotar compras por lote y semielaborados.</li>
+                <li><span>03</span> Probar automatización sobre retales.</li>
+              </ul>
+              <button class="button primary" type="button" data-view-target="profit">Ver escenarios</button>
+            </article>
+          </div>
+        </section>
+
+        <section id="production" class="view" aria-labelledby="productionHeading">
+          <div class="page-heading compact">
+            <div>
+              <p class="eyebrow">PRODUCCIÓN</p>
+              <h1 id="productionHeading">Qué se repite y qué conviene preparar.</h1>
+              <p class="page-lead">Filtra el histórico para decidir plantillas, lotes de corte y compras. Los datos personales no se muestran en este panel.</p>
+            </div>
+            <div class="filter-row">
+              <label>Año <select id="yearFilter"><option value="all">Todo el histórico</option></select></label>
+              <label>Modelo <select id="modelFilter"><option value="all">Todos los modelos</option></select></label>
+            </div>
+          </div>
+
+          <div class="production-metrics">
+            <article><span>Medidas con dato</span><strong id="measuredOrders">148</strong><small>para planificar corte</small></article>
+            <article><span>Medidas diferentes</span><strong id="distinctSizes">118</strong><small>no conviene almacenar lápidas completas</small></article>
+            <article><span>Medida más frecuente</span><strong id="topSize">99 × 80</strong><small>cm · 9 pedidos</small></article>
+          </div>
+
+          <div class="dashboard-grid production-grid">
+            <article class="panel table-panel">
+              <div class="panel-head"><div><p class="eyebrow">FAMILIAS</p><h2>Modelos por frecuencia</h2></div></div>
+              <div id="modelsTable" class="rank-table"></div>
+            </article>
+            <article class="panel table-panel">
+              <div class="panel-head"><div><p class="eyebrow">MATERIAL</p><h2>Materiales indicados</h2></div></div>
+              <div id="materialsTable" class="rank-table"></div>
+            </article>
+            <article class="panel table-panel wide-table">
+              <div class="panel-head"><div><p class="eyebrow">MEDIDAS</p><h2>Medidas totales más frecuentes</h2></div><span class="chart-note">No usar como stock terminado</span></div>
+              <div id="sizesTable" class="rank-table sizes"></div>
+            </article>
+          </div>
+        </section>
+
+        <section id="profit" class="view" aria-labelledby="profitHeading">
+          <div class="page-heading compact">
+            <div>
+              <p class="eyebrow">RENTABILIDAD</p>
+              <h1 id="profitHeading">Cuánto puede aportar el plan.</h1>
+              <p class="page-lead">Estimación de beneficio operativo incremental. Modifica los supuestos para discutirlos con tu padre.</p>
+            </div>
+            <button id="resetAssumptions" class="button secondary" type="button">Restablecer supuestos</button>
+          </div>
+
+          <div class="profit-layout">
+            <article class="panel assumptions-panel">
+              <div class="panel-head"><div><p class="eyebrow">SUPUESTOS EDITABLES</p><h2>Escenario central</h2></div></div>
+              <div class="assumptions-form">
+                <label>Trabajos al año<input id="assumptionOrders" type="number" min="0" step="1" value="150" /></label>
+                <label>Mejora media de margen por trabajo (€)<input id="assumptionPrice" type="number" min="0" step="1" value="15" /></label>
+                <label>Ahorro anual en compras y merma (€)<input id="assumptionProcurement" type="number" min="0" step="50" value="500" /></label>
+                <label>Trabajos adicionales sin CNC<input id="assumptionExtraJobs" type="number" min="0" step="1" value="15" /></label>
+                <label>Margen de contribución por trabajo extra (€)<input id="assumptionContribution" type="number" min="0" step="5" value="90" /></label>
+                <label>Ahorro por errores, viajes y repeticiones (€)<input id="assumptionRework" type="number" min="0" step="50" value="0" /></label>
+              </div>
+              <p class="form-note">Estos supuestos se guardan solo en este dispositivo. Registra los valores reales en el libro maestro para sustituir estimaciones por datos.</p>
+            </article>
+
+            <article class="panel profit-result">
+              <p class="eyebrow">RESULTADO ESTIMADO</p>
+              <div class="result-number" id="annualBenefit">4.100 €</div>
+              <p class="result-label">beneficio operativo incremental anual, antes de impuestos</p>
+              <div class="profit-bars">
+                <div><span>Tarifa y mezcla</span><strong id="benefitPrice">2.250 €</strong><i><b id="benefitPriceBar"></b></i></div>
+                <div><span>Compras y merma</span><strong id="benefitProcurement">500 €</strong><i><b id="benefitProcurementBar"></b></i></div>
+                <div><span>Capacidad adicional</span><strong id="benefitCapacity">1.350 €</strong><i><b id="benefitCapacityBar"></b></i></div>
+                <div><span>Errores y viajes</span><strong id="benefitRework">0 €</strong><i><b id="benefitReworkBar"></b></i></div>
+              </div>
+              <div class="ten-year"><span>Potencial acumulado en 10 años</span><strong id="tenYearBenefit">41.000 €</strong><small>Sin inflación ni impuestos</small></div>
+            </article>
+          </div>
+
+          <article class="panel cnc-panel">
+            <div>
+              <p class="eyebrow">DECISIÓN DE INVERSIÓN</p>
+              <h2>La CNC debe superar un umbral económico.</h2>
+              <p>Una inversión de 40.000 € necesita aportar 10.000 € netos al año para devolverse en cuatro años. Con el límite actual de 200 trabajos, el incremento máximo desde 150 son 50 trabajos.</p>
+            </div>
+            <div class="cnc-math">
+              <div><span>50 × <b id="cncContribution">90 €</b></span><strong id="cncBenefit">4.500 €</strong><small>contribución anual de capacidad</small></div>
+              <div><span>Objetivo a 4 años</span><strong>10.000 €</strong><small>beneficio anual necesario</small></div>
+              <div class="verdict"><span id="cncVerdict">Faltan 5.500 €</span><small>antes de mantenimiento, financiación y riesgo</small></div>
+            </div>
+          </article>
+        </section>
+
+        <section id="data" class="view" aria-labelledby="dataHeading">
+          <div class="page-heading compact">
+            <div>
+              <p class="eyebrow">DATOS Y CONEXIÓN</p>
+              <h1 id="dataHeading">Un único libro maestro. Un panel privado.</h1>
+              <p class="page-lead">El Sheet permanece como la fuente de verdad. LITOS Control Interno solo agrega y visualiza los datos que autorices.</p>
+            </div>
+          </div>
+
+          <div class="data-layout">
+            <article class="panel connection-panel">
+              <div class="connection-heading"><span class="connection-icon">⌘</span><div><p class="eyebrow">GOOGLE SHEETS</p><h2>Conectar el libro maestro</h2></div></div>
+              <p>La conexión usa autorización de Google en tu navegador. El repositorio no incluye datos de pedidos ni nombres de clientes.</p>
+              <div class="connection-status" id="connectionStatus"><span></span><b>Sin conectar</b><small>Se muestra una vista agregada de referencia.</small></div>
+              <div class="connection-actions">
+                <button id="connectGoogle" class="button primary" type="button">Conectar con Google</button>
+                <button id="openSheet" class="button secondary" type="button">Editar libro maestro ↗</button>
+              </div>
+            </article>
+
+            <article class="panel settings-panel">
+              <p class="eyebrow">CONFIGURACIÓN PRIVADA</p>
+              <h2>Datos de conexión</h2>
+              <label>ID del libro maestro<input id="spreadsheetId" type="text" value="1kFXDIm3FLXGhGBvCsyMzcawQ0kfsf5fm" /></label>
+              <label>Pestaña de pedidos<input id="sheetName" type="text" value="Pedidos" /></label>
+              <label>Client ID de Google<input id="googleClientId" type="text" placeholder="Pega aquí el Client ID de Google Cloud" autocomplete="off" /></label>
+              <button id="saveSettings" class="button tertiary" type="button">Guardar configuración local</button>
+              <p class="form-note">Solo se guarda en el navegador. Para la primera conexión hay que crear un Client ID OAuth de Google con el origen privado de esta web.</p>
+            </article>
+          </div>
+
+          <article class="panel privacy-panel">
+            <p class="eyebrow">PRIVACIDAD</p>
+            <h2>Reglas de este proyecto</h2>
+            <div class="privacy-rules">
+              <div><span>01</span><p><strong>LITOS es el único nombre visible.</strong> El nombre comercial real no aparece en la web, el repositorio ni la URL.</p></div>
+              <div><span>02</span><p><strong>El Sheet no se publica.</strong> El panel se conecta con autorización del propietario, sin enlaces públicos de datos.</p></div>
+              <div><span>03</span><p><strong>Los cambios se hacen en el libro maestro.</strong> El panel se actualiza al recargar los datos autorizados.</p></div>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script type="module">
+const MASTER_SHEET_URL = "https://docs.google.com/spreadsheets/d/1kFXDIm3FLXGhGBvCsyMzcawQ0kfsf5fm/edit?gid=427781584#gid=427781584";
+const STORAGE_KEY = "litos-control-settings-v1";
+const ASSUMPTIONS_KEY = "litos-control-assumptions-v1";
+
+const previewSummary = {
+  total: 255,
+  yearOrders: 101,
+  year: 2026,
+  measured: 148,
+  distinctSizes: 118,
+  repeatShare: 81,
+  models: [["Tapenucho", 115], ["Reforma", 92], ["Lápida", 34], ["Rótulo", 3], ["Otros", 11]],
+  materials: [["Suyo / Suya", 83], ["Sudáfrica", 19], ["Italia", 19], ["Absoluto", 18], ["Blancos", 40]],
+  sizes: [["99 × 80", 9], ["96 × 80", 6], ["95 × 63", 5], ["97,5 × 78", 4], ["90 × 80", 3], ["99 × 84", 3], ["Otras medidas", 118]],
+  months: [
+    ["sep. 25", 19], ["oct. 25", 17], ["nov. 25", 13], ["dic. 25", 10],
+    ["ene. 26", 11], ["feb. 26", 11], ["mar. 26", 11], ["abr. 26", 16],
+    ["may. 26", 13], ["jun. 26", 17], ["jul. 26", 13], ["ago. 26", 9]
+  ]
+};
+
+const state = {
+  rows: [],
+  summary: previewSummary,
+  connected: false,
+  tokenClient: null,
+  token: null,
+  settings: loadSettings(),
+  activeView: "summary"
+};
+
+const $ = (selector) => document.querySelector(selector);
+const $ = (selector) => [...document.querySelectorAll(selector)];
+const formatInt = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 0 });
+const formatMoney = (value) => `${formatInt.format(Math.round(value))} €`;
+
+function loadSettings() {
+  try {
+    return {
+      spreadsheetId: "1kFXDIm3FLXGhGBvCsyMzcawQ0kfsf5fm",
+      sheetName: "Pedidos",
+      googleClientId: "",
+      ...JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}")
+    };
+  } catch {
+    return { spreadsheetId: "1kFXDIm3FLXGhGBvCsyMzcawQ0kfsf5fm", sheetName: "Pedidos", googleClientId: "" };
+  }
+}
+
+function saveSettings() {
+  state.settings = {
+    spreadsheetId: $("#spreadsheetId").value.trim(),
+    sheetName: $("#sheetName").value.trim() || "Pedidos",
+    googleClientId: $("#googleClientId").value.trim()
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.settings));
+  showToast("Configuración guardada en este navegador.");
+}
+
+function showToast(message) {
+  const toast = $("#toast");
+  toast.textContent = message;
+  toast.classList.add("visible");
+  window.clearTimeout(showToast.timer);
+  showToast.timer = window.setTimeout(() => toast.classList.remove("visible"), 3600);
+}
+
+function text(value) {
+  return String(value ?? "").trim();
+}
+
+function parseNumber(value) {
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  const normalized = text(value).replace(/\./g, "").replace(",", ".").replace(/[^0-9.-]/g, "");
+  const result = Number(normalized);
+  return Number.isFinite(result) ? result : null;
+}
+
+function parseDate(value) {
+  if (value instanceof Date && !Number.isNaN(value.valueOf())) return value;
+  const raw = text(value);
+  if (!raw) return null;
+  const iso = raw.match(/^(\d{4})[-/]?(\d{1,2})[-/]?(\d{1,2})/);
+  if (iso) return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
+  const spanish = raw.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})/);
+  if (spanish) {
+    const year = Number(spanish[3].length === 2 ? `20${spanish[3]}` : spanish[3]);
+    return new Date(year, Number(spanish[2]) - 1, Number(spanish[1]));
+  }
+  return null;
+}
+
+function normalize(value) {
+  return text(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+function countBy(values) {
+  const map = new Map();
+  values.filter(Boolean).forEach((value) => map.set(value, (map.get(value) || 0) + 1));
+  return [...map.entries()].sort((a, b) => b[1] - a[1]);
+}
+
+function familyFor(model) {
+  const value = normalize(model);
+  if (value.startsWith("tapenucho")) return "Tapenucho";
+  if (value.startsWith("reforma")) return "Reforma";
+  if (value.startsWith("lapida")) return "Lápida";
+  return text(model) || "Sin modelo";
+}
+
+function materialFor(material) {
+  const value = normalize(material);
+  if (value === "suyo" || value === "suya") return "Suyo / Suya";
+  if (value.includes("blanco")) return "Blancos";
+  return text(material) || "Sin material";
+}
+
+function sizeFor(row) {
+  const width = parseNumber(row["Ancho total (cm)"]);
+  const height = parseNumber(row["Alto total (cm)"]);
+  if (width === null || height === null) return null;
+  const show = (value) => Number.isInteger(value) ? String(value) : String(value).replace(".", ",");
+  return `${show(width)} × ${show(height)}`;
+}
+
+function numberAt(row, key) {
+  const value = row[key];
+  return parseNumber(value);
+}
+
+function mapRows(values) {
+  const headerIndex = values.findIndex((row) => row.some((cell) => text(cell) === "Pedido"));
+  if (headerIndex < 0) throw new Error("No se localizó la fila de cabeceras 'Pedido' en la pestaña indicada.");
+  const headers = values[headerIndex].map(text);
+  return values.slice(headerIndex + 1)
+    .map((row, index) => {
+      const record = { _rowNumber: headerIndex + index + 2 };
+      headers.forEach((header, column) => { if (header) record[header] = row[column] ?? ""; });
+      return record;
+    })
+    .filter((row) => text(row.Pedido));
+}
+
+function makeSummary(rows) {
+  const rowsWithDate = rows.map((row) => ({ ...row, _date: parseDate(row["Fecha ficha"]) })).filter((row) => row._date);
+  const latestYear = rowsWithDate.length ? Math.max(...rowsWithDate.map((row) => row._date.getFullYear())) : new Date().getFullYear();
+  const inLatestYear = rowsWithDate.filter((row) => row._date.getFullYear() === latestYear);
+  const measured = rows.filter((row) => sizeFor(row));
+  const models = countBy(rows.map((row) => familyFor(row.Modelo))).slice(0, 6);
+  const materials = countBy(rows.map((row) => materialFor(row.Material))).slice(0, 6);
+  const sizes = countBy(measured.map(sizeFor));
+  const monthMap = new Map();
+  rowsWithDate.forEach((row) => {
+    const d = row._date;
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    monthMap.set(key, (monthMap.get(key) || 0) + 1);
+  });
+  const months = [...monthMap.entries()].sort(([a], [b]) => a.localeCompare(b)).slice(-12).map(([key, value]) => {
+    const [year, month] = key.split("-").map(Number);
+    const label = new Intl.DateTimeFormat("es-ES", { month: "short", year: "2-digit" }).format(new Date(year, month - 1, 1)).replace(" de ", " ");
+    return [label, value];
+  });
+  const recurrent = rows.filter((row) => ["Tapenucho", "Reforma"].includes(familyFor(row.Modelo))).length;
+  return {
+    total: rows.length,
+    yearOrders: inLatestYear.length,
+    year: latestYear,
+    measured: measured.length,
+    distinctSizes: sizes.length,
+    repeatShare: rows.length ? Math.round((recurrent / rows.length) * 100) : 0,
+    models,
+    materials,
+    sizes: sizes.slice(0, 8),
+    months
+  };
+}
+
+function getFilteredRows() {
+  if (!state.rows.length) return [];
+  const year = $("#yearFilter").value;
+  const model = $("#modelFilter").value;
+  return state.rows.filter((row) => {
+    const date = parseDate(row["Fecha ficha"]);
+    const yearMatches = year === "all" || (date && String(date.getFullYear()) === year);
+    const modelMatches = model === "all" || familyFor(row.Modelo) === model;
+    return yearMatches && modelMatches;
+  });
+}
+
+function getProductionSummary() {
+  const rows = getFilteredRows();
+  if (!rows.length) return state.summary;
+  const measured = rows.filter((row) => sizeFor(row));
+  const sizes = countBy(measured.map(sizeFor));
+  return {
+    total: rows.length,
+    measured: measured.length,
+    distinctSizes: sizes.length,
+    models: countBy(rows.map((row) => familyFor(row.Modelo))).slice(0, 8),
+    materials: countBy(rows.map((row) => materialFor(row.Material))).slice(0, 8),
+    sizes: sizes.slice(0, 12)
+  };
+}
+
+function renderRank(container, values, label) {
+  container.replaceChildren();
+  const max = Math.max(...values.map(([, value]) => value), 1);
+  values.forEach(([name, value], index) => {
+    const row = document.createElement("div");
+    row.className = "rank-row";
+    const rank = document.createElement("span"); rank.className = "rank-index"; rank.textContent = String(index + 1).padStart(2, "0");
+    const nameEl = document.createElement("span"); nameEl.className = "rank-label"; nameEl.textContent = name;
+    const count = document.createElement("span"); count.className = "rank-value"; count.textContent = `${value} ${label}`;
+    const bar = document.createElement("div"); bar.className = "rank-bar";
+    const fill = document.createElement("i"); fill.style.width = `${Math.max(8, (value / max) * 100)}%`;
+    bar.append(fill); row.append(rank, nameEl, count, bar); container.append(row);
+  });
+}
+
+function setupCanvas(canvas) {
+  const rect = canvas.getBoundingClientRect();
+  const ratio = window.devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.floor(rect.width * ratio));
+  canvas.height = Math.max(1, Math.floor(rect.height * ratio));
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  return { ctx, width: rect.width, height: rect.height };
+}
+
+function drawOrdersChart(data) {
+  const canvas = $("#ordersChart");
+  const { ctx, width, height } = setupCanvas(canvas);
+  const left = 38, right = 12, top = 18, bottom = 33;
+  const max = Math.max(...data.map(([, value]) => value), 1);
+  ctx.clearRect(0, 0, width, height);
+  ctx.font = "11px Manrope"; ctx.fillStyle = "#799194"; ctx.strokeStyle = "#e4edeb"; ctx.lineWidth = 1;
+  [0, .5, 1].forEach((ratio) => {
+    const y = top + (height - top - bottom) * ratio;
+    ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(width - right, y); ctx.stroke();
+    ctx.fillText(String(Math.round(max * (1 - ratio))), 2, y + 4);
+  });
+  if (!data.length) return;
+  const step = (width - left - right) / Math.max(1, data.length - 1);
+  ctx.beginPath();
+  data.forEach(([label, value], index) => {
+    const x = left + index * step;
+    const y = top + (height - top - bottom) * (1 - value / max);
+    index ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  });
+  ctx.lineTo(left + (data.length - 1) * step, height - bottom); ctx.lineTo(left, height - bottom); ctx.closePath();
+  const gradient = ctx.createLinearGradient(0, top, 0, height - bottom); gradient.addColorStop(0, "rgba(16,114,110,.22)"); gradient.addColorStop(1, "rgba(16,114,110,0)"); ctx.fillStyle = gradient; ctx.fill();
+  ctx.beginPath(); ctx.strokeStyle = "#10726e"; ctx.lineWidth = 2.5;
+  data.forEach(([, value], index) => { const x = left + index * step; const y = top + (height - top - bottom) * (1 - value / max); index ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
+  data.forEach(([label, value], index) => {
+    const x = left + index * step; const y = top + (height - top - bottom) * (1 - value / max);
+    ctx.fillStyle = "#10726e"; ctx.beginPath(); ctx.arc(x, y, 3.1, 0, Math.PI * 2); ctx.fill();
+    if (index % 2 === 0 || data.length < 8) { ctx.fillStyle = "#799194"; ctx.textAlign = "center"; ctx.fillText(label, x, height - 12); }
+  });
+  ctx.textAlign = "start";
+}
+
+function drawModelsChart(data) {
+  const canvas = $("#modelsChart");
+  const { ctx, width, height } = setupCanvas(canvas);
+  const top = 10, left = 108, right = 30, bottom = 8;
+  const max = Math.max(...data.map(([, value]) => value), 1);
+  const step = (height - top - bottom) / Math.max(data.length, 1);
+  ctx.clearRect(0, 0, width, height); ctx.font = "11px Manrope";
+  data.slice(0, 5).forEach(([label, value], index) => {
+    const y = top + index * step + step * .2; const barHeight = Math.max(12, step * .48); const barWidth = (width - left - right) * (value / max);
+    ctx.fillStyle = "#f0f4f3"; ctx.fillRect(left, y, width - left - right, barHeight);
+    ctx.fillStyle = index === 0 ? "#10726e" : "#6ca7a0"; ctx.fillRect(left, y, barWidth, barHeight);
+    ctx.fillStyle = "#466267"; ctx.textAlign = "right"; ctx.fillText(label, left - 10, y + barHeight - 1);
+    ctx.fillStyle = "#1b4145"; ctx.textAlign = "left"; ctx.fillText(String(value), Math.min(left + barWidth + 7, width - 20), y + barHeight - 1);
+  });
+  ctx.textAlign = "start";
+}
+
+function renderSummary() {
+  const s = state.summary;
+  $("#totalOrders").textContent = formatInt.format(s.total);
+  $("#yearOrders").textContent = formatInt.format(s.yearOrders);
+  $("#yearOrdersFoot").textContent = `Año ${s.year}`;
+  $("#repeatShare").innerHTML = `${s.repeatShare}<span>%</span>`;
+  $("#measuredOrders").textContent = formatInt.format(s.measured);
+  $("#distinctSizes").textContent = formatInt.format(s.distinctSizes);
+  const [topSize, topSizeCount] = s.sizes[0] || ["—", 0];
+  $("#topSize").textContent = topSize;
+  $("#topSize").nextElementSibling.textContent = `${topSizeCount} pedidos`;
+  $("#orderPeriod").textContent = state.connected ? "Libro maestro conectado" : "Histórico disponible";
+  $("#lastUpdate").textContent = state.connected ? `Actualizado ${new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeStyle: "short" }).format(new Date())}` : "Datos de referencia";
+  drawOrdersChart(s.months);
+  drawModelsChart(s.models);
+}
+
+function renderProduction() {
+  const s = getProductionSummary();
+  $("#measuredOrders").textContent = formatInt.format(s.measured || 0);
+  $("#distinctSizes").textContent = formatInt.format(s.distinctSizes || 0);
+  const [topSize, topCount] = s.sizes[0] || ["—", 0];
+  $("#topSize").textContent = topSize; $("#topSize").nextElementSibling.textContent = `${topCount} pedidos`;
+  renderRank($("#modelsTable"), s.models || [], "pedidos");
+  renderRank($("#materialsTable"), s.materials || [], "pedidos");
+  renderRank($("#sizesTable"), s.sizes || [], "pedidos");
+}
+
+function setupFilters() {
+  const year = $("#yearFilter"); const model = $("#modelFilter");
+  const currentYear = year.value; const currentModel = model.value;
+  const years = [...new Set(state.rows.map((row) => parseDate(row["Fecha ficha"])?.getFullYear()).filter(Boolean))].sort((a,b) => b-a);
+  const models = [...new Set(state.rows.map((row) => familyFor(row.Modelo)).filter(Boolean))].sort();
+  year.replaceChildren(new Option("Todo el histórico", "all"), ...years.map((value) => new Option(String(value), String(value))));
+  model.replaceChildren(new Option("Todos los modelos", "all"), ...models.map((value) => new Option(value, value)));
+  if ([...year.options].some((option) => option.value === currentYear)) year.value = currentYear;
+  if ([...model.options].some((option) => option.value === currentModel)) model.value = currentModel;
+}
+
+function updateBenefit() {
+  const values = {
+    orders: numberAt({ value: $("#assumptionOrders").value }, "value") || 0,
+    price: numberAt({ value: $("#assumptionPrice").value }, "value") || 0,
+    procurement: numberAt({ value: $("#assumptionProcurement").value }, "value") || 0,
+    extraJobs: numberAt({ value: $("#assumptionExtraJobs").value }, "value") || 0,
+    contribution: numberAt({ value: $("#assumptionContribution").value }, "value") || 0,
+    rework: numberAt({ value: $("#assumptionRework").value }, "value") || 0
+  };
+  const components = { price: values.orders * values.price, procurement: values.procurement, capacity: values.extraJobs * values.contribution, rework: values.rework };
+  const annual = Object.values(components).reduce((total, value) => total + value, 0);
+  $("#annualBenefit").textContent = formatMoney(annual);
+  $("#tenYearBenefit").textContent = formatMoney(annual * 10);
+  const max = Math.max(...Object.values(components), 1);
+  [["Price", components.price], ["Procurement", components.procurement], ["Capacity", components.capacity], ["Rework", components.rework]].forEach(([name, value]) => {
+    $(`#benefit${name}`).textContent = formatMoney(value);
+    $(`#benefit${name}Bar`).style.width = `${Math.max(value ? 7 : 0, (value / max) * 100)}%`;
+  });
+  const capacityForCnc = Math.max(0, 200 - values.orders) * values.contribution;
+  const gap = 10000 - capacityForCnc;
+  $("#cncContribution").textContent = formatMoney(values.contribution);
+  $("#cncBenefit").textContent = formatMoney(capacityForCnc);
+  $("#cncVerdict").textContent = gap > 0 ? `Faltan ${formatMoney(gap)}` : `Supera el objetivo por ${formatMoney(Math.abs(gap))}`;
+  localStorage.setItem(ASSUMPTIONS_KEY, JSON.stringify(values));
+}
+
+function loadAssumptions() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(ASSUMPTIONS_KEY) || "{}");
+    const lookup = { orders: "assumptionOrders", price: "assumptionPrice", procurement: "assumptionProcurement", extraJobs: "assumptionExtraJobs", contribution: "assumptionContribution", rework: "assumptionRework" };
+    Object.entries(lookup).forEach(([key, id]) => { if (Number.isFinite(saved[key])) $(`#${id}`).value = saved[key]; });
+  } catch { /* defaults remain visible */ }
+  updateBenefit();
+}
+
+function resetAssumptions() {
+  const defaults = { assumptionOrders: 150, assumptionPrice: 15, assumptionProcurement: 500, assumptionExtraJobs: 15, assumptionContribution: 90, assumptionRework: 0 };
+  Object.entries(defaults).forEach(([id, value]) => { $(`#${id}`).value = value; });
+  localStorage.removeItem(ASSUMPTIONS_KEY); updateBenefit(); showToast("Supuestos restablecidos.");
+}
+
+function updateConnectionUI() {
+  const status = $("#connectionStatus");
+  const dataStatus = $("#dataStatus");
+  status.classList.toggle("connected", state.connected);
+  status.querySelector("b").textContent = state.connected ? "Conectado al libro maestro" : "Sin conectar";
+  status.querySelector("small").textContent = state.connected ? "Los datos se mantienen en memoria solo durante esta sesión." : "Se muestra una vista agregada de referencia.";
+  dataStatus.textContent = state.connected ? "Datos privados recibidos del libro maestro. Actualiza cuando cambies una ficha en Google Sheets." : "Vista de ejemplo basada en los últimos agregados. Conecta el libro maestro para actualizarla.";
+}
+
+async function requestGoogleConnection() {
+  if (!state.settings.googleClientId) {
+    switchView("data");
+    showToast("Introduce primero el Client ID de Google Cloud y guárdalo.");
+    return;
+  }
+  if (!window.google?.accounts?.oauth2) {
+    showToast("El acceso de Google todavía se está cargando. Inténtalo de nuevo en unos segundos.");
+    return;
+  }
+  state.tokenClient = window.google.accounts.oauth2.initTokenClient({
+    client_id: state.settings.googleClientId,
+    scope: "https://www.googleapis.com/auth/spreadsheets.readonly",
+    callback: async (response) => {
+      if (response.error) { showToast("Google no autorizó la conexión al libro maestro."); return; }
+      state.token = response.access_token;
+      await refreshFromSheet();
+    }
+  });
+  state.tokenClient.requestAccessToken({ prompt: "consent" });
+}
+
+async function refreshFromSheet() {
+  if (!state.token) { requestGoogleConnection(); return; }
+  const range = `${state.settings.sheetName}!A:Q`;
+  const endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(state.settings.spreadsheetId)}/values/${encodeURIComponent(range)}?majorDimension=ROWS`;
+  $("#refreshData").textContent = "Actualizando…";
+  try {
+    const response = await fetch(endpoint, { headers: { Authorization: `Bearer ${state.token}` } });
+    if (!response.ok) throw new Error(`Google Sheets respondió ${response.status}`);
+    const payload = await response.json();
+    state.rows = mapRows(payload.values || []);
+    state.summary = makeSummary(state.rows);
+    state.connected = true;
+    setupFilters(); renderSummary(); renderProduction(); updateConnectionUI();
+    showToast(`${formatInt.format(state.rows.length)} fichas actualizadas desde el libro maestro.`);
+  } catch (error) {
+    state.connected = false; updateConnectionUI(); showToast(`No se pudieron actualizar los datos: ${error.message}`);
+  } finally {
+    $("#refreshData").textContent = "Actualizar datos";
+  }
+}
+
+function switchView(view) {
+  state.activeView = view;
+  $(".view").forEach((section) => section.classList.toggle("active", section.id === view));
+  $("[data-view-target]").forEach((button) => button.classList.toggle("active", button.dataset.viewTarget === view));
+  $("#viewTitle").textContent = ({ summary: "Resumen", production: "Producción", profit: "Rentabilidad", data: "Datos y conexión" })[view];
+  $(".sidebar").classList.remove("open");
+  if (view === "summary") requestAnimationFrame(renderSummary);
+  if (view === "production") requestAnimationFrame(renderProduction);
+}
+
+function openMasterSheet() {
+  window.open(MASTER_SHEET_URL, "_blank", "noopener,noreferrer");
+}
+
+function init() {
+  $("#spreadsheetId").value = state.settings.spreadsheetId;
+  $("#sheetName").value = state.settings.sheetName;
+  $("#googleClientId").value = state.settings.googleClientId;
+  updateConnectionUI(); setupFilters(); renderSummary(); renderProduction(); loadAssumptions();
+  $("[data-view-target]").forEach((button) => button.addEventListener("click", () => switchView(button.dataset.viewTarget)));
+  $("#mobileMenu").addEventListener("click", () => $(".sidebar").classList.toggle("open"));
+  $("#openSheet").addEventListener("click", openMasterSheet); $("#openSheetSide").addEventListener("click", openMasterSheet);
+  $("#saveSettings").addEventListener("click", saveSettings);
+  $("#connectGoogle").addEventListener("click", requestGoogleConnection);
+  $("#refreshData").addEventListener("click", refreshFromSheet);
+  $("#yearFilter").addEventListener("change", renderProduction); $("#modelFilter").addEventListener("change", renderProduction);
+  ["#assumptionOrders", "#assumptionPrice", "#assumptionProcurement", "#assumptionExtraJobs", "#assumptionContribution", "#assumptionRework"].forEach((selector) => $(selector).addEventListener("input", updateBenefit));
+  $("#resetAssumptions").addEventListener("click", resetAssumptions);
+  window.addEventListener("resize", () => { if (state.activeView === "summary") renderSummary(); });
+}
+
+init();
+
+</script>
+  </body>
+</html>
