@@ -351,7 +351,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
             <div class="privacy-rules">
               <div><span>01</span><p><strong>LITOS es el único nombre visible.</strong> El nombre comercial real no aparece en la web, el repositorio ni la URL.</p></div>
               <div><span>02</span><p><strong>El Sheet no se publica.</strong> El panel se conecta con autorización del propietario, sin enlaces públicos de datos.</p></div>
-              <div><span>03</span><p><strong>Los cambios se hacen en el libro maestro.</strong> El panel se actualiza al recargar los datos autorizados.</p></div>
+              <div><span>03</span><p><strong>Los cambios se hacen en el libro maestro.</strong> El panel se sincroniza cada minuto mientras esté abierto, o al instante con «Actualizar datos».</p></div>
             </div>
           </article>
         </section>
@@ -361,7 +361,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
     <script type="module">
 const STORAGE_KEY = "litos-control-settings-v1";
 const ASSUMPTIONS_KEY = "litos-control-assumptions-v1";
-const AUTO_REFRESH_MS = 5 * 60 * 1000;
+const AUTO_REFRESH_MS = 60 * 1000;
 
 const emptySummary = {
   total: 0,
@@ -797,9 +797,9 @@ function updateConnectionUI() {
   status.classList.toggle("connected", state.connected);
   status.querySelector("b").textContent = state.connected ? "Conectado al libro maestro" : "Sin conectar";
   status.querySelector("small").textContent = state.connected
-    ? "Actualización automática cada 5 minutos mientras esta pestaña esté abierta."
+    ? "Actualización automática cada minuto mientras esta pestaña esté abierta."
     : "No hay datos cargados en este navegador.";
-  dataStatus.textContent = state.connected ? "Datos privados recibidos del libro maestro. Actualiza cuando cambies una ficha en Google Sheets." : "El panel está vacío hasta que autorices la conexión al libro maestro.";
+  dataStatus.textContent = state.connected ? "Datos privados recibidos del libro maestro. Se sincronizan cada minuto y puedes actualizar al instante cuando cambies una ficha." : "El panel está vacío hasta que autorices la conexión al libro maestro.";
 }
 
 async function requestGoogleConnection() {
