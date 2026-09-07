@@ -361,6 +361,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
     <script type="module">
 const STORAGE_KEY = "litos-control-settings-v1";
 const ASSUMPTIONS_KEY = "litos-control-assumptions-v1";
+const AUTO_REFRESH_MS = 5 * 60 * 1000;
 
 const emptySummary = {
   total: 0,
@@ -766,7 +767,9 @@ function updateConnectionUI() {
   const dataStatus = $("#dataStatus");
   status.classList.toggle("connected", state.connected);
   status.querySelector("b").textContent = state.connected ? "Conectado al libro maestro" : "Sin conectar";
-  status.querySelector("small").textContent = state.connected ? "Los datos se mantienen en memoria solo durante esta sesión." : "No hay datos cargados en este navegador.";
+  status.querySelector("small").textContent = state.connected
+    ? "Actualización automática cada 5 minutos mientras esta pestaña esté abierta."
+    : "No hay datos cargados en este navegador.";
   dataStatus.textContent = state.connected ? "Datos privados recibidos del libro maestro. Actualiza cuando cambies una ficha en Google Sheets." : "El panel está vacío hasta que autorices la conexión al libro maestro.";
 }
 
@@ -794,7 +797,9 @@ async function requestGoogleConnection() {
       await refreshFromSheet();
     }
   });
-  state.tokenClient.requestAccessToken({ prompt: "consent" });
+  // Google asks for consent on the first connection. Omitting a forced consent
+  // prompt prevents asking again on every manual refresh during later sessions.
+  state.tokenClient.requestAccessToken({ prompt: "" });
 }
 
 async function refreshFromSheet() {
@@ -804,7 +809,10 @@ async function refreshFromSheet() {
   $("#refreshData").textContent = "Actualizando…";
   try {
     const response = await fetch(endpoint, { headers: { Authorization: `Bearer ${state.token}` } });
-    if (!response.ok) throw new Error(`Google Sheets respondió ${response.status}`);
+    if (!response.ok) {
+      if (response.status === 401) state.token = null;
+      throw new Error(response.status === 401 ? "la sesión de Google ha caducado; vuelve a conectar" : `Google Sheets respondió ${response.status}`);
+    }
     const payload = await response.json();
     state.rows = mapRows(payload.values || []);
     state.summary = makeSummary(state.rows);
@@ -851,6 +859,7 @@ function init() {
   $("#yearFilter").addEventListener("change", renderProduction); $("#modelFilter").addEventListener("change", renderProduction);
   ["#assumptionOrders", "#assumptionPrice", "#assumptionProcurement", "#assumptionExtraJobs", "#assumptionContribution", "#assumptionRework", "#assumptionCncCapacity", "#assumptionCncInvestment", "#assumptionCncPayback"].forEach((selector) => $(selector).addEventListener("input", updateBenefit));
   $("#resetAssumptions").addEventListener("click", resetAssumptions);
+  window.setInterval(() => { if (state.token) refreshFromSheet(); }, AUTO_REFRESH_MS);
   window.addEventListener("resize", () => { if (state.activeView === "summary") renderSummary(); });
 }
 
