@@ -157,31 +157,31 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
             <div>
               <p class="eyebrow">PANEL DE MANDO</p>
               <h1 id="summaryHeading">El taller, de un vistazo.</h1>
-              <p id="dataStatus" class="page-lead">Vista de ejemplo basada en los últimos agregados. Conecta el libro maestro para actualizarla.</p>
+              <p id="dataStatus" class="page-lead">El panel está vacío hasta que autorices la conexión al libro maestro.</p>
             </div>
-            <div class="heading-date" id="lastUpdate">Datos de referencia</div>
+            <div class="heading-date" id="lastUpdate">Acceso requerido</div>
           </div>
 
           <div class="kpi-grid">
             <article class="kpi-card accent-blue">
               <div class="kpi-label">Pedidos registrados</div>
-              <div class="kpi-value" id="totalOrders">255</div>
-              <div class="kpi-foot" id="orderPeriod">Histórico disponible</div>
+              <div class="kpi-value" id="totalOrders">—</div>
+              <div class="kpi-foot" id="orderPeriod">Sin datos cargados</div>
             </article>
             <article class="kpi-card accent-amber">
               <div class="kpi-label">Pedidos del año</div>
-              <div class="kpi-value" id="yearOrders">101</div>
-              <div class="kpi-foot" id="yearOrdersFoot">Hasta agosto de 2026</div>
+              <div class="kpi-value" id="yearOrders">—</div>
+              <div class="kpi-foot" id="yearOrdersFoot">Pendiente de conexión</div>
             </article>
             <article class="kpi-card accent-green">
               <div class="kpi-label">Familias repetibles</div>
-              <div class="kpi-value" id="repeatShare">81<span>%</span></div>
-              <div class="kpi-foot">Tapenucho + Reforma</div>
+              <div class="kpi-value" id="repeatShare">—</div>
+              <div class="kpi-foot">Tapa nicho + Reforma</div>
             </article>
             <article class="kpi-card accent-lilac">
               <div class="kpi-label">Mejora anual estimada</div>
-              <div class="kpi-value">4,1<span>k €</span></div>
-              <div class="kpi-foot">Caso central, antes de impuestos</div>
+              <div class="kpi-value">—</div>
+              <div class="kpi-foot">Introduce supuestos privados</div>
             </article>
           </div>
 
@@ -198,8 +198,8 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
             </article>
             <article class="panel insight-panel">
               <p class="eyebrow">LECTURA RÁPIDA</p>
-              <h2 id="mainInsightTitle">La repetición permite estandarizar.</h2>
-              <p id="mainInsightText">La mayoría de fichas se concentra en dos familias de trabajo. La primera inversión debe ser biblioteca de plantillas, croquis y componentes.</p>
+              <h2 id="mainInsightTitle">Conecta antes de analizar.</h2>
+              <p id="mainInsightText">Las frecuencias y medidas solo se calculan en el navegador autorizado, a partir del libro maestro privado.</p>
               <button class="button tertiary" type="button" data-view-target="production">Ver producción <span>→</span></button>
             </article>
           </div>
@@ -229,7 +229,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
             <div>
               <p class="eyebrow">PRODUCCIÓN</p>
               <h1 id="productionHeading">Qué se repite y qué conviene preparar.</h1>
-              <p class="page-lead">Filtra el histórico para decidir plantillas, lotes de corte y compras. Los datos personales no se muestran en este panel.</p>
+              <p class="page-lead">Filtra el histórico para decidir plantillas, lotes de corte y compras. Las medidas de lápida usan el alto neto: alto escrito menos 4 cm de escalón y tapa.</p>
             </div>
             <div class="filter-row">
               <label>Año <select id="yearFilter"><option value="all">Todo el histórico</option></select></label>
@@ -238,9 +238,9 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
           </div>
 
           <div class="production-metrics">
-            <article><span>Medidas con dato</span><strong id="measuredOrders">148</strong><small>para planificar corte</small></article>
-            <article><span>Medidas diferentes</span><strong id="distinctSizes">118</strong><small>no conviene almacenar lápidas completas</small></article>
-            <article><span>Medida más frecuente</span><strong id="topSize">99 × 80</strong><small>cm · 9 pedidos</small></article>
+            <article><span>Medidas con dato</span><strong id="measuredOrders">—</strong><small>para planificar corte</small></article>
+            <article><span>Medidas diferentes</span><strong id="distinctSizes">—</strong><small>no conviene almacenar lápidas completas</small></article>
+            <article><span>Medida más frecuente</span><strong id="topSize">—</strong><small>medida terminada</small></article>
           </div>
 
           <div class="dashboard-grid production-grid">
@@ -253,7 +253,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
               <div id="materialsTable" class="rank-table"></div>
             </article>
             <article class="panel table-panel wide-table">
-              <div class="panel-head"><div><p class="eyebrow">MEDIDAS</p><h2>Medidas totales más frecuentes</h2></div><span class="chart-note">No usar como stock terminado</span></div>
+              <div class="panel-head"><div><p class="eyebrow">MEDIDAS</p><h2>Medidas netas de lápida más frecuentes</h2></div><span class="chart-note">Ancho × alto escrito − 4 cm</span></div>
               <div id="sizesTable" class="rank-table sizes"></div>
             </article>
           </div>
@@ -273,27 +273,30 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
             <article class="panel assumptions-panel">
               <div class="panel-head"><div><p class="eyebrow">SUPUESTOS EDITABLES</p><h2>Escenario central</h2></div></div>
               <div class="assumptions-form">
-                <label>Trabajos al año<input id="assumptionOrders" type="number" min="0" step="1" value="150" /></label>
-                <label>Mejora media de margen por trabajo (€)<input id="assumptionPrice" type="number" min="0" step="1" value="15" /></label>
-                <label>Ahorro anual en compras y merma (€)<input id="assumptionProcurement" type="number" min="0" step="50" value="500" /></label>
-                <label>Trabajos adicionales sin CNC<input id="assumptionExtraJobs" type="number" min="0" step="1" value="15" /></label>
-                <label>Margen de contribución por trabajo extra (€)<input id="assumptionContribution" type="number" min="0" step="5" value="90" /></label>
+                <label>Trabajos al año<input id="assumptionOrders" type="number" min="0" step="1" value="0" /></label>
+                <label>Mejora media de margen por trabajo (€)<input id="assumptionPrice" type="number" min="0" step="1" value="0" /></label>
+                <label>Ahorro anual en compras y merma (€)<input id="assumptionProcurement" type="number" min="0" step="50" value="0" /></label>
+                <label>Trabajos adicionales sin CNC<input id="assumptionExtraJobs" type="number" min="0" step="1" value="0" /></label>
+                <label>Margen de contribución por trabajo extra (€)<input id="assumptionContribution" type="number" min="0" step="5" value="0" /></label>
                 <label>Ahorro por errores, viajes y repeticiones (€)<input id="assumptionRework" type="number" min="0" step="50" value="0" /></label>
+                <label>Capacidad anual a contrastar<input id="assumptionCncCapacity" type="number" min="0" step="1" value="0" /></label>
+                <label>Inversión a contrastar (€)<input id="assumptionCncInvestment" type="number" min="0" step="500" value="0" /></label>
+                <label>Plazo objetivo de retorno (años)<input id="assumptionCncPayback" type="number" min="0" step="1" value="0" /></label>
               </div>
               <p class="form-note">Estos supuestos se guardan solo en este dispositivo. Registra los valores reales en el libro maestro para sustituir estimaciones por datos.</p>
             </article>
 
             <article class="panel profit-result">
               <p class="eyebrow">RESULTADO ESTIMADO</p>
-              <div class="result-number" id="annualBenefit">4.100 €</div>
+              <div class="result-number" id="annualBenefit">0 €</div>
               <p class="result-label">beneficio operativo incremental anual, antes de impuestos</p>
               <div class="profit-bars">
-                <div><span>Tarifa y mezcla</span><strong id="benefitPrice">2.250 €</strong><i><b id="benefitPriceBar"></b></i></div>
-                <div><span>Compras y merma</span><strong id="benefitProcurement">500 €</strong><i><b id="benefitProcurementBar"></b></i></div>
-                <div><span>Capacidad adicional</span><strong id="benefitCapacity">1.350 €</strong><i><b id="benefitCapacityBar"></b></i></div>
+                <div><span>Tarifa y mezcla</span><strong id="benefitPrice">0 €</strong><i><b id="benefitPriceBar"></b></i></div>
+                <div><span>Compras y merma</span><strong id="benefitProcurement">0 €</strong><i><b id="benefitProcurementBar"></b></i></div>
+                <div><span>Capacidad adicional</span><strong id="benefitCapacity">0 €</strong><i><b id="benefitCapacityBar"></b></i></div>
                 <div><span>Errores y viajes</span><strong id="benefitRework">0 €</strong><i><b id="benefitReworkBar"></b></i></div>
               </div>
-              <div class="ten-year"><span>Potencial acumulado en 10 años</span><strong id="tenYearBenefit">41.000 €</strong><small>Sin inflación ni impuestos</small></div>
+              <div class="ten-year"><span>Potencial acumulado en 10 años</span><strong id="tenYearBenefit">0 €</strong><small>Sin inflación ni impuestos</small></div>
             </article>
           </div>
 
@@ -301,12 +304,12 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
             <div>
               <p class="eyebrow">DECISIÓN DE INVERSIÓN</p>
               <h2>La CNC debe superar un umbral económico.</h2>
-              <p>Una inversión de 40.000 € necesita aportar 10.000 € netos al año para devolverse en cuatro años. Con el límite actual de 200 trabajos, el incremento máximo desde 150 son 50 trabajos.</p>
+              <p>Define la inversión, el plazo objetivo y la contribución real por trabajo antes de comparar una máquina con las mejoras de proceso.</p>
             </div>
             <div class="cnc-math">
-              <div><span>50 × <b id="cncContribution">90 €</b></span><strong id="cncBenefit">4.500 €</strong><small>contribución anual de capacidad</small></div>
-              <div><span>Objetivo a 4 años</span><strong>10.000 €</strong><small>beneficio anual necesario</small></div>
-              <div class="verdict"><span id="cncVerdict">Faltan 5.500 €</span><small>antes de mantenimiento, financiación y riesgo</small></div>
+              <div><span>Capacidad × <b id="cncContribution">0 €</b></span><strong id="cncBenefit">0 €</strong><small>contribución anual de capacidad</small></div>
+              <div><span>Objetivo de inversión</span><strong id="cncTarget">A definir</strong><small>beneficio anual necesario</small></div>
+              <div class="verdict"><span id="cncVerdict">Introduce supuestos</span><small>incluye mantenimiento, financiación y riesgo</small></div>
             </div>
           </article>
         </section>
@@ -324,7 +327,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
             <article class="panel connection-panel">
               <div class="connection-heading"><span class="connection-icon">⌘</span><div><p class="eyebrow">GOOGLE SHEETS</p><h2>Conectar el libro maestro</h2></div></div>
               <p>La conexión usa autorización de Google en tu navegador. El repositorio no incluye datos de pedidos ni nombres de clientes.</p>
-              <div class="connection-status" id="connectionStatus"><span></span><b>Sin conectar</b><small>Se muestra una vista agregada de referencia.</small></div>
+              <div class="connection-status" id="connectionStatus"><span></span><b>Sin conectar</b><small>No hay datos cargados en este navegador.</small></div>
               <div class="connection-actions">
                 <button id="connectGoogle" class="button primary" type="button">Conectar con Google</button>
                 <button id="openSheet" class="button secondary" type="button">Editar libro maestro ↗</button>
@@ -334,11 +337,11 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
             <article class="panel settings-panel">
               <p class="eyebrow">CONFIGURACIÓN PRIVADA</p>
               <h2>Datos de conexión</h2>
-              <label>ID del libro maestro<input id="spreadsheetId" type="text" value="1kFXDIm3FLXGhGBvCsyMzcawQ0kfsf5fm" /></label>
+              <label>ID del libro maestro<input id="spreadsheetId" type="text" value="" placeholder="Pega el ID del Google Sheet privado" autocomplete="off" /></label>
               <label>Pestaña de pedidos<input id="sheetName" type="text" value="Pedidos" /></label>
               <label>Client ID de Google<input id="googleClientId" type="text" placeholder="Pega aquí el Client ID de Google Cloud" autocomplete="off" /></label>
               <button id="saveSettings" class="button tertiary" type="button">Guardar configuración local</button>
-              <p class="form-note">Solo se guarda en el navegador. Para la primera conexión hay que crear un Client ID OAuth de Google con el origen privado de esta web.</p>
+              <p class="form-note">Solo se guarda en este navegador. El ID del libro y el Client ID no se incluyen en el repositorio ni se cargan hasta que los guardes aquí.</p>
             </article>
           </div>
 
@@ -356,30 +359,25 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
     </div>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <script type="module">
-const MASTER_SHEET_URL = "https://docs.google.com/spreadsheets/d/1kFXDIm3FLXGhGBvCsyMzcawQ0kfsf5fm/edit?gid=427781584#gid=427781584";
 const STORAGE_KEY = "litos-control-settings-v1";
 const ASSUMPTIONS_KEY = "litos-control-assumptions-v1";
 
-const previewSummary = {
-  total: 255,
-  yearOrders: 101,
-  year: 2026,
-  measured: 148,
-  distinctSizes: 118,
-  repeatShare: 81,
-  models: [["Tapenucho", 115], ["Reforma", 92], ["Lápida", 34], ["Rótulo", 3], ["Otros", 11]],
-  materials: [["Suyo / Suya", 83], ["Sudáfrica", 19], ["Italia", 19], ["Absoluto", 18], ["Blancos", 40]],
-  sizes: [["99 × 80", 9], ["96 × 80", 6], ["95 × 63", 5], ["97,5 × 78", 4], ["90 × 80", 3], ["99 × 84", 3], ["Otras medidas", 118]],
-  months: [
-    ["sep. 25", 19], ["oct. 25", 17], ["nov. 25", 13], ["dic. 25", 10],
-    ["ene. 26", 11], ["feb. 26", 11], ["mar. 26", 11], ["abr. 26", 16],
-    ["may. 26", 13], ["jun. 26", 17], ["jul. 26", 13], ["ago. 26", 9]
-  ]
+const emptySummary = {
+  total: 0,
+  yearOrders: 0,
+  year: null,
+  measured: 0,
+  distinctSizes: 0,
+  repeatShare: 0,
+  models: [],
+  materials: [],
+  sizes: [],
+  months: []
 };
 
 const state = {
   rows: [],
-  summary: previewSummary,
+  summary: emptySummary,
   connected: false,
   tokenClient: null,
   token: null,
@@ -395,13 +393,13 @@ const formatMoney = (value) => `${formatInt.format(Math.round(value))} €`;
 function loadSettings() {
   try {
     return {
-      spreadsheetId: "1kFXDIm3FLXGhGBvCsyMzcawQ0kfsf5fm",
+      spreadsheetId: "",
       sheetName: "Pedidos",
       googleClientId: "",
       ...JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}")
     };
   } catch {
-    return { spreadsheetId: "1kFXDIm3FLXGhGBvCsyMzcawQ0kfsf5fm", sheetName: "Pedidos", googleClientId: "" };
+    return { spreadsheetId: "", sheetName: "Pedidos", googleClientId: "" };
   }
 }
 
@@ -429,7 +427,16 @@ function text(value) {
 
 function parseNumber(value) {
   if (typeof value === "number") return Number.isFinite(value) ? value : null;
-  const normalized = text(value).replace(/\./g, "").replace(",", ".").replace(/[^0-9.-]/g, "");
+  let normalized = text(value).replace(/[^0-9,.-]/g, "");
+  const lastComma = normalized.lastIndexOf(",");
+  const lastDot = normalized.lastIndexOf(".");
+  if (lastComma !== -1 && lastDot !== -1) {
+    const decimal = lastComma > lastDot ? "," : ".";
+    const thousands = decimal === "," ? /\./g : /,/g;
+    normalized = normalized.replace(thousands, "").replace(decimal, ".");
+  } else if (lastComma !== -1) {
+    normalized = normalized.replace(/,/g, ".");
+  }
   const result = Number(normalized);
   return Number.isFinite(result) ? result : null;
 }
@@ -460,22 +467,42 @@ function countBy(values) {
 
 function familyFor(model) {
   const value = normalize(model);
-  if (value.startsWith("tapenucho")) return "Tapenucho";
+  if (value.startsWith("tapa nicho") || value.startsWith("tapenucho")) return "Tapa nicho";
   if (value.startsWith("reforma")) return "Reforma";
   if (value.startsWith("lapida")) return "Lápida";
   return text(model) || "Sin modelo";
 }
 
-function materialFor(material) {
-  const value = normalize(material);
-  if (value === "suyo" || value === "suya") return "Suyo / Suya";
-  if (value.includes("blanco")) return "Blancos";
-  return text(material) || "Sin material";
+function isReform(row) {
+  return familyFor(row.Modelo) === "Reforma";
+}
+
+function rawMaterialFor(row) {
+  return text(row["Material indicado"] || row.Material);
+}
+
+function materialFor(row) {
+  const raw = rawMaterialFor(row);
+  const normalized = text(row["Material normalizado"]);
+  if (normalized) return normalized === "Material aportado" ? "Material aportado · M.S." : normalized;
+  const value = normalize(raw);
+  if (value.includes("blanco")) return "Mármol blanco Macael · M.S.";
+  if (value === "suyo" || value === "suya") {
+    return isReform(row) ? "Piedra existente" : "Material aportado · M.S.";
+  }
+  return raw || "Sin material";
+}
+
+function finishedHeightFor(row) {
+  const explicit = parseNumber(row["Alto neto lápida (cm)"]);
+  if (explicit !== null) return explicit;
+  const total = parseNumber(row["Alto total (cm)"]);
+  return total === null ? null : Math.max(0, total - 4);
 }
 
 function sizeFor(row) {
   const width = parseNumber(row["Ancho total (cm)"]);
-  const height = parseNumber(row["Alto total (cm)"]);
+  const height = finishedHeightFor(row);
   if (width === null || height === null) return null;
   const show = (value) => Number.isInteger(value) ? String(value) : String(value).replace(".", ",");
   return `${show(width)} × ${show(height)}`;
@@ -505,7 +532,7 @@ function makeSummary(rows) {
   const inLatestYear = rowsWithDate.filter((row) => row._date.getFullYear() === latestYear);
   const measured = rows.filter((row) => sizeFor(row));
   const models = countBy(rows.map((row) => familyFor(row.Modelo))).slice(0, 6);
-  const materials = countBy(rows.map((row) => materialFor(row.Material))).slice(0, 6);
+  const materials = countBy(rows.map(materialFor)).slice(0, 6);
   const sizes = countBy(measured.map(sizeFor));
   const monthMap = new Map();
   rowsWithDate.forEach((row) => {
@@ -518,7 +545,7 @@ function makeSummary(rows) {
     const label = new Intl.DateTimeFormat("es-ES", { month: "short", year: "2-digit" }).format(new Date(year, month - 1, 1)).replace(" de ", " ");
     return [label, value];
   });
-  const recurrent = rows.filter((row) => ["Tapenucho", "Reforma"].includes(familyFor(row.Modelo))).length;
+  const recurrent = rows.filter((row) => ["Tapa nicho", "Reforma"].includes(familyFor(row.Modelo))).length;
   return {
     total: rows.length,
     yearOrders: inLatestYear.length,
@@ -555,13 +582,20 @@ function getProductionSummary() {
     measured: measured.length,
     distinctSizes: sizes.length,
     models: countBy(rows.map((row) => familyFor(row.Modelo))).slice(0, 8),
-    materials: countBy(rows.map((row) => materialFor(row.Material))).slice(0, 8),
+    materials: countBy(rows.map(materialFor)).slice(0, 8),
     sizes: sizes.slice(0, 12)
   };
 }
 
 function renderRank(container, values, label) {
   container.replaceChildren();
+  if (!values.length) {
+    const empty = document.createElement("p");
+    empty.className = "empty-state";
+    empty.textContent = "Conecta el libro maestro para ver este análisis.";
+    container.append(empty);
+    return;
+  }
   const max = Math.max(...values.map(([, value]) => value), 1);
   values.forEach(([name, value], index) => {
     const row = document.createElement("div");
@@ -636,27 +670,28 @@ function drawModelsChart(data) {
 
 function renderSummary() {
   const s = state.summary;
-  $("#totalOrders").textContent = formatInt.format(s.total);
-  $("#yearOrders").textContent = formatInt.format(s.yearOrders);
-  $("#yearOrdersFoot").textContent = `Año ${s.year}`;
-  $("#repeatShare").innerHTML = `${s.repeatShare}<span>%</span>`;
-  $("#measuredOrders").textContent = formatInt.format(s.measured);
-  $("#distinctSizes").textContent = formatInt.format(s.distinctSizes);
+  const connected = state.connected;
+  $("#totalOrders").textContent = connected ? formatInt.format(s.total) : "—";
+  $("#yearOrders").textContent = connected ? formatInt.format(s.yearOrders) : "—";
+  $("#yearOrdersFoot").textContent = connected && s.year ? `Año ${s.year}` : "Pendiente de conexión";
+  $("#repeatShare").innerHTML = connected ? `${s.repeatShare}<span>%</span>` : "—";
+  $("#measuredOrders").textContent = connected ? formatInt.format(s.measured) : "—";
+  $("#distinctSizes").textContent = connected ? formatInt.format(s.distinctSizes) : "—";
   const [topSize, topSizeCount] = s.sizes[0] || ["—", 0];
   $("#topSize").textContent = topSize;
-  $("#topSize").nextElementSibling.textContent = `${topSizeCount} pedidos`;
-  $("#orderPeriod").textContent = state.connected ? "Libro maestro conectado" : "Histórico disponible";
-  $("#lastUpdate").textContent = state.connected ? `Actualizado ${new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeStyle: "short" }).format(new Date())}` : "Datos de referencia";
+  $("#topSize").nextElementSibling.textContent = connected ? `${topSizeCount} pedidos` : "Medida terminada";
+  $("#orderPeriod").textContent = connected ? "Libro maestro conectado" : "Sin datos cargados";
+  $("#lastUpdate").textContent = connected ? `Actualizado ${new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeStyle: "short" }).format(new Date())}` : "Acceso requerido";
   drawOrdersChart(s.months);
   drawModelsChart(s.models);
 }
 
 function renderProduction() {
   const s = getProductionSummary();
-  $("#measuredOrders").textContent = formatInt.format(s.measured || 0);
-  $("#distinctSizes").textContent = formatInt.format(s.distinctSizes || 0);
+  $("#measuredOrders").textContent = state.connected ? formatInt.format(s.measured || 0) : "—";
+  $("#distinctSizes").textContent = state.connected ? formatInt.format(s.distinctSizes || 0) : "—";
   const [topSize, topCount] = s.sizes[0] || ["—", 0];
-  $("#topSize").textContent = topSize; $("#topSize").nextElementSibling.textContent = `${topCount} pedidos`;
+  $("#topSize").textContent = state.connected ? topSize : "—"; $("#topSize").nextElementSibling.textContent = state.connected ? `${topCount} pedidos` : "Medida terminada";
   renderRank($("#modelsTable"), s.models || [], "pedidos");
   renderRank($("#materialsTable"), s.materials || [], "pedidos");
   renderRank($("#sizesTable"), s.sizes || [], "pedidos");
@@ -680,7 +715,10 @@ function updateBenefit() {
     procurement: numberAt({ value: $("#assumptionProcurement").value }, "value") || 0,
     extraJobs: numberAt({ value: $("#assumptionExtraJobs").value }, "value") || 0,
     contribution: numberAt({ value: $("#assumptionContribution").value }, "value") || 0,
-    rework: numberAt({ value: $("#assumptionRework").value }, "value") || 0
+    rework: numberAt({ value: $("#assumptionRework").value }, "value") || 0,
+    cncCapacity: numberAt({ value: $("#assumptionCncCapacity").value }, "value") || 0,
+    cncInvestment: numberAt({ value: $("#assumptionCncInvestment").value }, "value") || 0,
+    cncPayback: numberAt({ value: $("#assumptionCncPayback").value }, "value") || 0
   };
   const components = { price: values.orders * values.price, procurement: values.procurement, capacity: values.extraJobs * values.contribution, rework: values.rework };
   const annual = Object.values(components).reduce((total, value) => total + value, 0);
@@ -691,25 +729,27 @@ function updateBenefit() {
     $(`#benefit${name}`).textContent = formatMoney(value);
     $(`#benefit${name}Bar`).style.width = `${Math.max(value ? 7 : 0, (value / max) * 100)}%`;
   });
-  const capacityForCnc = Math.max(0, 200 - values.orders) * values.contribution;
-  const gap = 10000 - capacityForCnc;
+  const capacityForCnc = Math.max(0, values.cncCapacity - values.orders) * values.contribution;
+  const target = values.cncInvestment > 0 && values.cncPayback > 0 ? values.cncInvestment / values.cncPayback : null;
+  const gap = target === null ? null : target - capacityForCnc;
   $("#cncContribution").textContent = formatMoney(values.contribution);
   $("#cncBenefit").textContent = formatMoney(capacityForCnc);
-  $("#cncVerdict").textContent = gap > 0 ? `Faltan ${formatMoney(gap)}` : `Supera el objetivo por ${formatMoney(Math.abs(gap))}`;
+  $("#cncTarget").textContent = target === null ? "A definir" : formatMoney(target);
+  $("#cncVerdict").textContent = gap === null ? "Introduce inversión y plazo" : gap > 0 ? `Faltan ${formatMoney(gap)}` : `Supera el objetivo por ${formatMoney(Math.abs(gap))}`;
   localStorage.setItem(ASSUMPTIONS_KEY, JSON.stringify(values));
 }
 
 function loadAssumptions() {
   try {
     const saved = JSON.parse(localStorage.getItem(ASSUMPTIONS_KEY) || "{}");
-    const lookup = { orders: "assumptionOrders", price: "assumptionPrice", procurement: "assumptionProcurement", extraJobs: "assumptionExtraJobs", contribution: "assumptionContribution", rework: "assumptionRework" };
+    const lookup = { orders: "assumptionOrders", price: "assumptionPrice", procurement: "assumptionProcurement", extraJobs: "assumptionExtraJobs", contribution: "assumptionContribution", rework: "assumptionRework", cncCapacity: "assumptionCncCapacity", cncInvestment: "assumptionCncInvestment", cncPayback: "assumptionCncPayback" };
     Object.entries(lookup).forEach(([key, id]) => { if (Number.isFinite(saved[key])) $(`#${id}`).value = saved[key]; });
   } catch { /* defaults remain visible */ }
   updateBenefit();
 }
 
 function resetAssumptions() {
-  const defaults = { assumptionOrders: 150, assumptionPrice: 15, assumptionProcurement: 500, assumptionExtraJobs: 15, assumptionContribution: 90, assumptionRework: 0 };
+  const defaults = { assumptionOrders: 0, assumptionPrice: 0, assumptionProcurement: 0, assumptionExtraJobs: 0, assumptionContribution: 0, assumptionRework: 0, assumptionCncCapacity: 0, assumptionCncInvestment: 0, assumptionCncPayback: 0 };
   Object.entries(defaults).forEach(([id, value]) => { $(`#${id}`).value = value; });
   localStorage.removeItem(ASSUMPTIONS_KEY); updateBenefit(); showToast("Supuestos restablecidos.");
 }
@@ -719,11 +759,16 @@ function updateConnectionUI() {
   const dataStatus = $("#dataStatus");
   status.classList.toggle("connected", state.connected);
   status.querySelector("b").textContent = state.connected ? "Conectado al libro maestro" : "Sin conectar";
-  status.querySelector("small").textContent = state.connected ? "Los datos se mantienen en memoria solo durante esta sesión." : "Se muestra una vista agregada de referencia.";
-  dataStatus.textContent = state.connected ? "Datos privados recibidos del libro maestro. Actualiza cuando cambies una ficha en Google Sheets." : "Vista de ejemplo basada en los últimos agregados. Conecta el libro maestro para actualizarla.";
+  status.querySelector("small").textContent = state.connected ? "Los datos se mantienen en memoria solo durante esta sesión." : "No hay datos cargados en este navegador.";
+  dataStatus.textContent = state.connected ? "Datos privados recibidos del libro maestro. Actualiza cuando cambies una ficha en Google Sheets." : "El panel está vacío hasta que autorices la conexión al libro maestro.";
 }
 
 async function requestGoogleConnection() {
+  if (!state.settings.spreadsheetId) {
+    switchView("data");
+    showToast("Introduce el ID del libro maestro y guárdalo antes de conectar.");
+    return;
+  }
   if (!state.settings.googleClientId) {
     switchView("data");
     showToast("Introduce primero el Client ID de Google Cloud y guárdalo.");
@@ -747,7 +792,7 @@ async function requestGoogleConnection() {
 
 async function refreshFromSheet() {
   if (!state.token) { requestGoogleConnection(); return; }
-  const range = `${state.settings.sheetName}!A:Q`;
+  const range = `${state.settings.sheetName}!A:AZ`;
   const endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(state.settings.spreadsheetId)}/values/${encodeURIComponent(range)}?majorDimension=ROWS`;
   $("#refreshData").textContent = "Actualizando…";
   try {
@@ -777,7 +822,12 @@ function switchView(view) {
 }
 
 function openMasterSheet() {
-  window.open(MASTER_SHEET_URL, "_blank", "noopener,noreferrer");
+  if (!state.settings.spreadsheetId) {
+    switchView("data");
+    showToast("Guarda primero el ID del libro maestro en este navegador.");
+    return;
+  }
+  window.open(`https://docs.google.com/spreadsheets/d/${encodeURIComponent(state.settings.spreadsheetId)}/edit`, "_blank", "noopener,noreferrer");
 }
 
 function init() {
@@ -792,7 +842,7 @@ function init() {
   $("#connectGoogle").addEventListener("click", requestGoogleConnection);
   $("#refreshData").addEventListener("click", refreshFromSheet);
   $("#yearFilter").addEventListener("change", renderProduction); $("#modelFilter").addEventListener("change", renderProduction);
-  ["#assumptionOrders", "#assumptionPrice", "#assumptionProcurement", "#assumptionExtraJobs", "#assumptionContribution", "#assumptionRework"].forEach((selector) => $(selector).addEventListener("input", updateBenefit));
+  ["#assumptionOrders", "#assumptionPrice", "#assumptionProcurement", "#assumptionExtraJobs", "#assumptionContribution", "#assumptionRework", "#assumptionCncCapacity", "#assumptionCncInvestment", "#assumptionCncPayback"].forEach((selector) => $(selector).addEventListener("input", updateBenefit));
   $("#resetAssumptions").addEventListener("click", resetAssumptions);
   window.addEventListener("resize", () => { if (state.activeView === "summary") renderSummary(); });
 }
