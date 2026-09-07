@@ -468,6 +468,7 @@ function countBy(values) {
 function familyFor(model) {
   const value = normalize(model);
   if (value.startsWith("tapa nicho") || value.startsWith("tapenucho")) return "Tapa nicho";
+  if (value.startsWith("columbario") || value.startsWith("columbetino")) return "Columbario";
   if (value.startsWith("reforma")) return "Reforma";
   if (value.startsWith("lapida")) return "Lápida";
   return text(model) || "Sin modelo";
@@ -503,7 +504,9 @@ function finishedHeightFor(row) {
 function sizeFor(row) {
   const width = parseNumber(row["Ancho total (cm)"]);
   const height = finishedHeightFor(row);
-  if (width === null || height === null) return null;
+  // An empty numeric cell is read as 0 by JavaScript. Zero is not a valid
+  // finished tombstone dimension, so omit incomplete forms from size analysis.
+  if (width === null || height === null || width <= 0 || height <= 0) return null;
   const show = (value) => Number.isInteger(value) ? String(value) : String(value).replace(".", ",");
   return `${show(width)} × ${show(height)}`;
 }
@@ -682,6 +685,10 @@ function renderSummary() {
   $("#topSize").nextElementSibling.textContent = connected ? `${topSizeCount} pedidos` : "Medida terminada";
   $("#orderPeriod").textContent = connected ? "Libro maestro conectado" : "Sin datos cargados";
   $("#lastUpdate").textContent = connected ? `Actualizado ${new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeStyle: "short" }).format(new Date())}` : "Acceso requerido";
+  $("#mainInsightTitle").textContent = connected ? "Datos listos para planificar." : "Conecta antes de analizar.";
+  $("#mainInsightText").textContent = connected
+    ? `${formatInt.format(s.measured)} fichas con medidas completas permiten identificar formatos repetibles, lotes de corte y compras previsibles.`
+    : "Las frecuencias y medidas solo se calculan en el navegador autorizado, a partir del libro maestro privado.";
   drawOrdersChart(s.months);
   drawModelsChart(s.models);
 }
