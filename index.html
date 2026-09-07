@@ -813,8 +813,8 @@ async function refreshFromSheet() {
 
 function switchView(view) {
   state.activeView = view;
-  $(".view").forEach((section) => section.classList.toggle("active", section.id === view));
-  $("[data-view-target]").forEach((button) => button.classList.toggle("active", button.dataset.viewTarget === view));
+  $$(".view").forEach((section) => section.classList.toggle("active", section.id === view));
+  $$("[data-view-target]").forEach((button) => button.classList.toggle("active", button.dataset.viewTarget === view));
   $("#viewTitle").textContent = ({ summary: "Resumen", production: "Producción", profit: "Rentabilidad", data: "Datos y conexión" })[view];
   $(".sidebar").classList.remove("open");
   if (view === "summary") requestAnimationFrame(renderSummary);
@@ -835,7 +835,7 @@ function init() {
   $("#sheetName").value = state.settings.sheetName;
   $("#googleClientId").value = state.settings.googleClientId;
   updateConnectionUI(); setupFilters(); renderSummary(); renderProduction(); loadAssumptions();
-  $("[data-view-target]").forEach((button) => button.addEventListener("click", () => switchView(button.dataset.viewTarget)));
+  $$("[data-view-target]").forEach((button) => button.addEventListener("click", () => switchView(button.dataset.viewTarget)));
   $("#mobileMenu").addEventListener("click", () => $(".sidebar").classList.toggle("open"));
   $("#openSheet").addEventListener("click", openMasterSheet); $("#openSheetSide").addEventListener("click", openMasterSheet);
   $("#saveSettings").addEventListener("click", saveSettings);
