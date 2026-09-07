@@ -495,15 +495,44 @@ function materialFor(row) {
   return raw || "Sin material";
 }
 
+function numberFromFields(row, preferredFields, matchesHeader) {
+  const fields = [...preferredFields, ...Object.keys(row).filter(matchesHeader)];
+  for (const field of new Set(fields)) {
+    const raw = row[field];
+    if (!text(raw)) continue;
+    const value = parseNumber(raw);
+    if (value !== null) return value;
+  }
+  return null;
+}
+
+function isSlabMeasureHeader(header, measure) {
+  const value = normalize(header);
+  if (!value.includes(measure)) return false;
+  return !["escalon", "base", "remate", "rebaje", "interior", "hueco", "croquis"].some((term) => value.includes(term));
+}
+
 function finishedHeightFor(row) {
-  const explicit = parseNumber(row["Alto neto lápida (cm)"]);
+  const explicit = numberFromFields(
+    row,
+    ["Alto neto lápida (cm)", "Alto neto (cm)", "Alto final (cm)", "Alto real (cm)"],
+    (header) => isSlabMeasureHeader(header, "alto") && ["neto", "final", "real"].some((term) => normalize(header).includes(term))
+  );
   if (explicit !== null) return explicit;
-  const total = parseNumber(row["Alto total (cm)"]);
+  const total = numberFromFields(
+    row,
+    ["Alto escrito (cm)", "Alto total (cm)", "Alto lápida (cm)", "Alto lapida (cm)", "Alto (cm)"],
+    (header) => isSlabMeasureHeader(header, "alto") && !["neto", "final", "real"].some((term) => normalize(header).includes(term))
+  );
   return total === null ? null : Math.max(0, total - 4);
 }
 
 function sizeFor(row) {
-  const width = parseNumber(row["Ancho total (cm)"]);
+  const width = numberFromFields(
+    row,
+    ["Ancho total (cm)", "Ancho lápida (cm)", "Ancho lapida (cm)", "Ancho (cm)"],
+    (header) => isSlabMeasureHeader(header, "ancho")
+  );
   const height = finishedHeightFor(row);
   // An empty numeric cell is read as 0 by JavaScript. Zero is not a valid
   // finished tombstone dimension, so omit incomplete forms from size analysis.
