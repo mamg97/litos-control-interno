@@ -71,24 +71,25 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
 .page-lead { max-width: 720px; margin-bottom: 0; color: var(--ink-soft); font-size: .94rem; }
 .heading-date { align-self: center; color: var(--ink-soft); font-family: "DM Mono", monospace; font-size: .72rem; white-space: nowrap; }
 
-.button { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; min-height: 38px; padding: .52rem .83rem; border: 1px solid transparent; border-radius: 9px; font-size: .8rem; font-weight: 700; transition: transform .2s, box-shadow .2s, background .2s; }
+.button { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; min-height: 38px; padding: .52rem .83rem; border: 1px solid transparent; border-radius: 9px; font-size: .8rem; font-weight: 700; text-decoration: none; transition: transform .2s, box-shadow .2s, background .2s; }
 .button:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(22,58,60,.12); }
 .button.primary { border-color: var(--deep); background: var(--deep); color: white; }
 .button.secondary { border-color: #cbdcda; background: white; color: #264d50; }
 .button.tertiary { padding-left: 0; border-color: transparent; background: transparent; color: var(--teal); }
 .button.tertiary span { font-size: 1rem; }
 
-.kpi-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1rem; margin-bottom: 1rem; }
-.kpi-card { min-height: 156px; padding: 1.16rem 1.22rem 1rem; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); box-shadow: 0 2px 4px rgba(24,58,59,.015); overflow: hidden; position: relative; }
+.kpi-grid { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 1rem; margin-bottom: 1rem; }
+.kpi-card { min-height: 144px; padding: 1.16rem 1.22rem 1rem; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); box-shadow: 0 2px 4px rgba(24,58,59,.015); overflow: hidden; position: relative; }
 .kpi-card::after { position: absolute; right: 0; bottom: 0; left: 0; height: 4px; content: ""; background: var(--teal); }
 .kpi-card.accent-amber::after { background: var(--amber); }.kpi-card.accent-green::after { background: var(--green); }.kpi-card.accent-lilac::after { background: var(--lilac); }
 .kpi-label { color: var(--ink-soft); font-size: .76rem; font-weight: 700; letter-spacing: .025em; text-transform: uppercase; }
 .kpi-value { margin-top: .7rem; color: var(--deep); font-family: "DM Mono", monospace; font-size: 2rem; font-weight: 500; letter-spacing: -.08em; }.kpi-value span { margin-left: .2rem; font-size: 1rem; letter-spacing: -.04em; }
 .kpi-foot { margin-top: .3rem; color: var(--ink-soft); font-size: .72rem; }
 
-.dashboard-grid { display: grid; gap: 1rem; margin-bottom: 1rem; }.overview-grid { grid-template-columns: minmax(0, 1.75fr) minmax(260px, .75fr); }.bottom-grid { grid-template-columns: minmax(0, 1fr); }
+.dashboard-grid { display: grid; gap: 1rem; margin-bottom: 1rem; }.overview-grid { grid-template-columns: minmax(0, 1fr); }.bottom-grid { grid-template-columns: minmax(0, 1fr); }
 .panel { border: 1px solid var(--line); border-radius: 14px; background: var(--panel); box-shadow: 0 2px 4px rgba(24,58,59,.015); }
-.chart-panel { padding: 1.35rem; }.panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }.panel-head h2 { margin-bottom: 0; }.chart-note { color: var(--ink-soft); font-size: .7rem; white-space: nowrap; }.canvas-wrap { height: 254px; margin-top: 1.1rem; position: relative; }.canvas-wrap.small { height: 222px; }.canvas-wrap canvas { width: 100%; height: 100%; }
+.chart-panel { padding: 1.35rem; }.panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }.panel-head h2 { margin-bottom: 0; }.chart-note { color: var(--ink-soft); font-size: .7rem; white-space: nowrap; }.canvas-wrap { height: 276px; margin-top: 1.1rem; position: relative; }.canvas-wrap.small { height: 222px; }.canvas-wrap canvas { width: 100%; height: 100%; }
+.summary-chart-controls { display: flex; flex-wrap: wrap; align-items: end; justify-content: flex-end; gap: .55rem; }.summary-chart-controls label { display: grid; gap: .27rem; color: var(--ink-soft); font-size: .66rem; font-weight: 800; }.summary-chart-controls select { min-height: 34px; padding: .35rem .5rem; border: 1px solid #cfe0de; border-radius: 7px; background: white; color: var(--ink); font-size: .76rem; outline-color: var(--teal); }.summary-chart-controls .chart-note { align-self: end; padding: .48rem 0; }.summary-chart-controls.compact-controls { flex-wrap: nowrap; }.metric-strip { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1px; margin-top: .95rem; overflow: hidden; border: 1px solid #e1ecea; border-radius: 9px; background: #e1ecea; }.metric-strip > div { min-width: 0; padding: .46rem .3rem; background: #f7fbfa; text-align: center; }.metric-strip span, .metric-strip strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.metric-strip span { color: var(--ink-soft); font-family: "DM Mono", monospace; font-size: .61rem; text-transform: uppercase; }.metric-strip strong { margin-top: .12rem; color: var(--deep); font-family: "DM Mono", monospace; font-size: .66rem; font-weight: 500; }
 .insight-panel { display: flex; min-height: 318px; flex-direction: column; justify-content: center; padding: 2rem; background: linear-gradient(160deg, var(--deep), #164c50); color: #e9f7f5; }.insight-panel .eyebrow { color: #91d4ce; }.insight-panel h2 { max-width: 260px; color: white; font-size: 1.45rem; }.insight-panel p:not(.eyebrow) { max-width: 300px; color: #b9d5d2; font-size: .88rem; }.insight-panel .button { margin-top: .75rem; align-self: flex-start; color: #a8e4df; }
 .action-panel { padding: 1.7rem; background: #fffdf8; }.action-panel h2 { max-width: 330px; font-size: 1.3rem; }.action-panel ul { display: grid; gap: .55rem; margin: 1.1rem 0 1.2rem; padding: 0; list-style: none; }.action-panel li { display: flex; gap: .65rem; align-items: center; color: #4b6466; font-size: .8rem; }.action-panel li span { display: inline-grid; width: 1.35rem; height: 1.35rem; place-items: center; border-radius: 6px; background: var(--amber-light); color: var(--amber); font-family: "DM Mono", monospace; font-size: .62rem; }
 
@@ -97,7 +98,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
 .production-grid { grid-template-columns: 1fr 1fr; }.wide-table { grid-column: 1 / -1; }.table-panel { padding: 1.25rem; }.rank-table { display: grid; gap: .22rem; margin-top: 1rem; }.rank-row { display: grid; grid-template-columns: 1.75rem minmax(0,1fr) 2.3rem; align-items: center; gap: .6rem; padding: .47rem 0; border-bottom: 1px solid #edf2f1; }.rank-row:last-child { border-bottom: 0; }.rank-index { color: #88a19e; font-family: "DM Mono", monospace; font-size: .68rem; }.rank-label { overflow: hidden; color: #345457; font-size: .81rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }.rank-value { color: var(--deep); font-family: "DM Mono", monospace; font-size: .76rem; text-align: right; }.rank-bar { grid-column: 2 / -1; height: 3px; margin-top: -.2rem; border-radius: 99px; background: #e9f0ef; overflow: hidden; }.rank-bar > i { display: block; height: 100%; border-radius: inherit; background: var(--teal); }.size-column-head { display: grid; grid-template-columns: 1.75rem minmax(0,1fr) minmax(88px,.7fr) 4.6rem; gap: .6rem; margin-top: 1rem; padding: 0 0 .45rem; border-bottom: 1px solid var(--line); color: var(--ink-soft); font-family: "DM Mono", monospace; font-size: .62rem; letter-spacing: .06em; text-transform: uppercase; }.size-column-head span:nth-child(3), .size-column-head span:last-child { text-align: right; }.sizes { margin-top: .2rem; }.sizes .size-rank-row { grid-template-columns: 1.75rem minmax(0,1fr) minmax(88px,.7fr) 4.6rem; }.rank-net { color: var(--teal); font-family: "DM Mono", monospace; font-size: .73rem; text-align: right; white-space: nowrap; }.sizes .size-rank-row .rank-bar { grid-column: 2 / -1; }
 .measure-scope { margin: 1rem 0 0; padding: .8rem .9rem; border-left: 3px solid #8bc5bf; border-radius: 0 8px 8px 0; background: #f4faf8; color: var(--ink-soft); font-size: .73rem; line-height: 1.55; }.measure-scope strong { color: var(--ink); }
 
-.profit-layout { display: grid; grid-template-columns: minmax(300px,.92fr) minmax(390px,1.08fr); gap: 1rem; }.assumptions-panel, .profit-result { padding: 1.45rem; }.assumptions-form { display: grid; grid-template-columns: 1fr 1fr; gap: .85rem; margin-top: 1.2rem; }.form-note { margin: 1rem 0 0; color: var(--ink-soft); font-size: .71rem; line-height: 1.55; }.profit-result { color: white; background: linear-gradient(145deg, #11373b, #155a58); }.profit-result .eyebrow { color: #92cec8; }.result-number { margin-top: .8rem; color: white; font-family: "DM Mono", monospace; font-size: clamp(2.4rem,5vw,3.8rem); letter-spacing: -.1em; }.result-label { max-width: 310px; margin: 0 0 1.3rem; color: #b4d0cd; font-size: .78rem; }.profit-bars { display: grid; gap: .7rem; }.profit-bars > div { display: grid; grid-template-columns: 1fr auto; column-gap: 1rem; color: #d8eae8; font-size: .75rem; }.profit-bars strong { color: white; font-family: "DM Mono", monospace; font-size: .78rem; font-weight: 500; }.profit-bars i { grid-column: 1 / -1; height: 5px; margin-top: .3rem; border-radius: 99px; background: rgba(255,255,255,.16); overflow: hidden; }.profit-bars b { display: block; height: 100%; border-radius: inherit; background: #9bd8d2; }.ten-year { display: grid; grid-template-columns: 1fr auto; gap: .2rem 1rem; margin-top: 1.35rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,.22); color: #b8d1ce; font-size: .75rem; }.ten-year strong { color: white; font-family: "DM Mono", monospace; font-size: 1.05rem; }.ten-year small { grid-column: 1 / -1; color: #8eb8b4; }
+.forecast-panel { margin-bottom: 1rem; padding: 1.35rem; }.forecast-canvas-wrap { height: 300px; }.forecast-scope { display: flex; align-items: baseline; gap: .35rem; margin: .95rem 0 0; padding: .78rem .9rem; border-left: 3px solid #bd7e27; border-radius: 0 8px 8px 0; background: #fffaf0; color: #6e6451; font-size: .73rem; line-height: 1.55; }.forecast-scope > span { flex: 0 0 20px; height: 2px; border-top: 2px dashed #bd7e27; }.forecast-scope strong { color: var(--ink); }.profit-layout { display: grid; grid-template-columns: minmax(300px,.92fr) minmax(390px,1.08fr); gap: 1rem; }.assumptions-panel, .profit-result { padding: 1.45rem; }.assumptions-form { display: grid; grid-template-columns: 1fr 1fr; gap: .85rem; margin-top: 1.2rem; }.form-note { margin: 1rem 0 0; color: var(--ink-soft); font-size: .71rem; line-height: 1.55; }.profit-result { color: white; background: linear-gradient(145deg, #11373b, #155a58); }.profit-result .eyebrow { color: #92cec8; }.result-number { margin-top: .8rem; color: white; font-family: "DM Mono", monospace; font-size: clamp(2.4rem,5vw,3.8rem); letter-spacing: -.1em; }.result-label { max-width: 310px; margin: 0 0 1.3rem; color: #b4d0cd; font-size: .78rem; }.profit-bars { display: grid; gap: .7rem; }.profit-bars > div { display: grid; grid-template-columns: 1fr auto; column-gap: 1rem; color: #d8eae8; font-size: .75rem; }.profit-bars strong { color: white; font-family: "DM Mono", monospace; font-size: .78rem; font-weight: 500; }.profit-bars i { grid-column: 1 / -1; height: 5px; margin-top: .3rem; border-radius: 99px; background: rgba(255,255,255,.16); overflow: hidden; }.profit-bars b { display: block; height: 100%; border-radius: inherit; background: #9bd8d2; }.ten-year { display: grid; grid-template-columns: 1fr auto; gap: .2rem 1rem; margin-top: 1.35rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,.22); color: #b8d1ce; font-size: .75rem; }.ten-year strong { color: white; font-family: "DM Mono", monospace; font-size: 1.05rem; }.ten-year small { grid-column: 1 / -1; color: #8eb8b4; }.strategy-details { margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--line); }.strategy-section-heading { margin-bottom: 1rem; }.strategy-section-heading h2 { font-size: 1.55rem; }.strategy-section-heading .page-lead { max-width: 800px; font-size: .86rem; }
 .cnc-panel { display: grid; grid-template-columns: 1fr 1.15fr; gap: 2.5rem; margin-top: 1rem; padding: 1.55rem; background: #fffaf0; border-color: #f2d9ab; }.cnc-panel p:not(.eyebrow) { margin-bottom: 0; color: #70634d; font-size: .85rem; }.cnc-math { display: grid; grid-template-columns: repeat(3,1fr); gap: .65rem; align-items: stretch; }.cnc-math > div { display: flex; flex-direction: column; justify-content: center; padding: .8rem; border: 1px solid #eedbb7; border-radius: 10px; background: rgba(255,255,255,.56); }.cnc-math span { color: #806d4f; font-size: .7rem; }.cnc-math strong { margin: .2rem 0; color: #6e4d19; font-family: "DM Mono", monospace; font-size: 1.2rem; letter-spacing: -.06em; }.cnc-math small { color: #8d8067; font-size: .64rem; }.cnc-math .verdict { border-color: #dcbf8b; background: #fff4dd; }.cnc-math .verdict span { color: #aa6a17; font-weight: 800; }
 
 .strategy-grid { display: grid; grid-template-columns: minmax(360px,1.15fr) minmax(310px,.85fr); gap: 1rem; margin-bottom: 1rem; }.strategy-intro, .strategy-inputs { padding: 1.55rem; }.strategy-intro { background: linear-gradient(145deg, #eff9f7, #fbfcf8); }.strategy-intro h2 { max-width: 540px; margin-bottom: .65rem; font-size: 1.55rem; }.strategy-intro > p:not(.eyebrow) { max-width: 650px; margin: 0; color: var(--ink-soft); font-size: .85rem; line-height: 1.65; }.strategy-roadmap { display: grid; grid-template-columns: repeat(3,1fr); gap: .85rem; margin-top: 1.35rem; }.strategy-roadmap div { display: grid; grid-template-columns: 1.55rem 1fr; gap: .5rem; align-items: start; }.strategy-roadmap span { display: grid; width: 1.55rem; height: 1.55rem; place-items: center; border-radius: 6px; background: #ccebe7; color: var(--teal); font-family: "DM Mono", monospace; font-size: .65rem; }.strategy-roadmap p { margin: 0; color: var(--ink-soft); font-size: .73rem; line-height: 1.5; }.strategy-roadmap strong { color: var(--ink); }.strategy-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-bottom: 1rem; }.strategy-card { min-height: 185px; padding: 1.35rem; }.strategy-card h2 { margin-bottom: .5rem; font-size: 1rem; }.strategy-card p:not(.eyebrow) { margin: 0; color: var(--ink-soft); font-size: .78rem; line-height: 1.58; }.strategy-decision-grid { grid-template-columns: minmax(340px,.75fr) minmax(430px,1.25fr); }.strategy-decision-grid .cnc-panel { margin-top: 0; }.strategy-inputs .assumptions-form { grid-template-columns: 1fr; margin-top: 1rem; }.strategy-inputs .form-note { margin-top: .85rem; }
@@ -112,9 +113,9 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
 
 .toast { position: fixed; z-index: 20; right: 1rem; bottom: 1rem; max-width: 360px; padding: .8rem 1rem; border-radius: 10px; background: var(--deep); box-shadow: var(--shadow); color: white; font-size: .8rem; opacity: 0; pointer-events: none; transform: translateY(8px); transition: opacity .2s, transform .2s; }.toast.visible { opacity: 1; transform: translateY(0); }
 
-@media (max-width: 1120px) { .kpi-grid { grid-template-columns: repeat(2,1fr); }.overview-grid, .bottom-grid, .profit-layout, .data-layout, .cnc-panel, .strategy-grid, .strategy-decision-grid, .finance-layout, .finance-register-note, .sources-guides { grid-template-columns: 1fr; }.finance-kpis { grid-template-columns: repeat(2,1fr); }.insight-panel { min-height: 230px; }.cnc-math { min-height: 155px; }.production-grid { grid-template-columns: 1fr; }.wide-table { grid-column: auto; } }
+@media (max-width: 1120px) { .kpi-grid { grid-template-columns: repeat(3,1fr); }.overview-grid, .bottom-grid, .profit-layout, .data-layout, .cnc-panel, .strategy-grid, .strategy-decision-grid, .finance-layout, .finance-register-note, .sources-guides { grid-template-columns: 1fr; }.finance-kpis { grid-template-columns: repeat(2,1fr); }.insight-panel { min-height: 230px; }.cnc-math { min-height: 155px; }.production-grid { grid-template-columns: 1fr; }.wide-table { grid-column: auto; } }
 @media (max-width: 1360px) { .sources-table-wrap { overflow: visible; }.sources-table { min-width: 0; }.sources-table thead { display: none; }.sources-table, .sources-table tbody { display: block; width: 100%; }.sources-table tbody { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .8rem; }.sources-table tr { display: grid; gap: .38rem; padding: .95rem; border: 1px solid var(--line); border-radius: 10px; background: #fbfcfc; }.sources-table td { display: block; padding: .13rem 0; border: 0; font-size: .72rem; }.sources-table td::before { display: block; margin-bottom: .12rem; color: var(--ink-soft); font-family: "DM Mono", monospace; font-size: .58rem; letter-spacing: .06em; text-transform: uppercase; }.sources-table td:nth-child(1)::before { content: "Dato"; }.sources-table td:nth-child(2)::before { content: "Origen"; }.sources-table td:nth-child(3)::before { content: "Destino"; }.sources-table td:nth-child(4)::before { content: "Regla"; }.sources-table td:nth-child(5)::before { content: "Automatización"; } }
-@media (max-width: 760px) { .app-shell { display: block; }.sidebar { position: fixed; z-index: 14; left: -270px; width: 254px; transition: left .2s; }.sidebar.open { left: 0; box-shadow: 25px 0 50px rgba(0,0,0,.25); }.topbar { height: 64px; padding: 0 1rem; }.mobile-menu { display: inline-grid; width: 33px; height: 33px; place-items: center; border: 0; border-radius: 7px; background: #e6efee; color: var(--deep); }.breadcrumb { flex: 1; margin-left: .4rem; }.private-badge { display: none; }.view { padding: 1.75rem 1rem 3rem; }.page-heading { display: grid; gap: 1rem; }.heading-date { align-self: start; }.kpi-grid, .production-metrics, .privacy-rules, .assumptions-form, .strategy-cards, .strategy-roadmap, .finance-kpis, .finance-form, .sources-table tbody { grid-template-columns: 1fr; }.kpi-card { min-height: 132px; }.filter-row { width: 100%; }.filter-row label { flex: 1; min-width: 125px; }.canvas-wrap { height: 220px; }.cnc-math { grid-template-columns: 1fr; }.topbar-actions .button { padding: .45rem .6rem; font-size: .72rem; }.connection-status { grid-template-columns: .55rem 1fr; }.connection-status small { grid-column: 2; }.privacy-rules { gap: .8rem; }.finance-sankey { min-height: 430px; }.finance-register-note .eyebrow { grid-column: auto; } }
+@media (max-width: 760px) { .app-shell { display: block; }.sidebar { position: fixed; z-index: 14; left: -270px; width: 254px; transition: left .2s; }.sidebar.open { left: 0; box-shadow: 25px 0 50px rgba(0,0,0,.25); }.topbar { height: 64px; padding: 0 1rem; }.mobile-menu { display: inline-grid; width: 33px; height: 33px; place-items: center; border: 0; border-radius: 7px; background: #e6efee; color: var(--deep); }.breadcrumb { flex: 1; margin-left: .4rem; }.private-badge { display: none; }.view { padding: 1.75rem 1rem 3rem; }.page-heading { display: grid; gap: 1rem; }.heading-date { align-self: start; }.kpi-grid, .production-metrics, .privacy-rules, .assumptions-form, .strategy-cards, .strategy-roadmap, .finance-kpis, .finance-form, .sources-table tbody { grid-template-columns: 1fr; }.kpi-card { min-height: 132px; }.filter-row { width: 100%; }.filter-row label { flex: 1; min-width: 125px; }.canvas-wrap, .forecast-canvas-wrap { height: 220px; }.summary-chart-controls { justify-content: flex-start; width: 100%; }.summary-chart-controls.compact-controls { flex-wrap: wrap; }.summary-chart-controls .chart-note { width: 100%; padding-bottom: 0; white-space: normal; }.metric-strip { grid-template-columns: repeat(4, minmax(0,1fr)); }.metric-strip > div { padding: .55rem .35rem; }.cnc-math { grid-template-columns: 1fr; }.topbar-actions .button { padding: .45rem .6rem; font-size: .72rem; }.connection-status { grid-template-columns: .55rem 1fr; }.connection-status small { grid-column: 2; }.privacy-rules { gap: .8rem; }.finance-sankey { min-height: 430px; }.finance-register-note .eyebrow { grid-column: auto; }.forecast-scope { align-items: flex-start; } }
 
 </style>
   </head>
@@ -136,14 +137,8 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
           <button class="nav-link" type="button" data-view-target="production">
             <span class="nav-icon">◌</span> Producción
           </button>
-          <button class="nav-link" type="button" data-view-target="profit">
-            <span class="nav-icon">↗</span> Estimaciones
-          </button>
           <button class="nav-link" type="button" data-view-target="finance">
             <span class="nav-icon">≈</span> Ingresos y gastos
-          </button>
-          <button class="nav-link" type="button" data-view-target="sources">
-            <span class="nav-icon">⌁</span> Fuentes
           </button>
           <button class="nav-link" type="button" data-view-target="strategy">
             <span class="nav-icon">◇</span> Estrategia
@@ -196,24 +191,33 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
               <div class="kpi-value" id="repeatShare">—</div>
               <div class="kpi-foot">Tapa nicho + Reforma</div>
             </article>
+            <article class="kpi-card accent-blue">
+              <div class="kpi-label">Ingresos del año</div>
+              <div class="kpi-value" id="summaryRevenue">—</div>
+              <div class="kpi-foot" id="summaryRevenueFoot">Estimación operativa</div>
+            </article>
+            <article class="kpi-card accent-lilac">
+              <div class="kpi-label">Gastos del año</div>
+              <div class="kpi-value" id="summaryCosts">—</div>
+              <div class="kpi-foot" id="summaryCostsFoot">Pendiente de facturas</div>
+            </article>
           </div>
 
           <div class="dashboard-grid overview-grid">
-            <article class="panel chart-panel wide">
+            <article class="panel chart-panel">
               <div class="panel-head">
                 <div>
                   <p class="eyebrow">RITMO DE ENTRADA</p>
-                  <h2>Pedidos por mes</h2>
+                  <h2>Actividad mensual</h2>
                 </div>
-                <span class="chart-note">Últimos 12 meses disponibles</span>
+                <div class="summary-chart-controls">
+                  <label>Año <select id="summaryYear" aria-label="Año del gráfico de pedidos"><option value="">Cargando años…</option></select></label>
+                  <label>Indicador <select id="summaryMetric" aria-label="Indicador del gráfico mensual"><option value="orders">Pedidos</option><option value="revenue">Ingresos</option><option value="costs">Gastos</option></select></label>
+                  <span class="chart-note" id="summaryChartNote">Selecciona un año</span>
+                </div>
               </div>
               <div class="canvas-wrap"><canvas id="ordersChart" aria-label="Gráfico de pedidos por mes" role="img"></canvas></div>
-            </article>
-            <article class="panel insight-panel">
-              <p class="eyebrow">LECTURA RÁPIDA</p>
-              <h2 id="mainInsightTitle">Preparando el análisis.</h2>
-              <p id="mainInsightText">El panel carga automáticamente los datos operativos autorizados, sin pedir inicio de sesión.</p>
-              <button class="button tertiary" type="button" data-view-target="production">Ver producción <span>→</span></button>
+              <div id="summaryMetricTable" class="metric-strip" aria-label="Detalle mensual del indicador seleccionado"></div>
             </article>
           </div>
 
@@ -264,15 +268,27 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
           </div>
         </section>
 
-        <section id="profit" class="view" aria-labelledby="profitHeading">
+        <section id="strategy" class="view" aria-labelledby="strategyHeading">
           <div class="page-heading compact">
             <div>
-              <p class="eyebrow">ESTIMACIONES</p>
-              <h1 id="profitHeading">Cuantificar el impacto económico.</h1>
-              <p class="page-lead">Una estimación editable del beneficio operativo incremental. No sustituye los costes, tiempos y márgenes que deben registrarse en el libro maestro.</p>
+              <p class="eyebrow">ESTRATEGIA Y ESTIMACIONES</p>
+              <h1 id="strategyHeading">Decidir con capacidad, margen y previsión.</h1>
+              <p class="page-lead">Aquí se reúnen los escenarios, la previsión hasta cierre de año y las decisiones de proceso. Las estimaciones no sustituyen los costes y márgenes que deben registrarse en el libro maestro.</p>
             </div>
             <button id="resetAssumptions" class="button secondary" type="button">Restablecer supuestos</button>
           </div>
+
+          <article id="strategyEstimates" class="panel forecast-panel">
+            <div class="panel-head">
+              <div><p class="eyebrow">PREVISIÓN DE INGRESOS</p><h2>Del histórico al cierre de año</h2></div>
+              <div class="summary-chart-controls compact-controls">
+                <label>Año <select id="forecastYear" aria-label="Año de la previsión de ingresos"><option value="">Cargando años…</option></select></label>
+                <span class="chart-note" id="forecastChartNote">Pendiente de datos</span>
+              </div>
+            </div>
+            <div class="canvas-wrap forecast-canvas-wrap"><canvas id="forecastChart" aria-label="Gráfico de ingresos reales y previsión hasta cierre de año" role="img"></canvas></div>
+            <p class="forecast-scope"><span></span><strong>Real:</strong> ingresos estimados a partir de los pedidos registrados y el precio medio configurado. <strong>Previsión punteada:</strong> media mensual de los meses con datos del año seleccionado, prolongada hasta diciembre.</p>
+          </article>
 
           <div class="profit-layout">
             <article class="panel assumptions-panel">
@@ -302,13 +318,11 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
             </article>
           </div>
 
-        </section>
-
-        <section id="strategy" class="view" aria-labelledby="strategyHeading">
-          <div class="page-heading compact">
+          <div class="strategy-details">
+          <div class="strategy-section-heading">
             <div>
-              <p class="eyebrow">FUTURIBLES</p>
-              <h1 id="strategyHeading">Decisiones y estrategia por validar.</h1>
+              <p class="eyebrow">DECISIONES POR VALIDAR</p>
+              <h2>Decisiones y estrategia de producción.</h2>
               <p class="page-lead">Este es el espacio único para hipótesis, pilotos e inversiones futuras. No se confunden con el control operativo ni con los resultados ya conseguidos.</p>
             </div>
           </div>
@@ -333,7 +347,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
                 <li><span>02</span> Pilotar compras por lote y semielaborados.</li>
                 <li><span>03</span> Probar automatización sobre retales.</li>
               </ul>
-              <button class="button primary" type="button" data-view-target="profit">Contrastar estimaciones</button>
+              <a class="button primary" href="#strategyEstimates">Ver estimaciones <span>↓</span></a>
             </article>
           </div>
 
@@ -378,6 +392,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
                 <div class="verdict"><span id="cncVerdict">Introduce supuestos</span><small>incluye mantenimiento, financiación y riesgo</small></div>
               </div>
             </article>
+          </div>
           </div>
         </section>
 
@@ -449,12 +464,12 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
           </article>
         </section>
 
-        <section id="sources" class="view" aria-labelledby="sourcesHeading">
+        <section id="data" class="view" aria-labelledby="dataHeading">
           <div class="page-heading compact">
             <div>
-              <p class="eyebrow">TRAZABILIDAD FINANCIERA</p>
-              <h1 id="sourcesHeading">Cada cifra tiene una fuente.</h1>
-              <p class="page-lead">Este mapa define de dónde debe llegar cada dato antes de entrar en el libro maestro. Los datos personales, los buzones y la identificación exacta de los suministros no se publican.</p>
+              <p class="eyebrow">DATOS Y CONEXIÓN</p>
+              <h1 id="dataHeading">Datos reales, fuentes y trazabilidad.</h1>
+              <p class="page-lead">El libro maestro permanece privado. Este apartado reúne la consulta operativa, las fuentes de cada cifra y el histórico publicado de trabajos.</p>
             </div>
           </div>
 
@@ -492,16 +507,8 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
               </ol>
             </article>
           </div>
-        </section>
 
-        <section id="data" class="view" aria-labelledby="dataHeading">
-          <div class="page-heading compact">
-            <div>
-              <p class="eyebrow">DATOS OPERATIVOS</p>
-              <h1 id="dataHeading">Datos reales. Consulta sin acceso.</h1>
-              <p class="page-lead">El libro maestro permanece privado y se edita desde Drive. Este panel se consulta sin iniciar sesión y se actualiza automáticamente.</p>
-            </div>
-          </div>
+          <div class="data-section-content">
 
           <div class="data-layout">
             <article class="panel connection-panel">
@@ -541,6 +548,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
               <div><span>03</span><p><strong>Los cambios se hacen en el libro maestro.</strong> El panel se sincroniza cada minuto o al pulsar «Actualizar datos».</p></div>
             </div>
           </article>
+          </div>
         </section>
       </main>
     </div>
@@ -848,6 +856,37 @@ function makeSummary(rows) {
   };
 }
 
+function rowsForYear(year) {
+  if (!year) return [];
+  return state.rows.filter((row) => parseDate(row["Fecha ficha"])?.getFullYear() === Number(year));
+}
+
+function monthlyOrdersForYear(rows, year) {
+  const counts = Array.from({ length: 12 }, () => 0);
+  rows.forEach((row) => {
+    const date = parseDate(row["Fecha ficha"]);
+    if (date?.getFullYear() === Number(year)) counts[date.getMonth()] += 1;
+  });
+  return counts.map((value, month) => [
+    new Intl.DateTimeFormat("es-ES", { month: "short" }).format(new Date(Number(year), month, 1)).replace(".", ""),
+    value
+  ]);
+}
+
+function selectedSummaryYear() {
+  const selected = Number($("#summaryYear")?.value);
+  return Number.isFinite(selected) && selected > 0 ? selected : state.summary.year;
+}
+
+function selectedSummaryMetric() {
+  return $("#summaryMetric")?.value || "orders";
+}
+
+function selectedForecastYear() {
+  const selected = Number($("#forecastYear")?.value);
+  return Number.isFinite(selected) && selected > 0 ? selected : state.summary.year;
+}
+
 function getFilteredRows() {
   if (!state.rows.length) return [];
   const year = $("#yearFilter").value;
@@ -930,17 +969,27 @@ function setupCanvas(canvas) {
   return { ctx, width: rect.width, height: rect.height };
 }
 
-function drawOrdersChart(data) {
+function chartValue(value, metric) {
+  if (metric === "orders") return formatInt.format(value);
+  const amount = Math.round(value);
+  if (Math.abs(amount) >= 1000) {
+    return `${new Intl.NumberFormat("es-ES", { maximumFractionDigits: 1 }).format(amount / 1000)}k`;
+  }
+  return `${formatInt.format(amount)} €`;
+}
+
+function drawOrdersChart(data, metric = "orders") {
   const canvas = $("#ordersChart");
   const { ctx, width, height } = setupCanvas(canvas);
-  const left = 38, right = 12, top = 18, bottom = 33;
+  const left = metric === "orders" ? 38 : 58, right = 12, top = 28, bottom = 33;
   const max = Math.max(...data.map(([, value]) => value), 1);
   ctx.clearRect(0, 0, width, height);
   ctx.font = "11px Manrope"; ctx.fillStyle = "#799194"; ctx.strokeStyle = "#e4edeb"; ctx.lineWidth = 1;
   [0, .5, 1].forEach((ratio) => {
     const y = top + (height - top - bottom) * ratio;
     ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(width - right, y); ctx.stroke();
-    ctx.fillText(String(Math.round(max * (1 - ratio))), 2, y + 4);
+    const scaleValue = max * (1 - ratio);
+    ctx.fillText(metric === "orders" ? formatInt.format(Math.round(scaleValue)) : formatMoney(scaleValue), 2, y + 4);
   });
   if (!data.length) return;
   const step = (width - left - right) / Math.max(1, data.length - 1);
@@ -957,9 +1006,126 @@ function drawOrdersChart(data) {
   data.forEach(([label, value], index) => {
     const x = left + index * step; const y = top + (height - top - bottom) * (1 - value / max);
     ctx.fillStyle = "#10726e"; ctx.beginPath(); ctx.arc(x, y, 3.1, 0, Math.PI * 2); ctx.fill();
-    if (index % 2 === 0 || data.length < 8) { ctx.fillStyle = "#799194"; ctx.textAlign = "center"; ctx.fillText(label, x, height - 12); }
+    ctx.fillStyle = "#0e3137"; ctx.font = "600 10px DM Mono"; ctx.textAlign = "center"; ctx.fillText(chartValue(value, metric), x, Math.max(13, y - 10));
+    if (index % 2 === 0 || data.length < 9 || width >= 940) { ctx.fillStyle = "#799194"; ctx.font = "11px Manrope"; ctx.fillText(label, x, height - 12); }
   });
   ctx.textAlign = "start";
+}
+
+function monthlyMetricSeries(year, metric) {
+  const rowsByMonth = Array.from({ length: 12 }, () => []);
+  rowsForYear(year).forEach((row) => {
+    const date = parseDate(row["Fecha ficha"]);
+    if (date) rowsByMonth[date.getMonth()].push(row);
+  });
+  const finance = calculateFinance(rowsForYear(year));
+  const recurringMonthly = (finance.consumables + finance.manual.reduce((total, entry) => total + entry.value, 0)) / 12;
+  const otherIncomeMonthly = finance.otherIncome / 12;
+  return rowsByMonth.map((rows, month) => {
+    const label = new Intl.DateTimeFormat("es-ES", { month: "short" }).format(new Date(Number(year), month, 1)).replace(".", "");
+    if (metric === "revenue") return [label, rows.length * finance.averagePrice + otherIncomeMonthly];
+    if (metric === "costs") return [label, estimateMaterial(rows).amount + recurringMonthly];
+    return [label, rows.length];
+  });
+}
+
+function renderMetricStrip(data, metric) {
+  const root = $("#summaryMetricTable");
+  if (!root) return;
+  root.replaceChildren();
+  data.forEach(([label, value]) => {
+    const cell = document.createElement("div");
+    const month = document.createElement("span");
+    const amount = document.createElement("strong");
+    month.textContent = label;
+    amount.textContent = metric === "orders" ? formatInt.format(value) : formatMoney(value);
+    cell.append(month, amount);
+    root.append(cell);
+  });
+}
+
+function drawForecastChart(series) {
+  const canvas = $("#forecastChart");
+  if (!canvas) return;
+  const { ctx, width, height } = setupCanvas(canvas);
+  if (width < 2 || height < 2) return;
+  const left = 47, right = 15, top = 27, bottom = 34;
+  const values = [...series.actual, ...series.forecast.filter((value) => value !== null)];
+  const max = Math.max(...values, 1);
+  const point = (index, value) => ({
+    x: left + index * ((width - left - right) / 11),
+    y: top + (height - top - bottom) * (1 - value / max)
+  });
+  ctx.clearRect(0, 0, width, height);
+  ctx.font = "11px Manrope"; ctx.fillStyle = "#799194"; ctx.strokeStyle = "#e4edeb"; ctx.lineWidth = 1;
+  [0, .5, 1].forEach((ratio) => {
+    const y = top + (height - top - bottom) * ratio;
+    ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(width - right, y); ctx.stroke();
+    ctx.fillText(chartValue(max * (1 - ratio), "revenue"), 2, y + 4);
+  });
+  const actualEnd = Math.max(0, series.lastActualMonth);
+  ctx.beginPath();
+  series.actual.slice(0, actualEnd + 1).forEach((value, index) => {
+    const position = point(index, value);
+    index ? ctx.lineTo(position.x, position.y) : ctx.moveTo(position.x, position.y);
+  });
+  ctx.strokeStyle = "#10726e"; ctx.lineWidth = 2.5; ctx.stroke();
+  if (actualEnd < 11) {
+    ctx.save(); ctx.setLineDash([7, 6]); ctx.beginPath();
+    const start = point(actualEnd, series.actual[actualEnd]);
+    ctx.moveTo(start.x, start.y);
+    for (let index = actualEnd + 1; index < 12; index += 1) {
+      const position = point(index, series.forecast[index]);
+      ctx.lineTo(position.x, position.y);
+    }
+    ctx.strokeStyle = "#bd7e27"; ctx.lineWidth = 2.25; ctx.stroke(); ctx.restore();
+  }
+  series.actual.slice(0, actualEnd + 1).forEach((value, index) => {
+    const position = point(index, value);
+    ctx.fillStyle = "#10726e"; ctx.beginPath(); ctx.arc(position.x, position.y, 3.1, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#0e3137"; ctx.font = "600 10px DM Mono"; ctx.textAlign = "center";
+    ctx.fillText(chartValue(value, "revenue"), position.x, Math.max(13, position.y - 10));
+  });
+  if (actualEnd < 11) {
+    const end = point(11, series.forecast[11]);
+    ctx.fillStyle = "#bd7e27"; ctx.beginPath(); ctx.arc(end.x, end.y, 3.1, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#805817"; ctx.font = "600 10px DM Mono"; ctx.textAlign = "center";
+    ctx.fillText(chartValue(series.forecast[11], "revenue"), end.x, Math.max(13, end.y - 10));
+  }
+  Array.from({ length: 12 }, (_, index) => {
+    const label = new Intl.DateTimeFormat("es-ES", { month: "short" }).format(new Date(series.year, index, 1)).replace(".", "");
+    ctx.fillStyle = "#799194"; ctx.font = "11px Manrope"; ctx.textAlign = "center";
+    if (index % 2 === 0 || width >= 940) ctx.fillText(label, point(index, 0).x, height - 12);
+  });
+  ctx.textAlign = "start";
+}
+
+function renderRevenueForecast() {
+  const year = selectedForecastYear();
+  const rows = rowsForYear(year);
+  const averagePrice = financeValue("financeAveragePrice");
+  const orders = Array.from({ length: 12 }, () => 0);
+  rows.forEach((row) => {
+    const date = parseDate(row["Fecha ficha"]);
+    if (date) orders[date.getMonth()] += 1;
+  });
+  const lastActualMonth = orders.reduce((latest, count, month) => count > 0 ? month : latest, -1);
+  const knownMonths = lastActualMonth >= 0 ? lastActualMonth + 1 : 0;
+  const actual = orders.map((count) => count * averagePrice);
+  const averageMonthly = knownMonths ? actual.slice(0, knownMonths).reduce((total, value) => total + value, 0) / knownMonths : 0;
+  const forecast = actual.map((value, month) => month <= lastActualMonth ? value : averageMonthly);
+  const projected = actual.slice(0, knownMonths).reduce((total, value) => total + value, 0) + forecast.slice(knownMonths).reduce((total, value) => total + value, 0);
+  const note = $("#forecastChartNote");
+  if (note) {
+    note.textContent = !state.connected || !year
+      ? "Pendiente de datos"
+      : lastActualMonth < 0
+        ? `Sin pedidos registrados · año ${year}`
+        : lastActualMonth === 11
+          ? `Año cerrado · ${formatMoney(projected)}`
+          : `Cierre estimado: ${formatMoney(projected)}`;
+  }
+  drawForecastChart({ year: Number(year) || new Date().getFullYear(), actual, forecast, lastActualMonth });
 }
 
 function drawModelsChart(data) {
@@ -982,10 +1148,20 @@ function drawModelsChart(data) {
 function renderSummary() {
   const s = state.summary;
   const connected = state.connected;
+  const year = selectedSummaryYear();
+  const yearRows = rowsForYear(year);
+  const finance = calculateFinance(yearRows);
+  const repeatShare = yearRows.length
+    ? Math.round((yearRows.filter((row) => ["Tapa nicho", "Reforma"].includes(familyFor(row.Modelo))).length / yearRows.length) * 100)
+    : 0;
   $("#totalOrders").textContent = connected ? formatInt.format(s.total) : "—";
-  $("#yearOrders").textContent = connected ? formatInt.format(s.yearOrders) : "—";
-  $("#yearOrdersFoot").textContent = connected && s.year ? `Año ${s.year}` : "Pendiente de actualización";
-  $("#repeatShare").innerHTML = connected ? `${s.repeatShare}<span>%</span>` : "—";
+  $("#yearOrders").textContent = connected ? formatInt.format(yearRows.length) : "—";
+  $("#yearOrdersFoot").textContent = connected && year ? `Año ${year}` : "Pendiente de actualización";
+  $("#repeatShare").innerHTML = connected ? `${repeatShare}<span>%</span>` : "—";
+  $("#summaryRevenue").textContent = connected ? formatMoney(finance.revenue) : "—";
+  $("#summaryCosts").textContent = connected ? formatMoney(finance.costs) : "—";
+  $("#summaryRevenueFoot").textContent = connected && year ? `Estimación operativa · ${year}` : "Estimación operativa";
+  $("#summaryCostsFoot").textContent = connected && year ? `Material, consumibles y gastos · ${year}` : "Pendiente de facturas";
   $("#measuredOrders").textContent = connected ? formatInt.format(s.measured) : "—";
   $("#distinctSizes").textContent = connected ? formatInt.format(s.distinctSizes) : "—";
   const topSize = s.sizes[0];
@@ -997,11 +1173,18 @@ function renderSummary() {
   $("#lastUpdate").textContent = connected
     ? `Actualizado ${new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeStyle: "short" }).format(updateDate || new Date())}`
     : "Actualizando datos";
-  $("#mainInsightTitle").textContent = connected ? "Datos listos para planificar." : "Preparando el análisis.";
-  $("#mainInsightText").textContent = connected
-    ? `${formatInt.format(s.measured)} fichas con medidas completas permiten identificar formatos repetibles, lotes de corte y compras previsibles.`
-    : "El panel cargará automáticamente los datos operativos autorizados, sin pedir inicio de sesión.";
-  drawOrdersChart(s.months);
+  const metric = selectedSummaryMetric();
+  const metricLabels = {
+    orders: "Pedidos registrados",
+    revenue: "Ingresos estimados por pedidos",
+    costs: "Gastos estimados"
+  };
+  $("#summaryChartNote").textContent = connected && year
+    ? `${metricLabels[metric]} · ${year}`
+    : "Pendiente de actualización";
+  const series = monthlyMetricSeries(year || new Date().getFullYear(), metric);
+  drawOrdersChart(series, metric);
+  renderMetricStrip(series, metric);
   drawModelsChart(s.models);
 }
 
@@ -1093,11 +1276,37 @@ function setupFilters() {
   model.replaceChildren(new Option("Todos los modelos", "all"), ...models.map((value) => new Option(value, value)));
   if ([...year.options].some((option) => option.value === currentYear)) year.value = currentYear;
   if ([...model.options].some((option) => option.value === currentModel)) model.value = currentModel;
+  setupSummaryYearFilter(years);
   setupFinanceYearFilter(years);
+  setupForecastYearFilter(years);
+}
+
+function setupSummaryYearFilter(years = []) {
+  const select = $("#summaryYear");
+  if (!select) return;
+  const current = select.value;
+  if (!years.length) {
+    select.replaceChildren(new Option("Sin pedidos con fecha", ""));
+    return;
+  }
+  select.replaceChildren(...years.map((value) => new Option(String(value), String(value))));
+  select.value = years.map(String).includes(current) ? current : String(years[0]);
 }
 
 function setupFinanceYearFilter(years = []) {
   const select = $("#financeYear");
+  if (!select) return;
+  const current = select.value;
+  if (!years.length) {
+    select.replaceChildren(new Option("Sin pedidos con fecha", ""));
+    return;
+  }
+  select.replaceChildren(...years.map((value) => new Option(String(value), String(value))));
+  select.value = years.map(String).includes(current) ? current : String(years[0]);
+}
+
+function setupForecastYearFilter(years = []) {
+  const select = $("#forecastYear");
   if (!select) return;
   const current = select.value;
   if (!years.length) {
@@ -1137,6 +1346,52 @@ function estimateMaterial(rows) {
     amount += (width * height / 10000) * 1.1 * rate;
   });
   return { amount, covered, withMeasure };
+}
+
+function calculateFinance(rows) {
+  const averagePrice = financeValue("financeAveragePrice");
+  const otherIncome = financeValue("financeOtherIncome");
+  const material = estimateMaterial(rows);
+  const consumables = Object.values(KNOWN_CONSUMABLES).reduce((total, value) => total + value, 0);
+  const manual = [
+    ["Electricidad", financeValue("financeElectricity"), "fixed"],
+    ["Agua y residuos", financeValue("financeWaterWaste"), "fixed"],
+    ["Internet", financeValue("financeInternet"), "fixed"],
+    ["Letras", financeValue("financeLetters"), "direct"],
+    ["Transporte y colocación", financeValue("financeTransport"), "direct"],
+    ["Mano de obra / autónomos", financeValue("financeLabour"), "labour"],
+    ["Otros gastos", financeValue("financeOtherCosts"), "fixed"]
+  ].map(([label, value, tone]) => ({ label, value, tone }));
+  const revenueOrders = rows.length * averagePrice;
+  const revenue = revenueOrders + otherIncome;
+  const costs = material.amount + consumables + manual.reduce((total, entry) => total + entry.value, 0);
+  const margin = revenue - costs;
+  const outputs = [
+    { label: "Materia prima estimada", value: material.amount, tone: "material" },
+    { label: "Abrasivos y lijas", value: KNOWN_CONSUMABLES.abrasives, tone: "consumables" },
+    { label: "Plantillas", value: KNOWN_CONSUMABLES.templates, tone: "consumables" },
+    { label: "Pintura, silicona y masilla", value: KNOWN_CONSUMABLES.finishing, tone: "consumables" },
+    ...manual,
+    ...(margin >= 0 ? [{ label: "Margen disponible", value: margin, tone: "margin" }] : [])
+  ];
+  return {
+    averagePrice,
+    otherIncome,
+    material,
+    consumables,
+    manual,
+    revenueOrders,
+    revenue,
+    costs,
+    margin,
+    flowTotal: revenue + Math.max(0, -margin),
+    outputs,
+    incomes: [
+      { label: `Ingresos estimados · ${rows.length} pedidos`, value: revenueOrders },
+      { label: "Otros ingresos facturados", value: otherIncome },
+      ...(margin < 0 ? [{ label: "Necesidad de caja", value: Math.abs(margin) }] : [])
+    ]
+  };
 }
 
 function svgEl(name, attrs = {}) {
@@ -1223,41 +1478,8 @@ function renderFinanceSankey(finance) {
 
 function renderFinance() {
   const rows = financeRows();
-  const averagePrice = financeValue("financeAveragePrice");
-  const otherIncome = financeValue("financeOtherIncome");
-  const material = estimateMaterial(rows);
-  const consumables = Object.values(KNOWN_CONSUMABLES).reduce((total, value) => total + value, 0);
-  const manual = [
-    ["Electricidad", financeValue("financeElectricity"), "fixed"],
-    ["Agua y residuos", financeValue("financeWaterWaste"), "fixed"],
-    ["Internet", financeValue("financeInternet"), "fixed"],
-    ["Letras", financeValue("financeLetters"), "direct"],
-    ["Transporte y colocación", financeValue("financeTransport"), "direct"],
-    ["Mano de obra / autónomos", financeValue("financeLabour"), "labour"],
-    ["Otros gastos", financeValue("financeOtherCosts"), "fixed"]
-  ].map(([label, value, tone]) => ({ label, value, tone }));
-  const revenueOrders = rows.length * averagePrice;
-  const revenue = revenueOrders + otherIncome;
-  const costs = material.amount + consumables + manual.reduce((total, entry) => total + entry.value, 0);
-  const margin = revenue - costs;
-  const outputs = [
-    { label: "Materia prima estimada", value: material.amount, tone: "material" },
-    { label: "Abrasivos y lijas", value: KNOWN_CONSUMABLES.abrasives, tone: "consumables" },
-    { label: "Plantillas", value: KNOWN_CONSUMABLES.templates, tone: "consumables" },
-    { label: "Pintura, silicona y masilla", value: KNOWN_CONSUMABLES.finishing, tone: "consumables" },
-    ...manual,
-    ...(margin >= 0 ? [{ label: "Margen disponible", value: margin, tone: "margin" }] : [])
-  ];
-  const finance = {
-    revenue,
-    flowTotal: revenue + Math.max(0, -margin),
-    outputs,
-    incomes: [
-      { label: `Ingresos estimados · ${rows.length} pedidos`, value: revenueOrders },
-      { label: "Otros ingresos facturados", value: otherIncome },
-      ...(margin < 0 ? [{ label: "Necesidad de caja", value: Math.abs(margin) }] : [])
-    ]
-  };
+  const finance = calculateFinance(rows);
+  const { material, consumables, revenue, costs, margin } = finance;
   $("#financeOrders").textContent = state.connected ? formatInt.format(rows.length) : "—";
   $("#financePeriod").textContent = state.connected ? `Año ${$("#financeYear").value || "sin fecha"}` : "Datos operativos pendientes";
   $("#financeRevenue").textContent = state.connected ? formatMoney(revenue) : "—";
@@ -1283,10 +1505,16 @@ function loadFinanceSettings() {
   renderFinance();
 }
 
+function renderFinancialViews() {
+  renderFinance();
+  if (state.activeView === "summary") renderSummary();
+  if (state.activeView === "strategy") renderRevenueForecast();
+}
+
 function resetFinance() {
   Object.entries(FINANCE_DEFAULTS).forEach(([id, value]) => { $(`#${id}`).value = value; });
   localStorage.removeItem(FINANCE_KEY);
-  renderFinance();
+  renderFinancialViews();
   showToast("Valores financieros restablecidos.");
 }
 
@@ -1362,6 +1590,7 @@ function refreshPublicFeed() {
     renderProduction();
     renderRecentOrders();
     renderFinance();
+    if (state.activeView === "strategy") renderRevenueForecast();
     showToast("El servicio de consulta todavía se está activando.");
     return;
   }
@@ -1389,6 +1618,7 @@ function refreshPublicFeed() {
     renderProduction();
     renderRecentOrders();
     renderFinance();
+    if (state.activeView === "strategy") renderRevenueForecast();
     showToast("No se pudieron actualizar los datos. Vuelve a intentarlo en unos segundos.");
   };
   window[callbackName] = (payload) => {
@@ -1405,6 +1635,7 @@ function refreshPublicFeed() {
       renderProduction();
       renderRecentOrders();
       renderFinance();
+      if (state.activeView === "strategy") renderRevenueForecast();
       updateConnectionUI();
       showToast(`${formatInt.format(state.rows.length)} fichas actualizadas.`);
     } catch {
@@ -1414,6 +1645,7 @@ function refreshPublicFeed() {
       renderProduction();
       renderRecentOrders();
       renderFinance();
+      if (state.activeView === "strategy") renderRevenueForecast();
       showToast("El servicio devolvió datos no válidos.");
     } finally {
       cleanUp();
@@ -1434,11 +1666,12 @@ function switchView(view) {
   state.activeView = view;
   $$(".view").forEach((section) => section.classList.toggle("active", section.id === view));
   $$("[data-view-target]").forEach((button) => button.classList.toggle("active", button.dataset.viewTarget === view));
-  $("#viewTitle").textContent = ({ summary: "Resumen", production: "Producción", profit: "Estimaciones", finance: "Ingresos y gastos", sources: "Fuentes", strategy: "Estrategia", data: "Datos y conexión" })[view];
+  $("#viewTitle").textContent = ({ summary: "Resumen", production: "Producción", finance: "Ingresos y gastos", strategy: "Estrategia", data: "Datos y conexión" })[view];
   $(".sidebar").classList.remove("open");
   if (view === "summary") requestAnimationFrame(renderSummary);
   if (view === "production") requestAnimationFrame(renderProduction);
   if (view === "finance") requestAnimationFrame(renderFinance);
+  if (view === "strategy") requestAnimationFrame(renderRevenueForecast);
 }
 
 function init() {
@@ -1448,14 +1681,21 @@ function init() {
   $("#mobileMenu").addEventListener("click", () => $(".sidebar").classList.toggle("open"));
   $("#refreshData").addEventListener("click", refreshPublicFeed);
   $("#yearFilter").addEventListener("change", renderProduction); $("#modelFilter").addEventListener("change", renderProduction);
+  $("#summaryYear").addEventListener("change", renderSummary);
+  $("#summaryMetric").addEventListener("change", renderSummary);
+  $("#forecastYear").addEventListener("change", renderRevenueForecast);
   $("#ordersSearch").addEventListener("input", renderRecentOrders);
   ["#assumptionOrders", "#assumptionPrice", "#assumptionProcurement", "#assumptionExtraJobs", "#assumptionContribution", "#assumptionRework", "#assumptionCncCapacity", "#assumptionCncInvestment", "#assumptionCncPayback"].forEach((selector) => $(selector).addEventListener("input", updateBenefit));
-  ["#financeAveragePrice", "#financeOtherIncome", "#financeElectricity", "#financeWaterWaste", "#financeInternet", "#financeLetters", "#financeTransport", "#financeLabour", "#financeOtherCosts"].forEach((selector) => $(selector).addEventListener("input", renderFinance));
-  $("#financeYear").addEventListener("change", renderFinance);
+  ["#financeAveragePrice", "#financeOtherIncome", "#financeElectricity", "#financeWaterWaste", "#financeInternet", "#financeLetters", "#financeTransport", "#financeLabour", "#financeOtherCosts"].forEach((selector) => $(selector).addEventListener("input", renderFinancialViews));
+  $("#financeYear").addEventListener("change", renderFinancialViews);
   $("#resetAssumptions").addEventListener("click", resetAssumptions);
   $("#resetFinance").addEventListener("click", resetFinance);
   window.setInterval(refreshPublicFeed, AUTO_REFRESH_MS);
-  window.addEventListener("resize", () => { if (state.activeView === "summary") renderSummary(); if (state.activeView === "finance") renderFinance(); });
+  window.addEventListener("resize", () => {
+    if (state.activeView === "summary") renderSummary();
+    if (state.activeView === "finance") renderFinance();
+    if (state.activeView === "strategy") renderRevenueForecast();
+  });
   refreshPublicFeed();
 }
 
