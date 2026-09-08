@@ -78,19 +78,22 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
 .button.tertiary { padding-left: 0; border-color: transparent; background: transparent; color: var(--teal); }
 .button.tertiary span { font-size: 1rem; }
 
-.kpi-grid { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 1rem; margin-bottom: 1rem; }
+.kpi-grid { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 1rem; margin-bottom: 1rem; }
 .kpi-card { min-height: 144px; padding: 1.16rem 1.22rem 1rem; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); box-shadow: 0 2px 4px rgba(24,58,59,.015); overflow: hidden; position: relative; }
 .kpi-card::after { position: absolute; right: 0; bottom: 0; left: 0; height: 4px; content: ""; background: var(--teal); }
 .kpi-card.accent-amber::after { background: var(--amber); }.kpi-card.accent-green::after { background: var(--green); }.kpi-card.accent-lilac::after { background: var(--lilac); }
 .kpi-label { color: var(--ink-soft); font-size: .76rem; font-weight: 700; letter-spacing: .025em; text-transform: uppercase; }
 .kpi-value { margin-top: .7rem; color: var(--deep); font-family: "DM Mono", monospace; font-size: 2rem; font-weight: 500; letter-spacing: -.08em; }.kpi-value span { margin-left: .2rem; font-size: 1rem; letter-spacing: -.04em; }
-.kpi-card:nth-child(4) .kpi-value, .kpi-card:nth-child(5) .kpi-value { font-size: clamp(1.4rem, 1.7vw, 1.8rem); white-space: nowrap; }
+.financial-kpi .kpi-value { font-size: clamp(1.25rem, 1.55vw, 1.72rem); white-space: nowrap; }
+.pending-kpi .kpi-value { color: #9aabaa; }
 .kpi-foot { margin-top: .3rem; color: var(--ink-soft); font-size: .72rem; }
 
 .dashboard-grid { display: grid; gap: 1rem; margin-bottom: 1rem; }.overview-grid { grid-template-columns: minmax(0, 1fr); }.bottom-grid { grid-template-columns: minmax(0, 1fr); }
 .panel { border: 1px solid var(--line); border-radius: 14px; background: var(--panel); box-shadow: 0 2px 4px rgba(24,58,59,.015); }
 .chart-panel { padding: 1.35rem; }.panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }.panel-head h2 { margin-bottom: 0; }.chart-note { color: var(--ink-soft); font-size: .7rem; white-space: nowrap; }.canvas-wrap { height: 276px; margin-top: 1.1rem; position: relative; }.canvas-wrap.small { height: 222px; }.canvas-wrap canvas { width: 100%; height: 100%; }
-.summary-chart-controls { display: flex; flex-wrap: wrap; align-items: end; justify-content: flex-end; gap: .55rem; }.summary-chart-controls label { display: grid; gap: .27rem; color: var(--ink-soft); font-size: .66rem; font-weight: 800; }.summary-chart-controls select { min-height: 34px; padding: .35rem .5rem; border: 1px solid #cfe0de; border-radius: 7px; background: white; color: var(--ink); font-size: .76rem; outline-color: var(--teal); }.summary-chart-controls .chart-note { align-self: end; padding: .48rem 0; }.summary-chart-controls.compact-controls { flex-wrap: nowrap; }.metric-strip { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1px; margin-top: .95rem; overflow: hidden; border: 1px solid #e1ecea; border-radius: 9px; background: #e1ecea; }.metric-strip > div { min-width: 0; padding: .46rem .3rem; background: #f7fbfa; text-align: center; }.metric-strip span, .metric-strip strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.metric-strip span { color: var(--ink-soft); font-family: "DM Mono", monospace; font-size: .61rem; text-transform: uppercase; }.metric-strip strong { margin-top: .12rem; color: var(--deep); font-family: "DM Mono", monospace; font-size: .66rem; font-weight: 500; }
+.summary-chart-controls { display: flex; flex-wrap: wrap; align-items: end; justify-content: flex-end; gap: .55rem; }.summary-chart-controls label, .history-matrix-head label { display: grid; gap: .27rem; color: var(--ink-soft); font-size: .66rem; font-weight: 800; }.summary-chart-controls select, .history-matrix-head select { min-height: 34px; padding: .35rem .5rem; border: 1px solid #cfe0de; border-radius: 7px; background: white; color: var(--ink); font-size: .76rem; outline-color: var(--teal); }.summary-chart-controls .chart-note { align-self: end; padding: .48rem 0; }.summary-chart-controls.compact-controls { flex-wrap: nowrap; }
+.history-matrix-head { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin-top: 1.15rem; }.history-matrix-head .eyebrow { margin-bottom: .25rem; }.history-matrix-head p:not(.eyebrow) { margin: 0; color: var(--ink-soft); font-size: .7rem; line-height: 1.45; }.metric-strip { --period-count: 12; margin-top: .6rem; overflow-x: auto; border: 1px solid #e1ecea; border-radius: 9px; background: #f9fbfb; }.history-matrix-row { display: grid; grid-template-columns: 58px repeat(var(--period-count), minmax(54px, 1fr)) 78px; min-width: calc(136px + var(--period-count) * 54px); border-bottom: 1px solid #e4edeb; }.history-matrix-row:last-child { border-bottom: 0; }.history-matrix-row span { min-width: 0; padding: .52rem .38rem; color: #466267; font-family: "DM Mono", monospace; font-size: .65rem; text-align: center; white-space: nowrap; }.history-matrix-row span:first-child { text-align: left; }.history-matrix-header { background: #edf4f3; }.history-matrix-header span { color: #6f898b; font-size: .61rem; font-weight: 700; text-transform: uppercase; }.history-matrix-row.selected { background: #e5f3f0; }.history-matrix-row.selected .history-year, .history-matrix-row.selected .history-total { color: #0e5755; font-weight: 800; }.history-total { border-left: 1px solid #d9e6e4; color: var(--deep) !important; font-weight: 700; }.metric-strip .empty-state { margin: 0; padding: 1rem; color: var(--ink-soft); font-size: .75rem; }
+.finance-summary-panel { padding-bottom: 1.15rem; }.finance-chart-legend { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .7rem; color: var(--ink-soft); font-size: .68rem; font-weight: 700; }.finance-chart-legend span { display: inline-flex; align-items: center; gap: .32rem; }.finance-chart-legend i { width: 18px; height: 3px; border-radius: 999px; background: #7fb9b2; }.finance-chart-legend .legend-costs i { background: #dda859; }.finance-chart-legend .legend-profit i { height: 4px; background: var(--deep); }.finance-chart-scope { margin: .8rem 0 0; padding: .72rem .85rem; border-left: 3px solid #8bc5bf; border-radius: 0 8px 8px 0; background: #f4faf8; color: var(--ink-soft); font-size: .71rem; line-height: 1.5; }
 .insight-panel { display: flex; min-height: 318px; flex-direction: column; justify-content: center; padding: 2rem; background: linear-gradient(160deg, var(--deep), #164c50); color: #e9f7f5; }.insight-panel .eyebrow { color: #91d4ce; }.insight-panel h2 { max-width: 260px; color: white; font-size: 1.45rem; }.insight-panel p:not(.eyebrow) { max-width: 300px; color: #b9d5d2; font-size: .88rem; }.insight-panel .button { margin-top: .75rem; align-self: flex-start; color: #a8e4df; }
 .action-panel { padding: 1.7rem; background: #fffdf8; }.action-panel h2 { max-width: 330px; font-size: 1.3rem; }.action-panel ul { display: grid; gap: .55rem; margin: 1.1rem 0 1.2rem; padding: 0; list-style: none; }.action-panel li { display: flex; gap: .65rem; align-items: center; color: #4b6466; font-size: .8rem; }.action-panel li span { display: inline-grid; width: 1.35rem; height: 1.35rem; place-items: center; border-radius: 6px; background: var(--amber-light); color: var(--amber); font-family: "DM Mono", monospace; font-size: .62rem; }
 
@@ -116,7 +119,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
 
 @media (max-width: 1120px) { .kpi-grid { grid-template-columns: repeat(3,1fr); }.overview-grid, .bottom-grid, .profit-layout, .data-layout, .cnc-panel, .strategy-grid, .strategy-decision-grid, .finance-layout, .finance-register-note, .sources-guides { grid-template-columns: 1fr; }.finance-kpis { grid-template-columns: repeat(2,1fr); }.insight-panel { min-height: 230px; }.cnc-math { min-height: 155px; }.production-grid { grid-template-columns: 1fr; }.wide-table { grid-column: auto; } }
 @media (max-width: 1360px) { .sources-table-wrap { overflow: visible; }.sources-table { min-width: 0; }.sources-table thead { display: none; }.sources-table, .sources-table tbody { display: block; width: 100%; }.sources-table tbody { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .8rem; }.sources-table tr { display: grid; gap: .38rem; padding: .95rem; border: 1px solid var(--line); border-radius: 10px; background: #fbfcfc; }.sources-table td { display: block; padding: .13rem 0; border: 0; font-size: .72rem; }.sources-table td::before { display: block; margin-bottom: .12rem; color: var(--ink-soft); font-family: "DM Mono", monospace; font-size: .58rem; letter-spacing: .06em; text-transform: uppercase; }.sources-table td:nth-child(1)::before { content: "Dato"; }.sources-table td:nth-child(2)::before { content: "Origen"; }.sources-table td:nth-child(3)::before { content: "Destino"; }.sources-table td:nth-child(4)::before { content: "Regla"; }.sources-table td:nth-child(5)::before { content: "Automatización"; } }
-@media (max-width: 760px) { .app-shell { display: block; }.sidebar { position: fixed; z-index: 14; left: -270px; width: 254px; transition: left .2s; }.sidebar.open { left: 0; box-shadow: 25px 0 50px rgba(0,0,0,.25); }.topbar { height: 64px; padding: 0 1rem; }.mobile-menu { display: inline-grid; width: 33px; height: 33px; place-items: center; border: 0; border-radius: 7px; background: #e6efee; color: var(--deep); }.breadcrumb { flex: 1; margin-left: .4rem; }.private-badge { display: none; }.view { padding: 1.75rem 1rem 3rem; }.page-heading { display: grid; gap: 1rem; }.heading-date { align-self: start; }.kpi-grid, .production-metrics, .privacy-rules, .assumptions-form, .strategy-cards, .strategy-roadmap, .finance-kpis, .finance-form, .sources-table tbody { grid-template-columns: 1fr; }.kpi-card { min-height: 132px; }.filter-row { width: 100%; }.filter-row label { flex: 1; min-width: 125px; }.canvas-wrap, .forecast-canvas-wrap { height: 220px; }.summary-chart-controls { justify-content: flex-start; width: 100%; }.summary-chart-controls.compact-controls { flex-wrap: wrap; }.summary-chart-controls .chart-note { width: 100%; padding-bottom: 0; white-space: normal; }.metric-strip { grid-template-columns: repeat(4, minmax(0,1fr)); }.metric-strip > div { padding: .55rem .35rem; }.cnc-math { grid-template-columns: 1fr; }.topbar-actions .button { padding: .45rem .6rem; font-size: .72rem; }.connection-status { grid-template-columns: .55rem 1fr; }.connection-status small { grid-column: 2; }.privacy-rules { gap: .8rem; }.finance-sankey { min-height: 430px; }.finance-register-note .eyebrow { grid-column: auto; }.forecast-scope { align-items: flex-start; } }
+@media (max-width: 760px) { .app-shell { display: block; }.sidebar { position: fixed; z-index: 14; left: -270px; width: 254px; transition: left .2s; }.sidebar.open { left: 0; box-shadow: 25px 0 50px rgba(0,0,0,.25); }.topbar { height: 64px; padding: 0 1rem; }.mobile-menu { display: inline-grid; width: 33px; height: 33px; place-items: center; border: 0; border-radius: 7px; background: #e6efee; color: var(--deep); }.breadcrumb { flex: 1; margin-left: .4rem; }.private-badge { display: none; }.view { padding: 1.75rem 1rem 3rem; }.page-heading { display: grid; gap: 1rem; }.heading-date { align-self: start; }.kpi-grid, .production-metrics, .privacy-rules, .assumptions-form, .strategy-cards, .strategy-roadmap, .finance-kpis, .finance-form, .sources-table tbody { grid-template-columns: 1fr; }.kpi-card { min-height: 132px; }.filter-row { width: 100%; }.filter-row label { flex: 1; min-width: 125px; }.canvas-wrap, .forecast-canvas-wrap { height: 220px; }.summary-chart-controls { justify-content: flex-start; width: 100%; }.summary-chart-controls.compact-controls { flex-wrap: wrap; }.summary-chart-controls .chart-note { width: 100%; padding-bottom: 0; white-space: normal; }.history-matrix-head { display: grid; align-items: start; }.history-matrix-head label { width: max-content; }.history-matrix-row { min-width: calc(136px + var(--period-count) * 52px); }.finance-chart-legend { justify-content: flex-start; }.cnc-math { grid-template-columns: 1fr; }.topbar-actions .button { padding: .45rem .6rem; font-size: .72rem; }.connection-status { grid-template-columns: .55rem 1fr; }.connection-status small { grid-column: 2; }.privacy-rules { gap: .8rem; }.finance-sankey { min-height: 430px; }.finance-register-note .eyebrow { grid-column: auto; }.forecast-scope { align-items: flex-start; } }
 
 </style>
   </head>
@@ -187,20 +190,30 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
               <div class="kpi-value" id="yearOrders">—</div>
               <div class="kpi-foot" id="yearOrdersFoot">Pendiente de conexión</div>
             </article>
-            <article class="kpi-card accent-green">
-              <div class="kpi-label">Familias repetibles</div>
-              <div class="kpi-value" id="repeatShare">—</div>
-              <div class="kpi-foot">Tapa nicho + Reforma</div>
-            </article>
-            <article class="kpi-card accent-blue">
+            <article class="kpi-card accent-blue financial-kpi">
               <div class="kpi-label">Ingresos del año</div>
               <div class="kpi-value" id="summaryRevenue">—</div>
               <div class="kpi-foot" id="summaryRevenueFoot">Estimación operativa</div>
             </article>
-            <article class="kpi-card accent-lilac">
+            <article class="kpi-card accent-lilac financial-kpi">
               <div class="kpi-label">Gastos del año</div>
               <div class="kpi-value" id="summaryCosts">—</div>
               <div class="kpi-foot" id="summaryCostsFoot">Pendiente de facturas</div>
+            </article>
+            <article class="kpi-card accent-green pending-kpi">
+              <div class="kpi-label">Pedidos en producción</div>
+              <div class="kpi-value" id="ordersInProduction">—</div>
+              <div class="kpi-foot">Pendiente de registrar estado</div>
+            </article>
+            <article class="kpi-card accent-amber pending-kpi">
+              <div class="kpi-label">Pedidos por cobrar</div>
+              <div class="kpi-value" id="ordersToCollect">—</div>
+              <div class="kpi-foot">Pendiente de registrar entrega</div>
+            </article>
+            <article class="kpi-card accent-blue pending-kpi">
+              <div class="kpi-label">Último pedido entregado</div>
+              <div class="kpi-value" id="lastDeliveredOrder">—</div>
+              <div class="kpi-foot">Pendiente de registrar entregas</div>
             </article>
           </div>
 
@@ -209,16 +222,38 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
               <div class="panel-head">
                 <div>
                   <p class="eyebrow">RITMO DE ENTRADA</p>
-                  <h2>Actividad mensual</h2>
+                  <h2>Pedidos por periodo</h2>
                 </div>
                 <div class="summary-chart-controls">
                   <label>Año <select id="summaryYear" aria-label="Año del gráfico de pedidos"><option value="">Cargando años…</option></select></label>
-                  <label>Indicador <select id="summaryMetric" aria-label="Indicador del gráfico mensual"><option value="orders">Pedidos</option><option value="revenue">Ingresos</option><option value="costs">Gastos</option></select></label>
+                  <label>Vista <select id="summaryGranularity" aria-label="Agrupación temporal del resumen"><option value="year">Anual · meses</option><option value="quarter">Trimestral</option></select></label>
                   <span class="chart-note" id="summaryChartNote">Selecciona un año</span>
                 </div>
               </div>
-              <div class="canvas-wrap"><canvas id="ordersChart" aria-label="Gráfico de pedidos por mes" role="img"></canvas></div>
-              <div id="summaryMetricTable" class="metric-strip" aria-label="Detalle mensual del indicador seleccionado"></div>
+              <div class="canvas-wrap"><canvas id="ordersChart" aria-label="Gráfico de pedidos por periodo" role="img"></canvas></div>
+              <div class="history-matrix-head">
+                <div><p class="eyebrow">HISTÓRICO COMPLETO</p><p>Todos los años permanecen visibles; el año seleccionado se resalta.</p></div>
+                <label>Tabla <select id="summaryTableMetric" aria-label="Indicador de la tabla histórica"><option value="orders">Pedidos</option><option value="revenue">Ingresos estimados</option><option value="costs">Gastos estimados</option><option value="profit">Beneficio estimado</option></select></label>
+              </div>
+              <div id="summaryMetricTable" class="metric-strip" aria-label="Histórico por año"></div>
+            </article>
+          </div>
+
+          <div class="dashboard-grid overview-grid finance-summary-grid">
+            <article class="panel chart-panel finance-summary-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">RESULTADO ESTIMADO</p>
+                  <h2>Ingresos, gastos y beneficio</h2>
+                </div>
+                <div class="finance-chart-legend" aria-label="Leyenda del gráfico">
+                  <span class="legend-income"><i></i>Ingresos</span>
+                  <span class="legend-costs"><i></i>Gastos</span>
+                  <span class="legend-profit"><i></i>Beneficio</span>
+                </div>
+              </div>
+              <div class="canvas-wrap"><canvas id="financialSummaryChart" aria-label="Gráfico de ingresos, gastos y beneficio por periodo" role="img"></canvas></div>
+              <p class="finance-chart-scope">Importes estimados a partir de los pedidos reales y de los costes configurados. El beneficio es ingresos menos gastos.</p>
             </article>
           </div>
 
@@ -862,25 +897,22 @@ function rowsForYear(year) {
   return state.rows.filter((row) => parseDate(row["Fecha ficha"])?.getFullYear() === Number(year));
 }
 
-function monthlyOrdersForYear(rows, year) {
-  const counts = Array.from({ length: 12 }, () => 0);
-  rows.forEach((row) => {
-    const date = parseDate(row["Fecha ficha"]);
-    if (date?.getFullYear() === Number(year)) counts[date.getMonth()] += 1;
-  });
-  return counts.map((value, month) => [
-    new Intl.DateTimeFormat("es-ES", { month: "short" }).format(new Date(Number(year), month, 1)).replace(".", ""),
-    value
-  ]);
-}
-
 function selectedSummaryYear() {
   const selected = Number($("#summaryYear")?.value);
   return Number.isFinite(selected) && selected > 0 ? selected : state.summary.year;
 }
 
-function selectedSummaryMetric() {
-  return $("#summaryMetric")?.value || "orders";
+function selectedSummaryGranularity() {
+  return $("#summaryGranularity")?.value === "quarter" ? "quarter" : "year";
+}
+
+function selectedSummaryTableMetric() {
+  return $("#summaryTableMetric")?.value || "orders";
+}
+
+function availableDataYears() {
+  return [...new Set(state.rows.map((row) => parseDate(row["Fecha ficha"])?.getFullYear()).filter(Boolean))]
+    .sort((a, b) => b - a);
 }
 
 function selectedForecastYear() {
@@ -1013,36 +1045,127 @@ function drawOrdersChart(data, metric = "orders") {
   ctx.textAlign = "start";
 }
 
-function monthlyMetricSeries(year, metric) {
-  const rowsByMonth = Array.from({ length: 12 }, () => []);
-  rowsForYear(year).forEach((row) => {
-    const date = parseDate(row["Fecha ficha"]);
-    if (date) rowsByMonth[date.getMonth()].push(row);
-  });
-  const finance = calculateFinance(rowsForYear(year));
-  const recurringMonthly = (finance.consumables + finance.manual.reduce((total, entry) => total + entry.value, 0)) / 12;
-  const otherIncomeMonthly = finance.otherIncome / 12;
-  return rowsByMonth.map((rows, month) => {
-    const label = new Intl.DateTimeFormat("es-ES", { month: "short" }).format(new Date(Number(year), month, 1)).replace(".", "");
-    if (metric === "revenue") return [label, rows.length * finance.averagePrice + otherIncomeMonthly];
-    if (metric === "costs") return [label, estimateMaterial(rows).amount + recurringMonthly];
-    return [label, rows.length];
+function periodsFor(year, granularity) {
+  if (granularity === "quarter") {
+    return [
+      { label: "T1", months: [0, 1, 2] }, { label: "T2", months: [3, 4, 5] },
+      { label: "T3", months: [6, 7, 8] }, { label: "T4", months: [9, 10, 11] }
+    ];
+  }
+  return Array.from({ length: 12 }, (_, month) => ({
+    label: new Intl.DateTimeFormat("es-ES", { month: "short" }).format(new Date(Number(year), month, 1)).replace(".", ""),
+    months: [month]
+  }));
+}
+
+function performanceSeries(year, granularity = "year") {
+  const periods = periodsFor(year, granularity);
+  const annualRows = rowsForYear(year);
+  const finance = calculateFinance(annualRows);
+  const recurringCosts = finance.consumables + finance.manual.reduce((total, entry) => total + entry.value, 0);
+  const share = periods.length ? 1 / periods.length : 0;
+
+  return periods.map(({ label, months }) => {
+    const rows = annualRows.filter((row) => months.includes(parseDate(row["Fecha ficha"])?.getMonth()));
+    const revenue = rows.length * finance.averagePrice + finance.otherIncome * share;
+    const costs = estimateMaterial(rows).amount + recurringCosts * share;
+    return { label, orders: rows.length, revenue, costs, profit: revenue - costs };
   });
 }
 
-function renderMetricStrip(data, metric) {
+function metricValue(point, metric) {
+  return point[metric] ?? 0;
+}
+
+function renderMetricStrip(years, selectedYear, granularity, metric) {
   const root = $("#summaryMetricTable");
   if (!root) return;
   root.replaceChildren();
-  data.forEach(([label, value]) => {
-    const cell = document.createElement("div");
-    const month = document.createElement("span");
-    const amount = document.createElement("strong");
-    month.textContent = label;
-    amount.textContent = metric === "orders" ? formatInt.format(value) : formatMoney(value);
-    cell.append(month, amount);
-    root.append(cell);
+  root.style.setProperty("--period-count", String(periodsFor(selectedYear || new Date().getFullYear(), granularity).length));
+
+  if (!years.length) {
+    const empty = document.createElement("p");
+    empty.className = "empty-state";
+    empty.textContent = "El histórico se mostrará al recibir pedidos con fecha.";
+    root.append(empty);
+    return;
+  }
+
+  const labels = periodsFor(selectedYear || years[0], granularity).map(({ label }) => label);
+  const makeCell = (content, className = "") => {
+    const cell = document.createElement("span");
+    cell.className = className;
+    cell.textContent = content;
+    return cell;
+  };
+  const header = document.createElement("div");
+  header.className = "history-matrix-row history-matrix-header";
+  header.append(makeCell("Año"), ...labels.map((label) => makeCell(label)), makeCell("Total"));
+  root.append(header);
+
+  years.forEach((year) => {
+    const series = performanceSeries(year, granularity);
+    const total = series.reduce((sum, point) => sum + metricValue(point, metric), 0);
+    const row = document.createElement("div");
+    row.className = `history-matrix-row${year === Number(selectedYear) ? " selected" : ""}`;
+    row.append(makeCell(String(year), "history-year"));
+    series.forEach((point) => {
+      const value = metricValue(point, metric);
+      row.append(makeCell(metric === "orders" ? formatInt.format(value) : chartValue(value, metric)));
+    });
+    row.append(makeCell(metric === "orders" ? formatInt.format(total) : chartValue(total, metric), "history-total"));
+    root.append(row);
   });
+}
+
+function drawFinancialSummaryChart(series) {
+  const canvas = $("#financialSummaryChart");
+  if (!canvas) return;
+  const { ctx, width, height } = setupCanvas(canvas);
+  if (width < 2 || height < 2) return;
+  const left = 56, right = 12, top = 28, bottom = 33;
+  const values = series.flatMap((point) => [point.revenue, point.costs, point.profit]);
+  const max = Math.max(...values, 1);
+  const plotHeight = height - top - bottom;
+  const step = (width - left - right) / Math.max(series.length - 1, 1);
+  const point = (index, value) => ({ x: left + index * step, y: top + plotHeight * (1 - value / max) });
+
+  ctx.clearRect(0, 0, width, height);
+  ctx.font = "11px Manrope"; ctx.fillStyle = "#799194"; ctx.strokeStyle = "#e4edeb"; ctx.lineWidth = 1;
+  [0, .5, 1].forEach((ratio) => {
+    const y = top + plotHeight * ratio;
+    ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(width - right, y); ctx.stroke();
+    ctx.fillText(chartValue(max * (1 - ratio), "revenue"), 2, y + 4);
+  });
+  if (!series.length) return;
+
+  const drawLine = (key, colour, lineWidth, withLabel = false) => {
+    ctx.beginPath(); ctx.strokeStyle = colour; ctx.lineWidth = lineWidth;
+    series.forEach((entry, index) => {
+      const position = point(index, entry[key]);
+      index ? ctx.lineTo(position.x, position.y) : ctx.moveTo(position.x, position.y);
+    });
+    ctx.stroke();
+    series.forEach((entry, index) => {
+      const position = point(index, entry[key]);
+      ctx.fillStyle = colour; ctx.beginPath(); ctx.arc(position.x, position.y, key === "profit" ? 3.6 : 2.5, 0, Math.PI * 2); ctx.fill();
+      if (withLabel) {
+        ctx.fillStyle = "#0e3137"; ctx.font = "600 10px DM Mono"; ctx.textAlign = "center";
+        ctx.fillText(chartValue(entry[key], "profit"), position.x, Math.max(13, position.y - 10));
+      }
+    });
+  };
+
+  drawLine("revenue", "#7fb9b2", 2);
+  drawLine("costs", "#dda859", 2);
+  drawLine("profit", "#0e3137", 3.8, true);
+  series.forEach((entry, index) => {
+    if (index % 2 === 0 || series.length < 9 || width >= 940) {
+      ctx.fillStyle = "#799194"; ctx.font = "11px Manrope"; ctx.textAlign = "center";
+      ctx.fillText(entry.label, point(index, 0).x, height - 12);
+    }
+  });
+  ctx.textAlign = "start";
 }
 
 function drawForecastChart(series) {
@@ -1152,13 +1275,15 @@ function renderSummary() {
   const year = selectedSummaryYear();
   const yearRows = rowsForYear(year);
   const finance = calculateFinance(yearRows);
-  const repeatShare = yearRows.length
-    ? Math.round((yearRows.filter((row) => ["Tapa nicho", "Reforma"].includes(familyFor(row.Modelo))).length / yearRows.length) * 100)
-    : 0;
+  const years = availableDataYears();
+  const granularity = selectedSummaryGranularity();
+  const firstDate = state.rows
+    .map((row) => parseDate(row["Fecha ficha"]))
+    .filter(Boolean)
+    .sort((a, b) => a - b)[0];
   $("#totalOrders").textContent = connected ? formatInt.format(s.total) : "—";
   $("#yearOrders").textContent = connected ? formatInt.format(yearRows.length) : "—";
   $("#yearOrdersFoot").textContent = connected && year ? `Año ${year}` : "Pendiente de actualización";
-  $("#repeatShare").innerHTML = connected ? `${repeatShare}<span>%</span>` : "—";
   $("#summaryRevenue").textContent = connected ? formatMoney(finance.revenue) : "—";
   $("#summaryCosts").textContent = connected ? formatMoney(finance.costs) : "—";
   $("#summaryRevenueFoot").textContent = connected && year ? `Estimación operativa · ${year}` : "Estimación operativa";
@@ -1168,24 +1293,21 @@ function renderSummary() {
   const topSize = s.sizes[0];
   $("#topSize").textContent = topSize?.initial || "—";
   $("#topSize").nextElementSibling.textContent = connected && topSize ? `Neto ${topSize.net} · ${topSize.count} pedidos` : "Medida de ficha";
-  $("#orderPeriod").textContent = connected ? "Datos reales recibidos" : "Sin datos cargados";
+  $("#orderPeriod").textContent = connected && firstDate
+    ? `Desde ${new Intl.DateTimeFormat("es-ES", { dateStyle: "medium" }).format(firstDate)}`
+    : "Sin datos cargados";
   const generated = state.generatedAt ? new Date(state.generatedAt) : null;
   const updateDate = generated && !Number.isNaN(generated.valueOf()) ? generated : null;
   $("#lastUpdate").textContent = connected
     ? `Actualizado ${new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeStyle: "short" }).format(updateDate || new Date())}`
     : "Actualizando datos";
-  const metric = selectedSummaryMetric();
-  const metricLabels = {
-    orders: "Pedidos registrados",
-    revenue: "Ingresos estimados por pedidos",
-    costs: "Gastos estimados"
-  };
   $("#summaryChartNote").textContent = connected && year
-    ? `${metricLabels[metric]} · ${year}`
+    ? `Pedidos ${granularity === "quarter" ? "por trimestre" : "por mes"} · ${year}`
     : "Pendiente de actualización";
-  const series = monthlyMetricSeries(year || new Date().getFullYear(), metric);
-  drawOrdersChart(series, metric);
-  renderMetricStrip(series, metric);
+  const series = performanceSeries(year || new Date().getFullYear(), granularity);
+  drawOrdersChart(series.map((point) => [point.label, point.orders]), "orders");
+  drawFinancialSummaryChart(series);
+  renderMetricStrip(years, year, granularity, selectedSummaryTableMetric());
   drawModelsChart(s.models);
 }
 
@@ -1271,7 +1393,7 @@ function renderRecentOrders() {
 function setupFilters() {
   const year = $("#yearFilter"); const model = $("#modelFilter");
   const currentYear = year.value; const currentModel = model.value;
-  const years = [...new Set(state.rows.map((row) => parseDate(row["Fecha ficha"])?.getFullYear()).filter(Boolean))].sort((a,b) => b-a);
+  const years = availableDataYears();
   const models = [...new Set(state.rows.map((row) => familyFor(row.Modelo)).filter(Boolean))].sort();
   year.replaceChildren(new Option("Todo el histórico", "all"), ...years.map((value) => new Option(String(value), String(value))));
   model.replaceChildren(new Option("Todos los modelos", "all"), ...models.map((value) => new Option(value, value)));
@@ -1683,7 +1805,8 @@ function init() {
   $("#refreshData").addEventListener("click", refreshPublicFeed);
   $("#yearFilter").addEventListener("change", renderProduction); $("#modelFilter").addEventListener("change", renderProduction);
   $("#summaryYear").addEventListener("change", renderSummary);
-  $("#summaryMetric").addEventListener("change", renderSummary);
+  $("#summaryGranularity").addEventListener("change", renderSummary);
+  $("#summaryTableMetric").addEventListener("change", renderSummary);
   $("#forecastYear").addEventListener("change", renderRevenueForecast);
   $("#ordersSearch").addEventListener("input", renderRecentOrders);
   ["#assumptionOrders", "#assumptionPrice", "#assumptionProcurement", "#assumptionExtraJobs", "#assumptionContribution", "#assumptionRework", "#assumptionCncCapacity", "#assumptionCncInvestment", "#assumptionCncPayback"].forEach((selector) => $(selector).addEventListener("input", updateBenefit));
