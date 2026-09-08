@@ -457,7 +457,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
               <span class="chart-note" id="financeFlowStatus">Actualizando pedidos</span>
             </div>
             <div id="financeSankey" class="finance-sankey" role="img" aria-label="Diagrama Sankey de ingresos y gastos operativos"></div>
-            <p class="finance-scope"><strong>Lectura correcta:</strong> el margen disponible no equivale todavía al beneficio final. Faltan por registrar mano de obra, impuestos y cualquier factura que siga pendiente. La materia prima se estima por la placa frontal de cada ficha, con un 10 % de merma, y no incluye bases, cornisas ni remates.</p>
+            <p class="finance-scope"><strong>Lectura correcta:</strong> los ingresos se separan por tipo de modelo y usan el precio medio de referencia hasta registrar importes facturados. El margen disponible no equivale todavía al beneficio final: faltan mano de obra, impuestos y facturas pendientes. La materia prima se estima por la placa frontal, con un 10 % de merma, y no incluye bases, cornisas ni remates.</p>
           </article>
 
           <div class="finance-layout">
@@ -1559,7 +1559,32 @@ function addSankeyNode(svg, { x, y, width, height = 52, label, value, tone, alig
   svg.append(group);
 }
 
-function renderFinanceSankey(finance) {
+function sankeyIncomeByModel(rows, finance) {
+  const groups = countBy(rows.map((row) => familyFor(row.Modelo))).map(([model, count]) => ({
+    label: `${model} · ${count} ${count === 1 ? "pedido" : "pedidos"}`,
+    value: count * finance.averagePrice,
+    tone: "income",
+    count
+  }));
+  const modelIncome = groups.slice(0, 6);
+  const remaining = groups.slice(6);
+  if (remaining.length) {
+    const count = remaining.reduce((total, entry) => total + entry.count, 0);
+    const value = remaining.reduce((total, entry) => total + entry.value, 0);
+    modelIncome.push({ label: `Otros modelos · ${count} ${count === 1 ? "pedido" : "pedidos"}`, value, tone: "income" });
+  }
+  if (finance.otherIncome > 0) modelIncome.push({ label: "Otros ingresos facturados", value: finance.otherIncome, tone: "income" });
+  if (finance.margin < 0) modelIncome.push({ label: "Necesidad de caja", value: Math.abs(finance.margin), tone: "income" });
+  return modelIncome.filter((entry) => entry.value > 0);
+}
+
+function sankeyPositions(entries, start, end) {
+  if (entries.length <= 1) return entries.map((entry) => ({ ...entry, y: (start + end) / 2 }));
+  const step = (end - start) / (entries.length - 1);
+  return entries.map((entry, index) => ({ ...entry, y: start + index * step }));
+}
+
+function renderFinanceSankey(finance, incomeParts) {
   const root = $("#financeSankey");
   root.replaceChildren();
   if (!state.connected) {
@@ -1570,41 +1595,29 @@ function renderFinanceSankey(finance) {
     return;
   }
   const outputs = finance.outputs.filter((entry) => entry.value > 0);
-  const rows = Math.max(outputs.length, 4);
-  const rowGap = 68;
-  const height = Math.max(500, rows * rowGap + 112);
+  const parts = incomeParts.filter((entry) => entry.value > 0);
+  const rows = Math.max(outputs.length, parts.length, 4);
+  const height = Math.max(490, rows * 76 + 132);
   const svg = svgEl("svg", { viewBox: `0 0 1060 ${height}`, xmlns: SVG_NS, "aria-hidden": "true" });
-  const labels = [[36, "INGRESOS"], [425, "CAJA OPERATIVA"], [766, "DESTINO"]];
+  const labels = [[36, "INGRESOS POR MODELO"], [425, "INGRESOS OPERATIVOS"], [766, "DESTINO"]];
   labels.forEach(([x, content]) => { const node = svgEl("text", { x, y: 34, class: "sankey-column-title" }); node.textContent = content; svg.append(node); });
-  const top = 82;
-  const centerY = Math.round(height / 2 + 7);
-  // The node boxes and ribbons share the same maximum height. That preserves
-  // the Sankey relationship without a broad ribbon visually swallowing the
-  // income or margin card; exact amounts remain in the nodes and tooltips.
-  const scale = Math.min(54 / Math.max(finance.flowTotal, 1), 0.012);
-  const ribbonThickness = (value) => Math.max(3, Math.min(54, value * scale));
-  const outputStart = top + 24;
-  const ports = outputs.map((entry, index) => ({
-    ...entry,
-    y: outputStart + index * rowGap,
-    thickness: ribbonThickness(entry.value)
-  }));
-  const incomeParts = finance.incomes.filter((entry) => entry.value > 0);
-  const incomePorts = incomeParts.map((entry, index) => ({
-    ...entry,
-    y: centerY + (index - (incomeParts.length - 1) / 2) * rowGap,
-    thickness: ribbonThickness(entry.value)
-  }));
+  const centerY = Math.round(height / 2);
+  // The real values remain exact in each card. Limiting the maximum ribbon to
+  // 34 px keeps the margin and small operating costs legible together.
+  const scale = 34 / Math.max(finance.flowTotal, 1);
+  const ribbonThickness = (value) => Math.max(3.5, Math.min(34, value * scale));
+  const ports = sankeyPositions(outputs, 112, height - 62).map((entry) => ({ ...entry, thickness: ribbonThickness(entry.value) }));
+  const incomePorts = sankeyPositions(parts, 112, height - 62).map((entry) => ({ ...entry, thickness: ribbonThickness(entry.value) }));
   incomePorts.forEach((entry) => {
-    const inletY = centerY + (entry.y - centerY) * 0.18;
+    const inletY = centerY + (entry.y - centerY) * 0.12;
     const link = svgEl("path", { d: sankeyRibbon(276, entry.y, 425, inletY, entry.thickness), class: "sankey-link income-link" });
     const tooltip = document.createElementNS(SVG_NS, "title");
     tooltip.textContent = `${entry.label}: ${formatMoney(entry.value)}`;
     link.append(tooltip);
     svg.append(link);
   });
-  ports.forEach((entry, index) => {
-    const outletY = centerY + (index - (ports.length - 1) / 2) * 11;
+  ports.forEach((entry) => {
+    const outletY = centerY + (entry.y - centerY) * 0.12;
     const link = svgEl("path", { d: sankeyRibbon(635, outletY, 766, entry.y, entry.thickness), class: `sankey-link ${entry.tone}-link` });
     const tooltip = document.createElementNS(SVG_NS, "title");
     tooltip.textContent = `${entry.label}: ${formatMoney(entry.value)}`;
@@ -1612,7 +1625,7 @@ function renderFinanceSankey(finance) {
     svg.append(link);
   });
   incomePorts.forEach((entry) => addSankeyNode(svg, { x: 36, y: entry.y, width: 240, label: entry.label, value: entry.value, tone: "income" }));
-  addSankeyNode(svg, { x: 425, y: centerY, width: 210, height: 76, label: "Recursos operativos", value: finance.flowTotal, tone: "center" });
+  addSankeyNode(svg, { x: 425, y: centerY, width: 210, height: 76, label: "Ingresos operativos", value: finance.flowTotal, tone: "center" });
   ports.forEach((entry) => addSankeyNode(svg, { x: 766, y: entry.y, width: 258, label: entry.label, value: entry.value, tone: entry.tone }));
   root.append(svg);
 }
@@ -1631,7 +1644,7 @@ function renderFinance() {
     ? `${formatMoney(material.amount)} calculados sobre ${material.covered} de ${material.withMeasure} fichas con medida completa y material identificable. Incluye 10 % de merma; material aportado y reforma se contabilizan a 0 € de compra.`
     : "La estimación de materia prima se calculará al recibir los pedidos del año.";
   $("#financeFlowStatus").textContent = state.connected ? `${rows.length} pedidos reales · año ${$("#financeYear").value}` : "Actualizando pedidos";
-  renderFinanceSankey(finance);
+  renderFinanceSankey(finance, sankeyIncomeByModel(rows, finance));
   const values = Object.fromEntries(Object.keys(FINANCE_DEFAULTS).map((id) => [id, financeValue(id)]));
   localStorage.setItem(FINANCE_KEY, JSON.stringify(values));
 }
