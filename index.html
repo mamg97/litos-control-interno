@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Panel privado de control operativo y económico de LITOS." />
+    <meta name="description" content="Panel de control operativo y económico de LITOS." />
     <title>LITOS Control Interno</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -48,7 +48,8 @@ button { cursor: pointer; }
 .nav-icon { width: 1.35rem; color: #83beba; font-size: 1.1rem; text-align: center; }
 .sidebar-bottom { margin-top: auto; padding: 1.2rem .8rem .55rem; border-top: 1px solid rgba(255,255,255,.14); }
 .sidebar-bottom .eyebrow { color: #7ba7a5; }
-.source-name { margin: .3rem 0 .65rem; color: #e8f2f1; font-size: .83rem; font-weight: 600; }
+.source-name { margin: .3rem 0 .15rem; color: #e8f2f1; font-size: .83rem; font-weight: 600; }
+.source-note { margin: 0; color: #8ccac5; font-size: .72rem; font-weight: 700; }
 .text-link { padding: 0; border: 0; background: transparent; color: #8ccac5; font-size: .78rem; font-weight: 700; }
 
 .main-content { min-width: 0; }
@@ -99,6 +100,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
 .cnc-panel { display: grid; grid-template-columns: 1fr 1.15fr; gap: 2.5rem; margin-top: 1rem; padding: 1.55rem; background: #fffaf0; border-color: #f2d9ab; }.cnc-panel p:not(.eyebrow) { margin-bottom: 0; color: #70634d; font-size: .85rem; }.cnc-math { display: grid; grid-template-columns: repeat(3,1fr); gap: .65rem; align-items: stretch; }.cnc-math > div { display: flex; flex-direction: column; justify-content: center; padding: .8rem; border: 1px solid #eedbb7; border-radius: 10px; background: rgba(255,255,255,.56); }.cnc-math span { color: #806d4f; font-size: .7rem; }.cnc-math strong { margin: .2rem 0; color: #6e4d19; font-family: "DM Mono", monospace; font-size: 1.2rem; letter-spacing: -.06em; }.cnc-math small { color: #8d8067; font-size: .64rem; }.cnc-math .verdict { border-color: #dcbf8b; background: #fff4dd; }.cnc-math .verdict span { color: #aa6a17; font-weight: 800; }
 
 .data-layout { display: grid; grid-template-columns: minmax(330px,1.1fr) minmax(300px,.9fr); gap: 1rem; }.connection-panel, .settings-panel, .privacy-panel { padding: 1.55rem; }.connection-heading { display: flex; align-items: center; gap: .85rem; }.connection-heading h2, .settings-panel h2 { margin-bottom: 0; }.connection-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 11px; background: var(--teal-light); color: var(--teal); font-family: "DM Mono", monospace; font-size: 1.3rem; }.connection-panel > p { margin: 1.1rem 0; color: var(--ink-soft); font-size: .87rem; }.connection-status { display: grid; grid-template-columns: .55rem auto 1fr; align-items: center; gap: .48rem; padding: .75rem .85rem; border-radius: 9px; background: #f5f8f7; color: var(--ink); }.connection-status > span { width: .48rem; height: .48rem; border-radius: 50%; background: #b3bdbd; }.connection-status.connected > span { background: var(--green); }.connection-status b { font-size: .8rem; }.connection-status small { color: var(--ink-soft); font-size: .68rem; }.connection-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1rem; }.settings-panel { display: grid; align-content: start; gap: .75rem; }.settings-panel .eyebrow { margin-bottom: -.35rem; }.settings-panel label { gap: .27rem; }.settings-panel .button { justify-self: start; margin-top: .2rem; }
+.trace-panel { margin-top: 1rem; padding: 1.25rem; }.trace-table-wrap { margin-top: 1rem; overflow-x: auto; }.trace-table { width: 100%; min-width: 700px; border-collapse: collapse; font-size: .78rem; }.trace-table th { padding: .55rem .7rem; border-bottom: 1px solid var(--line); color: var(--ink-soft); font-family: "DM Mono", monospace; font-size: .64rem; font-weight: 500; letter-spacing: .06em; text-align: left; text-transform: uppercase; }.trace-table td { padding: .67rem .7rem; border-bottom: 1px solid #edf2f1; color: #345457; vertical-align: top; }.trace-table tbody tr:last-child td { border-bottom: 0; }.trace-table td:first-child, .trace-table td:nth-child(2), .trace-table td:last-child { color: var(--deep); font-family: "DM Mono", monospace; font-size: .73rem; }.trace-table .empty-state { color: var(--ink-soft); font-family: "Manrope", Arial, sans-serif; text-align: center; }
 .privacy-panel { margin-top: 1rem; background: #fbfcfc; }.privacy-rules { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.2rem; margin-top: 1rem; }.privacy-rules div { display: flex; gap: .65rem; }.privacy-rules span { display: grid; flex: 0 0 1.65rem; height: 1.65rem; place-items: center; border-radius: 6px; background: var(--teal-light); color: var(--teal); font-family: "DM Mono", monospace; font-size: .65rem; }.privacy-rules p { margin: 0; color: var(--ink-soft); font-size: .77rem; line-height: 1.55; }.privacy-rules strong { color: var(--ink); }
 
 .toast { position: fixed; z-index: 20; right: 1rem; bottom: 1rem; max-width: 360px; padding: .8rem 1rem; border-radius: 10px; background: var(--deep); box-shadow: var(--shadow); color: white; font-size: .8rem; opacity: 0; pointer-events: none; transform: translateY(8px); transition: opacity .2s, transform .2s; }.toast.visible { opacity: 1; transform: translateY(0); }
@@ -107,7 +109,6 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
 @media (max-width: 760px) { .app-shell { display: block; }.sidebar { position: fixed; z-index: 14; left: -270px; width: 254px; transition: left .2s; }.sidebar.open { left: 0; box-shadow: 25px 0 50px rgba(0,0,0,.25); }.topbar { height: 64px; padding: 0 1rem; }.mobile-menu { display: inline-grid; width: 33px; height: 33px; place-items: center; border: 0; border-radius: 7px; background: #e6efee; color: var(--deep); }.breadcrumb { flex: 1; margin-left: .4rem; }.private-badge { display: none; }.view { padding: 1.75rem 1rem 3rem; }.page-heading { display: grid; gap: 1rem; }.heading-date { align-self: start; }.kpi-grid, .production-metrics, .privacy-rules, .assumptions-form { grid-template-columns: 1fr; }.kpi-card { min-height: 132px; }.filter-row { width: 100%; }.filter-row label { flex: 1; min-width: 125px; }.canvas-wrap { height: 220px; }.cnc-math { grid-template-columns: 1fr; }.topbar-actions .button { padding: .45rem .6rem; font-size: .72rem; }.connection-status { grid-template-columns: .55rem 1fr; }.connection-status small { grid-column: 2; }.privacy-rules { gap: .8rem; } }
 
 </style>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
   </head>
   <body>
     <div class="app-shell">
@@ -138,7 +139,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
         <div class="sidebar-bottom">
           <p class="eyebrow">FUENTE MAESTRA</p>
           <p class="source-name">Google Sheets privado</p>
-          <button id="openSheetSide" class="text-link" type="button">Abrir libro maestro ↗</button>
+          <p class="source-note">Edición solo desde Drive</p>
         </div>
       </aside>
 
@@ -147,7 +148,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
           <button class="mobile-menu" id="mobileMenu" type="button" aria-label="Abrir navegación">☰</button>
           <div class="breadcrumb"><span>Control interno</span><span class="slash">/</span><strong id="viewTitle">Resumen</strong></div>
           <div class="topbar-actions">
-            <span class="private-badge"><span></span> Privado</span>
+            <span class="private-badge"><span></span> Datos reales</span>
             <button id="refreshData" class="button secondary" type="button">Actualizar datos</button>
           </div>
         </header>
@@ -157,9 +158,9 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
             <div>
               <p class="eyebrow">PANEL DE MANDO</p>
               <h1 id="summaryHeading">El taller, de un vistazo.</h1>
-              <p id="dataStatus" class="page-lead">El panel está vacío hasta que autorices la conexión al libro maestro.</p>
+              <p id="dataStatus" class="page-lead">Cargando el panel con datos operativos reales…</p>
             </div>
-            <div class="heading-date" id="lastUpdate">Acceso requerido</div>
+            <div class="heading-date" id="lastUpdate">Actualizando datos</div>
           </div>
 
           <div class="kpi-grid">
@@ -198,8 +199,8 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
             </article>
             <article class="panel insight-panel">
               <p class="eyebrow">LECTURA RÁPIDA</p>
-              <h2 id="mainInsightTitle">Conecta antes de analizar.</h2>
-              <p id="mainInsightText">Las frecuencias y medidas solo se calculan en el navegador autorizado, a partir del libro maestro privado.</p>
+              <h2 id="mainInsightTitle">Preparando el análisis.</h2>
+              <p id="mainInsightText">El panel carga automáticamente los datos operativos autorizados, sin pedir inicio de sesión.</p>
               <button class="button tertiary" type="button" data-view-target="production">Ver producción <span>→</span></button>
             </article>
           </div>
@@ -317,41 +318,44 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
         <section id="data" class="view" aria-labelledby="dataHeading">
           <div class="page-heading compact">
             <div>
-              <p class="eyebrow">DATOS Y CONEXIÓN</p>
-              <h1 id="dataHeading">Un único libro maestro. Un panel privado.</h1>
-              <p class="page-lead">El Sheet permanece como la fuente de verdad. LITOS Control Interno solo agrega y visualiza los datos que autorices.</p>
+              <p class="eyebrow">DATOS OPERATIVOS</p>
+              <h1 id="dataHeading">Datos reales. Consulta sin acceso.</h1>
+              <p class="page-lead">El libro maestro permanece privado y se edita desde Drive. Este panel se consulta sin iniciar sesión y se actualiza automáticamente.</p>
             </div>
           </div>
 
           <div class="data-layout">
             <article class="panel connection-panel">
-              <div class="connection-heading"><span class="connection-icon">⌘</span><div><p class="eyebrow">GOOGLE SHEETS</p><h2>Conectar el libro maestro</h2></div></div>
-              <p>La conexión usa autorización de Google en tu navegador. El repositorio no incluye datos de pedidos ni nombres de clientes.</p>
-              <div class="connection-status" id="connectionStatus"><span></span><b>Sin conectar</b><small>No hay datos cargados en este navegador.</small></div>
-              <div class="connection-actions">
-                <button id="connectGoogle" class="button primary" type="button">Conectar con Google</button>
-                <button id="openSheet" class="button secondary" type="button">Editar libro maestro ↗</button>
-              </div>
+              <div class="connection-heading"><span class="connection-icon">⌘</span><div><p class="eyebrow">GOOGLE SHEETS</p><h2>Consulta operativa</h2></div></div>
+              <p>La web recibe datos reales de trabajo sin pedir inicio de sesión. No puede ver ni modificar el libro maestro.</p>
+              <div class="connection-status" id="connectionStatus"><span></span><b>Actualizando datos</b><small>El panel consultará los datos en unos segundos.</small></div>
             </article>
 
             <article class="panel settings-panel">
-              <p class="eyebrow">CONFIGURACIÓN PRIVADA</p>
-              <h2>Datos de conexión</h2>
-              <label>ID del libro maestro<input id="spreadsheetId" type="text" value="" placeholder="Pega el ID del Google Sheet privado" autocomplete="off" /></label>
-              <label>Pestaña de pedidos<input id="sheetName" type="text" value="Pedidos" /></label>
-              <label>Client ID de Google<input id="googleClientId" type="text" placeholder="Pega aquí el Client ID de Google Cloud" autocomplete="off" /></label>
-              <button id="saveSettings" class="button tertiary" type="button">Guardar configuración local</button>
-              <p class="form-note">Solo se guarda en este navegador. El ID del libro y el Client ID no se incluyen en el repositorio ni se cargan hasta que los guardes aquí.</p>
+              <p class="eyebrow">ALCANCE DE LOS DATOS</p>
+              <h2>Qué se muestra</h2>
+              <p class="form-note">Cada registro conserva el ID de trabajo, la fecha, el modelo, el material y las medidas reales. Las alturas terminadas descuentan 4 cm de escalón y tapa.</p>
+              <p class="form-note">No se publican nombres, inscripciones, fotografías, archivos, especificaciones libres ni el enlace o ID del libro maestro.</p>
             </article>
           </div>
+
+          <article class="panel trace-panel">
+            <div class="panel-head"><div><p class="eyebrow">TRAZABILIDAD</p><h2>Últimos pedidos registrados</h2></div><span class="chart-note">ID y fecha reales</span></div>
+            <div class="trace-table-wrap">
+              <table class="trace-table">
+                <thead><tr><th>ID trabajo</th><th>Fecha</th><th>Modelo</th><th>Material</th><th>Medida terminada</th></tr></thead>
+                <tbody id="recentOrders"><tr><td colspan="5" class="empty-state">Actualizando datos operativos…</td></tr></tbody>
+              </table>
+            </div>
+          </article>
 
           <article class="panel privacy-panel">
             <p class="eyebrow">PRIVACIDAD</p>
             <h2>Reglas de este proyecto</h2>
             <div class="privacy-rules">
               <div><span>01</span><p><strong>LITOS es el único nombre visible.</strong> El nombre comercial real no aparece en la web, el repositorio ni la URL.</p></div>
-              <div><span>02</span><p><strong>El Sheet no se publica.</strong> El panel se conecta con autorización del propietario, sin enlaces públicos de datos.</p></div>
-              <div><span>03</span><p><strong>Los cambios se hacen en el libro maestro.</strong> El panel se sincroniza cada minuto mientras esté abierto, o al instante con «Actualizar datos».</p></div>
+              <div><span>02</span><p><strong>El Sheet no se publica.</strong> Permanece privado; el panel solo recibe un conjunto limitado de campos operativos.</p></div>
+              <div><span>03</span><p><strong>Los cambios se hacen en el libro maestro.</strong> El panel se sincroniza cada minuto o al pulsar «Actualizar datos».</p></div>
             </div>
           </article>
         </section>
@@ -359,9 +363,12 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
     </div>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <script type="module">
-const STORAGE_KEY = "litos-control-settings-v1";
 const ASSUMPTIONS_KEY = "litos-control-assumptions-v1";
 const AUTO_REFRESH_MS = 60 * 1000;
+// This URL is added only after the Apps Script feed is deployed. The feed is
+// anonymous by design, but it contains only the whitelisted operational data
+// defined in apps-script/Code.gs — never the Sheet itself or client details.
+const DATA_FEED_URL = "https://script.google.com/macros/s/AKfycbyhzZOwkeSuBLskOnjtPNUs1yElq6dcNb4UXmNAA0Bp38qBfFX7DEPi8rNkuOPnT4DlHw/exec";
 
 const emptySummary = {
   total: 0,
@@ -380,9 +387,8 @@ const state = {
   rows: [],
   summary: emptySummary,
   connected: false,
-  tokenClient: null,
-  token: null,
-  settings: loadSettings(),
+  generatedAt: null,
+  loading: false,
   activeView: "summary"
 };
 
@@ -390,29 +396,6 @@ const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 const formatInt = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 0 });
 const formatMoney = (value) => `${formatInt.format(Math.round(value))} €`;
-
-function loadSettings() {
-  try {
-    return {
-      spreadsheetId: "",
-      sheetName: "Pedidos",
-      googleClientId: "",
-      ...JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}")
-    };
-  } catch {
-    return { spreadsheetId: "", sheetName: "Pedidos", googleClientId: "" };
-  }
-}
-
-function saveSettings() {
-  state.settings = {
-    spreadsheetId: $("#spreadsheetId").value.trim(),
-    sheetName: $("#sheetName").value.trim() || "Pedidos",
-    googleClientId: $("#googleClientId").value.trim()
-  };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.settings));
-  showToast("Configuración guardada en este navegador.");
-}
 
 function showToast(message) {
   const toast = $("#toast");
@@ -559,6 +542,27 @@ function mapRows(values) {
     .filter((row) => text(row.Pedido));
 }
 
+// The public feed deliberately has a narrow, fixed schema. Mapping it back to
+// the dashboard's internal field names lets the analysis stay in one place
+// without ever loading names, memorial text, attachments or Sheet metadata.
+function mapPublicRows(records) {
+  if (!Array.isArray(records)) return [];
+  return records.map((record) => ({
+    Pedido: text(record.id),
+    "Fecha ficha": text(record.date),
+    Modelo: text(record.model),
+    Material: text(record.material),
+    "Ancho total (cm)": record.width ?? "",
+    "Alto total (cm)": record.height ?? "",
+    "Grosor (cm)": record.thickness ?? "",
+    "Ancho base (cm)": record.baseWidth ?? "",
+    "Alto base/croquis (cm)": record.baseHeight ?? "",
+    "Ancho superior/remate (cm)": record.topWidth ?? "",
+    "Cotas/escalones (cm)": text(record.stepMeasures),
+    "Voleo (cm)": record.voleo ?? ""
+  })).filter((row) => row.Pedido);
+}
+
 function makeSummary(rows) {
   const rowsWithDate = rows.map((row) => ({ ...row, _date: parseDate(row["Fecha ficha"]) })).filter((row) => row._date);
   const latestYear = rowsWithDate.length ? Math.max(...rowsWithDate.map((row) => row._date.getFullYear())) : new Date().getFullYear();
@@ -625,7 +629,7 @@ function renderRank(container, values, label) {
   if (!values.length) {
     const empty = document.createElement("p");
     empty.className = "empty-state";
-    empty.textContent = "Conecta el libro maestro para ver este análisis.";
+    empty.textContent = "Los datos operativos se están actualizando.";
     container.append(empty);
     return;
   }
@@ -706,19 +710,23 @@ function renderSummary() {
   const connected = state.connected;
   $("#totalOrders").textContent = connected ? formatInt.format(s.total) : "—";
   $("#yearOrders").textContent = connected ? formatInt.format(s.yearOrders) : "—";
-  $("#yearOrdersFoot").textContent = connected && s.year ? `Año ${s.year}` : "Pendiente de conexión";
+  $("#yearOrdersFoot").textContent = connected && s.year ? `Año ${s.year}` : "Pendiente de actualización";
   $("#repeatShare").innerHTML = connected ? `${s.repeatShare}<span>%</span>` : "—";
   $("#measuredOrders").textContent = connected ? formatInt.format(s.measured) : "—";
   $("#distinctSizes").textContent = connected ? formatInt.format(s.distinctSizes) : "—";
   const [topSize, topSizeCount] = s.sizes[0] || ["—", 0];
   $("#topSize").textContent = topSize;
   $("#topSize").nextElementSibling.textContent = connected ? `${topSizeCount} pedidos` : "Medida terminada";
-  $("#orderPeriod").textContent = connected ? "Libro maestro conectado" : "Sin datos cargados";
-  $("#lastUpdate").textContent = connected ? `Actualizado ${new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeStyle: "short" }).format(new Date())}` : "Acceso requerido";
-  $("#mainInsightTitle").textContent = connected ? "Datos listos para planificar." : "Conecta antes de analizar.";
+  $("#orderPeriod").textContent = connected ? "Datos reales recibidos" : "Sin datos cargados";
+  const generated = state.generatedAt ? new Date(state.generatedAt) : null;
+  const updateDate = generated && !Number.isNaN(generated.valueOf()) ? generated : null;
+  $("#lastUpdate").textContent = connected
+    ? `Actualizado ${new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeStyle: "short" }).format(updateDate || new Date())}`
+    : "Actualizando datos";
+  $("#mainInsightTitle").textContent = connected ? "Datos listos para planificar." : "Preparando el análisis.";
   $("#mainInsightText").textContent = connected
     ? `${formatInt.format(s.measured)} fichas con medidas completas permiten identificar formatos repetibles, lotes de corte y compras previsibles.`
-    : "Las frecuencias y medidas solo se calculan en el navegador autorizado, a partir del libro maestro privado.";
+    : "El panel cargará automáticamente los datos operativos autorizados, sin pedir inicio de sesión.";
   drawOrdersChart(s.months);
   drawModelsChart(s.models);
 }
@@ -732,6 +740,48 @@ function renderProduction() {
   renderRank($("#modelsTable"), s.models || [], "pedidos");
   renderRank($("#materialsTable"), s.materials || [], "pedidos");
   renderRank($("#sizesTable"), s.sizes || [], "pedidos");
+}
+
+function formatOperationalDate(value) {
+  const date = parseDate(value);
+  return date ? new Intl.DateTimeFormat("es-ES", { dateStyle: "short" }).format(date) : text(value) || "—";
+}
+
+function renderRecentOrders() {
+  const table = $("#recentOrders");
+  if (!table) return;
+  table.replaceChildren();
+  if (!state.connected) {
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = 5;
+    cell.className = "empty-state";
+    cell.textContent = "Actualizando datos operativos…";
+    row.append(cell);
+    table.append(row);
+    return;
+  }
+  const rows = [...state.rows].sort((a, b) => {
+    const left = parseDate(a["Fecha ficha"])?.valueOf() || 0;
+    const right = parseDate(b["Fecha ficha"])?.valueOf() || 0;
+    return right - left || text(b.Pedido).localeCompare(text(a.Pedido), "es", { numeric: true });
+  }).slice(0, 12);
+  rows.forEach((order) => {
+    const row = document.createElement("tr");
+    const values = [
+      order.Pedido,
+      formatOperationalDate(order["Fecha ficha"]),
+      familyFor(order.Modelo),
+      materialFor(order),
+      sizeFor(order) || "Sin medida completa"
+    ];
+    values.forEach((value) => {
+      const cell = document.createElement("td");
+      cell.textContent = value;
+      row.append(cell);
+    });
+    table.append(row);
+  });
 }
 
 function setupFilters() {
@@ -795,64 +845,86 @@ function updateConnectionUI() {
   const status = $("#connectionStatus");
   const dataStatus = $("#dataStatus");
   status.classList.toggle("connected", state.connected);
-  status.querySelector("b").textContent = state.connected ? "Conectado al libro maestro" : "Sin conectar";
+  status.querySelector("b").textContent = state.connected ? "Datos operativos actualizados" : "Actualizando datos";
   status.querySelector("small").textContent = state.connected
-    ? "Actualización automática cada minuto mientras esta pestaña esté abierta."
-    : "No hay datos cargados en este navegador.";
-  dataStatus.textContent = state.connected ? "Datos privados recibidos del libro maestro. Se sincronizan cada minuto y puedes actualizar al instante cuando cambies una ficha." : "El panel está vacío hasta que autorices la conexión al libro maestro.";
+    ? "Consulta sin inicio de sesión. Actualización automática cada minuto."
+    : "El panel consultará los datos en unos segundos.";
+  dataStatus.textContent = state.connected
+    ? "Datos operativos reales actualizados desde el libro maestro. El panel se sincroniza cada minuto, sin inicio de sesión para consultar."
+    : "Cargando el panel con datos operativos reales…";
 }
 
-async function requestGoogleConnection() {
-  if (!state.settings.spreadsheetId) {
-    switchView("data");
-    showToast("Introduce el ID del libro maestro y guárdalo antes de conectar.");
-    return;
-  }
-  if (!state.settings.googleClientId) {
-    switchView("data");
-    showToast("Introduce primero el Client ID de Google Cloud y guárdalo.");
-    return;
-  }
-  if (!window.google?.accounts?.oauth2) {
-    showToast("El acceso de Google todavía se está cargando. Inténtalo de nuevo en unos segundos.");
-    return;
-  }
-  state.tokenClient = window.google.accounts.oauth2.initTokenClient({
-    client_id: state.settings.googleClientId,
-    scope: "https://www.googleapis.com/auth/spreadsheets.readonly",
-    callback: async (response) => {
-      if (response.error) { showToast("Google no autorizó la conexión al libro maestro."); return; }
-      state.token = response.access_token;
-      await refreshFromSheet();
-    }
-  });
-  // Google asks for consent on the first connection. Omitting a forced consent
-  // prompt prevents asking again on every manual refresh during later sessions.
-  state.tokenClient.requestAccessToken({ prompt: "" });
+function feedConfigured() {
+  return DATA_FEED_URL && !DATA_FEED_URL.startsWith("__");
 }
 
-async function refreshFromSheet() {
-  if (!state.token) { requestGoogleConnection(); return; }
-  const range = `${state.settings.sheetName}!A:AZ`;
-  const endpoint = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(state.settings.spreadsheetId)}/values/${encodeURIComponent(range)}?majorDimension=ROWS`;
+function refreshPublicFeed() {
+  if (state.loading) return;
+  if (!feedConfigured()) {
+    state.connected = false;
+    updateConnectionUI();
+    renderSummary();
+    renderProduction();
+    renderRecentOrders();
+    showToast("El servicio de consulta todavía se está activando.");
+    return;
+  }
+
+  state.loading = true;
   $("#refreshData").textContent = "Actualizando…";
-  try {
-    const response = await fetch(endpoint, { headers: { Authorization: `Bearer ${state.token}` } });
-    if (!response.ok) {
-      if (response.status === 401) state.token = null;
-      throw new Error(response.status === 401 ? "la sesión de Google ha caducado; vuelve a conectar" : `Google Sheets respondió ${response.status}`);
-    }
-    const payload = await response.json();
-    state.rows = mapRows(payload.values || []);
-    state.summary = makeSummary(state.rows);
-    state.connected = true;
-    setupFilters(); renderSummary(); renderProduction(); updateConnectionUI();
-    showToast(`${formatInt.format(state.rows.length)} fichas actualizadas desde el libro maestro.`);
-  } catch (error) {
-    state.connected = false; updateConnectionUI(); showToast(`No se pudieron actualizar los datos: ${error.message}`);
-  } finally {
+  const callbackName = `__litosPublicFeed${Date.now()}${Math.random().toString(36).slice(2)}`;
+  const script = document.createElement("script");
+  let settled = false;
+  let timer;
+  const cleanUp = () => {
+    window.clearTimeout(timer);
+    script.remove();
+    delete window[callbackName];
+    state.loading = false;
     $("#refreshData").textContent = "Actualizar datos";
-  }
+  };
+  const fail = () => {
+    if (settled) return;
+    settled = true;
+    cleanUp();
+    state.connected = false;
+    updateConnectionUI();
+    renderSummary();
+    renderProduction();
+    renderRecentOrders();
+    showToast("No se pudieron actualizar los datos. Vuelve a intentarlo en unos segundos.");
+  };
+  window[callbackName] = (payload) => {
+    if (settled) return;
+    settled = true;
+    try {
+      if (!payload || !Array.isArray(payload.records)) throw new Error("Respuesta no válida");
+      state.rows = mapPublicRows(payload.records);
+      state.summary = makeSummary(state.rows);
+      state.generatedAt = text(payload.generatedAt) || new Date().toISOString();
+      state.connected = true;
+      setupFilters();
+      renderSummary();
+      renderProduction();
+      renderRecentOrders();
+      updateConnectionUI();
+      showToast(`${formatInt.format(state.rows.length)} fichas actualizadas.`);
+    } catch {
+      state.connected = false;
+      updateConnectionUI();
+      renderSummary();
+      renderProduction();
+      renderRecentOrders();
+      showToast("El servicio devolvió datos no válidos.");
+    } finally {
+      cleanUp();
+    }
+  };
+  script.onerror = fail;
+  timer = window.setTimeout(fail, 12000);
+  const separator = DATA_FEED_URL.includes("?") ? "&" : "?";
+  script.src = `${DATA_FEED_URL}${separator}callback=${encodeURIComponent(callbackName)}&v=${Date.now()}`;
+  document.head.append(script);
 }
 
 function switchView(view) {
@@ -865,31 +937,18 @@ function switchView(view) {
   if (view === "production") requestAnimationFrame(renderProduction);
 }
 
-function openMasterSheet() {
-  if (!state.settings.spreadsheetId) {
-    switchView("data");
-    showToast("Guarda primero el ID del libro maestro en este navegador.");
-    return;
-  }
-  window.open(`https://docs.google.com/spreadsheets/d/${encodeURIComponent(state.settings.spreadsheetId)}/edit`, "_blank", "noopener,noreferrer");
-}
-
 function init() {
-  $("#spreadsheetId").value = state.settings.spreadsheetId;
-  $("#sheetName").value = state.settings.sheetName;
-  $("#googleClientId").value = state.settings.googleClientId;
   updateConnectionUI(); setupFilters(); renderSummary(); renderProduction(); loadAssumptions();
+  renderRecentOrders();
   $$("[data-view-target]").forEach((button) => button.addEventListener("click", () => switchView(button.dataset.viewTarget)));
   $("#mobileMenu").addEventListener("click", () => $(".sidebar").classList.toggle("open"));
-  $("#openSheet").addEventListener("click", openMasterSheet); $("#openSheetSide").addEventListener("click", openMasterSheet);
-  $("#saveSettings").addEventListener("click", saveSettings);
-  $("#connectGoogle").addEventListener("click", requestGoogleConnection);
-  $("#refreshData").addEventListener("click", refreshFromSheet);
+  $("#refreshData").addEventListener("click", refreshPublicFeed);
   $("#yearFilter").addEventListener("change", renderProduction); $("#modelFilter").addEventListener("change", renderProduction);
   ["#assumptionOrders", "#assumptionPrice", "#assumptionProcurement", "#assumptionExtraJobs", "#assumptionContribution", "#assumptionRework", "#assumptionCncCapacity", "#assumptionCncInvestment", "#assumptionCncPayback"].forEach((selector) => $(selector).addEventListener("input", updateBenefit));
   $("#resetAssumptions").addEventListener("click", resetAssumptions);
-  window.setInterval(() => { if (state.token) refreshFromSheet(); }, AUTO_REFRESH_MS);
+  window.setInterval(refreshPublicFeed, AUTO_REFRESH_MS);
   window.addEventListener("resize", () => { if (state.activeView === "summary") renderSummary(); });
+  refreshPublicFeed();
 }
 
 init();
