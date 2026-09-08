@@ -626,7 +626,12 @@ const state = {
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 const formatInt = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 0 });
-const formatMoney = (value) => `${formatInt.format(Math.round(value))} €`;
+const formatMoney = (value) => {
+  const rounded = Math.round(Number(value) || 0);
+  const sign = rounded < 0 ? "−" : "";
+  const digits = String(Math.abs(rounded)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${sign}${digits} €`;
+};
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 const FINANCE_DEFAULTS = Object.freeze({
