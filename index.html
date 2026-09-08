@@ -78,7 +78,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
 .button.tertiary { padding-left: 0; border-color: transparent; background: transparent; color: var(--teal); }
 .button.tertiary span { font-size: 1rem; }
 
-.kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 1rem; margin-bottom: 1rem; }
+.kpi-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1rem; margin-bottom: 1rem; }
 .kpi-card { min-height: 156px; padding: 1.16rem 1.22rem 1rem; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); box-shadow: 0 2px 4px rgba(24,58,59,.015); overflow: hidden; position: relative; }
 .kpi-card::after { position: absolute; right: 0; bottom: 0; left: 0; height: 4px; content: ""; background: var(--teal); }
 .kpi-card.accent-amber::after { background: var(--amber); }.kpi-card.accent-green::after { background: var(--green); }.kpi-card.accent-lilac::after { background: var(--lilac); }
@@ -86,7 +86,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
 .kpi-value { margin-top: .7rem; color: var(--deep); font-family: "DM Mono", monospace; font-size: 2rem; font-weight: 500; letter-spacing: -.08em; }.kpi-value span { margin-left: .2rem; font-size: 1rem; letter-spacing: -.04em; }
 .kpi-foot { margin-top: .3rem; color: var(--ink-soft); font-size: .72rem; }
 
-.dashboard-grid { display: grid; gap: 1rem; margin-bottom: 1rem; }.overview-grid { grid-template-columns: minmax(0, 1.75fr) minmax(260px, .75fr); }.bottom-grid { grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr); }
+.dashboard-grid { display: grid; gap: 1rem; margin-bottom: 1rem; }.overview-grid { grid-template-columns: minmax(0, 1.75fr) minmax(260px, .75fr); }.bottom-grid { grid-template-columns: minmax(0, 1fr); }
 .panel { border: 1px solid var(--line); border-radius: 14px; background: var(--panel); box-shadow: 0 2px 4px rgba(24,58,59,.015); }
 .chart-panel { padding: 1.35rem; }.panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }.panel-head h2 { margin-bottom: 0; }.chart-note { color: var(--ink-soft); font-size: .7rem; white-space: nowrap; }.canvas-wrap { height: 254px; margin-top: 1.1rem; position: relative; }.canvas-wrap.small { height: 222px; }.canvas-wrap canvas { width: 100%; height: 100%; }
 .insight-panel { display: flex; min-height: 318px; flex-direction: column; justify-content: center; padding: 2rem; background: linear-gradient(160deg, var(--deep), #164c50); color: #e9f7f5; }.insight-panel .eyebrow { color: #91d4ce; }.insight-panel h2 { max-width: 260px; color: white; font-size: 1.45rem; }.insight-panel p:not(.eyebrow) { max-width: 300px; color: #b9d5d2; font-size: .88rem; }.insight-panel .button { margin-top: .75rem; align-self: flex-start; color: #a8e4df; }
@@ -100,14 +100,16 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
 .profit-layout { display: grid; grid-template-columns: minmax(300px,.92fr) minmax(390px,1.08fr); gap: 1rem; }.assumptions-panel, .profit-result { padding: 1.45rem; }.assumptions-form { display: grid; grid-template-columns: 1fr 1fr; gap: .85rem; margin-top: 1.2rem; }.form-note { margin: 1rem 0 0; color: var(--ink-soft); font-size: .71rem; line-height: 1.55; }.profit-result { color: white; background: linear-gradient(145deg, #11373b, #155a58); }.profit-result .eyebrow { color: #92cec8; }.result-number { margin-top: .8rem; color: white; font-family: "DM Mono", monospace; font-size: clamp(2.4rem,5vw,3.8rem); letter-spacing: -.1em; }.result-label { max-width: 310px; margin: 0 0 1.3rem; color: #b4d0cd; font-size: .78rem; }.profit-bars { display: grid; gap: .7rem; }.profit-bars > div { display: grid; grid-template-columns: 1fr auto; column-gap: 1rem; color: #d8eae8; font-size: .75rem; }.profit-bars strong { color: white; font-family: "DM Mono", monospace; font-size: .78rem; font-weight: 500; }.profit-bars i { grid-column: 1 / -1; height: 5px; margin-top: .3rem; border-radius: 99px; background: rgba(255,255,255,.16); overflow: hidden; }.profit-bars b { display: block; height: 100%; border-radius: inherit; background: #9bd8d2; }.ten-year { display: grid; grid-template-columns: 1fr auto; gap: .2rem 1rem; margin-top: 1.35rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,.22); color: #b8d1ce; font-size: .75rem; }.ten-year strong { color: white; font-family: "DM Mono", monospace; font-size: 1.05rem; }.ten-year small { grid-column: 1 / -1; color: #8eb8b4; }
 .cnc-panel { display: grid; grid-template-columns: 1fr 1.15fr; gap: 2.5rem; margin-top: 1rem; padding: 1.55rem; background: #fffaf0; border-color: #f2d9ab; }.cnc-panel p:not(.eyebrow) { margin-bottom: 0; color: #70634d; font-size: .85rem; }.cnc-math { display: grid; grid-template-columns: repeat(3,1fr); gap: .65rem; align-items: stretch; }.cnc-math > div { display: flex; flex-direction: column; justify-content: center; padding: .8rem; border: 1px solid #eedbb7; border-radius: 10px; background: rgba(255,255,255,.56); }.cnc-math span { color: #806d4f; font-size: .7rem; }.cnc-math strong { margin: .2rem 0; color: #6e4d19; font-family: "DM Mono", monospace; font-size: 1.2rem; letter-spacing: -.06em; }.cnc-math small { color: #8d8067; font-size: .64rem; }.cnc-math .verdict { border-color: #dcbf8b; background: #fff4dd; }.cnc-math .verdict span { color: #aa6a17; font-weight: 800; }
 
+.strategy-grid { display: grid; grid-template-columns: minmax(360px,1.15fr) minmax(310px,.85fr); gap: 1rem; margin-bottom: 1rem; }.strategy-intro, .strategy-inputs { padding: 1.55rem; }.strategy-intro { background: linear-gradient(145deg, #eff9f7, #fbfcf8); }.strategy-intro h2 { max-width: 540px; margin-bottom: .65rem; font-size: 1.55rem; }.strategy-intro > p:not(.eyebrow) { max-width: 650px; margin: 0; color: var(--ink-soft); font-size: .85rem; line-height: 1.65; }.strategy-roadmap { display: grid; grid-template-columns: repeat(3,1fr); gap: .85rem; margin-top: 1.35rem; }.strategy-roadmap div { display: grid; grid-template-columns: 1.55rem 1fr; gap: .5rem; align-items: start; }.strategy-roadmap span { display: grid; width: 1.55rem; height: 1.55rem; place-items: center; border-radius: 6px; background: #ccebe7; color: var(--teal); font-family: "DM Mono", monospace; font-size: .65rem; }.strategy-roadmap p { margin: 0; color: var(--ink-soft); font-size: .73rem; line-height: 1.5; }.strategy-roadmap strong { color: var(--ink); }.strategy-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-bottom: 1rem; }.strategy-card { min-height: 185px; padding: 1.35rem; }.strategy-card h2 { margin-bottom: .5rem; font-size: 1rem; }.strategy-card p:not(.eyebrow) { margin: 0; color: var(--ink-soft); font-size: .78rem; line-height: 1.58; }.strategy-decision-grid { grid-template-columns: minmax(340px,.75fr) minmax(430px,1.25fr); }.strategy-decision-grid .cnc-panel { margin-top: 0; }.strategy-inputs .assumptions-form { grid-template-columns: 1fr; margin-top: 1rem; }.strategy-inputs .form-note { margin-top: .85rem; }
+
 .data-layout { display: grid; grid-template-columns: minmax(330px,1.1fr) minmax(300px,.9fr); gap: 1rem; }.connection-panel, .settings-panel, .privacy-panel { padding: 1.55rem; }.connection-heading { display: flex; align-items: center; gap: .85rem; }.connection-heading h2, .settings-panel h2 { margin-bottom: 0; }.connection-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 11px; background: var(--teal-light); color: var(--teal); font-family: "DM Mono", monospace; font-size: 1.3rem; }.connection-panel > p { margin: 1.1rem 0; color: var(--ink-soft); font-size: .87rem; }.connection-status { display: grid; grid-template-columns: .55rem auto 1fr; align-items: center; gap: .48rem; padding: .75rem .85rem; border-radius: 9px; background: #f5f8f7; color: var(--ink); }.connection-status > span { width: .48rem; height: .48rem; border-radius: 50%; background: #b3bdbd; }.connection-status.connected > span { background: var(--green); }.connection-status b { font-size: .8rem; }.connection-status small { color: var(--ink-soft); font-size: .68rem; }.connection-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1rem; }.settings-panel { display: grid; align-content: start; gap: .75rem; }.settings-panel .eyebrow { margin-bottom: -.35rem; }.settings-panel label { gap: .27rem; }.settings-panel .button { justify-self: start; margin-top: .2rem; }
 .trace-panel { margin-top: 1rem; padding: 1.25rem; }.trace-table-wrap { margin-top: 1rem; overflow-x: auto; }.trace-table { width: 100%; min-width: 700px; border-collapse: collapse; font-size: .78rem; }.trace-table th { padding: .55rem .7rem; border-bottom: 1px solid var(--line); color: var(--ink-soft); font-family: "DM Mono", monospace; font-size: .64rem; font-weight: 500; letter-spacing: .06em; text-align: left; text-transform: uppercase; }.trace-table td { padding: .67rem .7rem; border-bottom: 1px solid #edf2f1; color: #345457; vertical-align: top; }.trace-table tbody tr:last-child td { border-bottom: 0; }.trace-table td:first-child, .trace-table td:nth-child(2), .trace-table td:last-child { color: var(--deep); font-family: "DM Mono", monospace; font-size: .73rem; }.trace-table .empty-state { color: var(--ink-soft); font-family: "Manrope", Arial, sans-serif; text-align: center; }
 .privacy-panel { margin-top: 1rem; background: #fbfcfc; }.privacy-rules { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.2rem; margin-top: 1rem; }.privacy-rules div { display: flex; gap: .65rem; }.privacy-rules span { display: grid; flex: 0 0 1.65rem; height: 1.65rem; place-items: center; border-radius: 6px; background: var(--teal-light); color: var(--teal); font-family: "DM Mono", monospace; font-size: .65rem; }.privacy-rules p { margin: 0; color: var(--ink-soft); font-size: .77rem; line-height: 1.55; }.privacy-rules strong { color: var(--ink); }
 
 .toast { position: fixed; z-index: 20; right: 1rem; bottom: 1rem; max-width: 360px; padding: .8rem 1rem; border-radius: 10px; background: var(--deep); box-shadow: var(--shadow); color: white; font-size: .8rem; opacity: 0; pointer-events: none; transform: translateY(8px); transition: opacity .2s, transform .2s; }.toast.visible { opacity: 1; transform: translateY(0); }
 
-@media (max-width: 1120px) { .kpi-grid { grid-template-columns: repeat(2,1fr); }.overview-grid, .bottom-grid, .profit-layout, .data-layout, .cnc-panel { grid-template-columns: 1fr; }.insight-panel { min-height: 230px; }.cnc-math { min-height: 155px; }.production-grid { grid-template-columns: 1fr; }.wide-table { grid-column: auto; } }
-@media (max-width: 760px) { .app-shell { display: block; }.sidebar { position: fixed; z-index: 14; left: -270px; width: 254px; transition: left .2s; }.sidebar.open { left: 0; box-shadow: 25px 0 50px rgba(0,0,0,.25); }.topbar { height: 64px; padding: 0 1rem; }.mobile-menu { display: inline-grid; width: 33px; height: 33px; place-items: center; border: 0; border-radius: 7px; background: #e6efee; color: var(--deep); }.breadcrumb { flex: 1; margin-left: .4rem; }.private-badge { display: none; }.view { padding: 1.75rem 1rem 3rem; }.page-heading { display: grid; gap: 1rem; }.heading-date { align-self: start; }.kpi-grid, .production-metrics, .privacy-rules, .assumptions-form { grid-template-columns: 1fr; }.kpi-card { min-height: 132px; }.filter-row { width: 100%; }.filter-row label { flex: 1; min-width: 125px; }.canvas-wrap { height: 220px; }.cnc-math { grid-template-columns: 1fr; }.topbar-actions .button { padding: .45rem .6rem; font-size: .72rem; }.connection-status { grid-template-columns: .55rem 1fr; }.connection-status small { grid-column: 2; }.privacy-rules { gap: .8rem; } }
+@media (max-width: 1120px) { .kpi-grid { grid-template-columns: repeat(2,1fr); }.overview-grid, .bottom-grid, .profit-layout, .data-layout, .cnc-panel, .strategy-grid, .strategy-decision-grid { grid-template-columns: 1fr; }.insight-panel { min-height: 230px; }.cnc-math { min-height: 155px; }.production-grid { grid-template-columns: 1fr; }.wide-table { grid-column: auto; } }
+@media (max-width: 760px) { .app-shell { display: block; }.sidebar { position: fixed; z-index: 14; left: -270px; width: 254px; transition: left .2s; }.sidebar.open { left: 0; box-shadow: 25px 0 50px rgba(0,0,0,.25); }.topbar { height: 64px; padding: 0 1rem; }.mobile-menu { display: inline-grid; width: 33px; height: 33px; place-items: center; border: 0; border-radius: 7px; background: #e6efee; color: var(--deep); }.breadcrumb { flex: 1; margin-left: .4rem; }.private-badge { display: none; }.view { padding: 1.75rem 1rem 3rem; }.page-heading { display: grid; gap: 1rem; }.heading-date { align-self: start; }.kpi-grid, .production-metrics, .privacy-rules, .assumptions-form, .strategy-cards, .strategy-roadmap { grid-template-columns: 1fr; }.kpi-card { min-height: 132px; }.filter-row { width: 100%; }.filter-row label { flex: 1; min-width: 125px; }.canvas-wrap { height: 220px; }.cnc-math { grid-template-columns: 1fr; }.topbar-actions .button { padding: .45rem .6rem; font-size: .72rem; }.connection-status { grid-template-columns: .55rem 1fr; }.connection-status small { grid-column: 2; }.privacy-rules { gap: .8rem; } }
 
 </style>
   </head>
@@ -130,7 +132,10 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
             <span class="nav-icon">◌</span> Producción
           </button>
           <button class="nav-link" type="button" data-view-target="profit">
-            <span class="nav-icon">↗</span> Rentabilidad
+            <span class="nav-icon">↗</span> Estimaciones
+          </button>
+          <button class="nav-link" type="button" data-view-target="strategy">
+            <span class="nav-icon">◇</span> Estrategia
           </button>
           <button class="nav-link" type="button" data-view-target="data">
             <span class="nav-icon">⌘</span> Datos y conexión
@@ -180,11 +185,6 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
               <div class="kpi-value" id="repeatShare">—</div>
               <div class="kpi-foot">Tapa nicho + Reforma</div>
             </article>
-            <article class="kpi-card accent-lilac">
-              <div class="kpi-label">Mejora anual estimada</div>
-              <div class="kpi-value">—</div>
-              <div class="kpi-foot">Introduce supuestos privados</div>
-            </article>
           </div>
 
           <div class="dashboard-grid overview-grid">
@@ -212,16 +212,6 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
                 <div><p class="eyebrow">MODELOS</p><h2>Más solicitados</h2></div>
               </div>
               <div class="canvas-wrap small"><canvas id="modelsChart" aria-label="Gráfico de modelos más solicitados" role="img"></canvas></div>
-            </article>
-            <article class="panel action-panel">
-              <p class="eyebrow">PRÓXIMA DECISIÓN</p>
-              <h2>Primero, margen. Después, máquina.</h2>
-              <ul>
-                <li><span>01</span> Registrar coste y horas por pedido.</li>
-                <li><span>02</span> Pilotar compras por lote y semielaborados.</li>
-                <li><span>03</span> Probar automatización sobre retales.</li>
-              </ul>
-              <button class="button primary" type="button" data-view-target="profit">Ver escenarios</button>
             </article>
           </div>
         </section>
@@ -266,9 +256,9 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
         <section id="profit" class="view" aria-labelledby="profitHeading">
           <div class="page-heading compact">
             <div>
-              <p class="eyebrow">RENTABILIDAD</p>
-              <h1 id="profitHeading">Cuánto puede aportar el plan.</h1>
-              <p class="page-lead">Estimación de beneficio operativo incremental. Modifica los supuestos para discutirlos con tu padre.</p>
+              <p class="eyebrow">ESTIMACIONES</p>
+              <h1 id="profitHeading">Cuantificar el impacto económico.</h1>
+              <p class="page-lead">Una estimación editable del beneficio operativo incremental. No sustituye los costes, tiempos y márgenes que deben registrarse en el libro maestro.</p>
             </div>
             <button id="resetAssumptions" class="button secondary" type="button">Restablecer supuestos</button>
           </div>
@@ -283,9 +273,6 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
                 <label>Trabajos adicionales sin CNC<input id="assumptionExtraJobs" type="number" min="0" step="1" value="0" /></label>
                 <label>Margen de contribución por trabajo extra (€)<input id="assumptionContribution" type="number" min="0" step="5" value="0" /></label>
                 <label>Ahorro por errores, viajes y repeticiones (€)<input id="assumptionRework" type="number" min="0" step="50" value="0" /></label>
-                <label>Capacidad anual a contrastar<input id="assumptionCncCapacity" type="number" min="0" step="1" value="0" /></label>
-                <label>Inversión a contrastar (€)<input id="assumptionCncInvestment" type="number" min="0" step="500" value="0" /></label>
-                <label>Plazo objetivo de retorno (años)<input id="assumptionCncPayback" type="number" min="0" step="1" value="0" /></label>
               </div>
               <p class="form-note">Estos supuestos se guardan solo en este dispositivo. Registra los valores reales en el libro maestro para sustituir estimaciones por datos.</p>
             </article>
@@ -304,18 +291,83 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
             </article>
           </div>
 
-          <article class="panel cnc-panel">
+        </section>
+
+        <section id="strategy" class="view" aria-labelledby="strategyHeading">
+          <div class="page-heading compact">
             <div>
-              <p class="eyebrow">DECISIÓN DE INVERSIÓN</p>
-              <h2>La CNC debe superar un umbral económico.</h2>
-              <p>Define la inversión, el plazo objetivo y la contribución real por trabajo antes de comparar una máquina con las mejoras de proceso.</p>
+              <p class="eyebrow">FUTURIBLES</p>
+              <h1 id="strategyHeading">Decisiones y estrategia por validar.</h1>
+              <p class="page-lead">Este es el espacio único para hipótesis, pilotos e inversiones futuras. No se confunden con el control operativo ni con los resultados ya conseguidos.</p>
             </div>
-            <div class="cnc-math">
-              <div><span>Capacidad × <b id="cncContribution">0 €</b></span><strong id="cncBenefit">0 €</strong><small>contribución anual de capacidad</small></div>
-              <div><span>Objetivo de inversión</span><strong id="cncTarget">A definir</strong><small>beneficio anual necesario</small></div>
-              <div class="verdict"><span id="cncVerdict">Introduce supuestos</span><small>incluye mantenimiento, financiación y riesgo</small></div>
-            </div>
-          </article>
+          </div>
+
+          <div class="strategy-grid">
+            <article class="panel strategy-intro">
+              <p class="eyebrow">PRINCIPIO RECTOR</p>
+              <h2>Liberar margen y capacidad antes de comprar una máquina.</h2>
+              <p>El objetivo es aumentar el beneficio y la libertad de decisión de la familia durante los próximos diez años. Cada propuesta debe demostrar su efecto en margen, horas, riesgo y caja.</p>
+              <div class="strategy-roadmap">
+                <div><span>01</span><p><strong>Medir</strong> coste, horas, repasos y entrega por pedido.</p></div>
+                <div><span>02</span><p><strong>Probar</strong> compras, cortes y plantillas repetibles con riesgo acotado.</p></div>
+                <div><span>03</span><p><strong>Invertir</strong> solo si el piloto mejora el resultado frente al proceso actual.</p></div>
+              </div>
+            </article>
+
+            <article class="panel action-panel">
+              <p class="eyebrow">ORDEN DE DECISIÓN</p>
+              <h2>Primero, margen. Después, máquina.</h2>
+              <ul>
+                <li><span>01</span> Registrar coste y horas por pedido.</li>
+                <li><span>02</span> Pilotar compras por lote y semielaborados.</li>
+                <li><span>03</span> Probar automatización sobre retales.</li>
+              </ul>
+              <button class="button primary" type="button" data-view-target="profit">Contrastar estimaciones</button>
+            </article>
+          </div>
+
+          <div class="strategy-cards">
+            <article class="panel strategy-card">
+              <p class="eyebrow">COMPRAS PREDICTIVAS</p>
+              <h2>Comprar por familias de formato.</h2>
+              <p>Agrupar pedidos y negociar material por medidas repetidas. Validar antes la rotación, el ahorro unitario, el espacio y el riesgo de inmovilizar piedra.</p>
+            </article>
+            <article class="panel strategy-card">
+              <p class="eyebrow">TRABAJO EN VALLE</p>
+              <h2>Preparar sin fabricar stock ciego.</h2>
+              <p>En semanas de menor carga, adelantar cortes estándar, pulidos y biblioteca de plantillas. Mantener trazabilidad del material y no terminar lápidas sin pedido.</p>
+            </article>
+            <article class="panel strategy-card">
+              <p class="eyebrow">AUTOMATIZACIÓN</p>
+              <h2>Un piloto antes de una compra.</h2>
+              <p>Comparar tiempo, calidad, repaso y merma de trabajos manuales y automatizados. El padre puede mantener el grabado manual durante la prueba.</p>
+            </article>
+          </div>
+
+          <div class="strategy-grid strategy-decision-grid">
+            <article class="panel strategy-inputs">
+              <div class="panel-head"><div><p class="eyebrow">UMBRAL DE INVERSIÓN</p><h2>Variables de la CNC</h2></div></div>
+              <div class="assumptions-form">
+                <label>Trabajos adicionales/año atribuibles a CNC<input id="assumptionCncCapacity" type="number" min="0" step="1" value="0" /></label>
+                <label>Inversión a contrastar (€)<input id="assumptionCncInvestment" type="number" min="0" step="500" value="0" /></label>
+                <label>Plazo objetivo de retorno (años)<input id="assumptionCncPayback" type="number" min="0" step="1" value="0" /></label>
+              </div>
+              <p class="form-note">Son hipótesis de decisión, no resultados reales. Contrástalas con proveedor, mantenimiento, financiación, formación, tiempos de preparación y tasa de repaso.</p>
+            </article>
+
+            <article class="panel cnc-panel">
+              <div>
+                <p class="eyebrow">DECISIÓN DE INVERSIÓN</p>
+                <h2>La CNC debe superar un umbral económico.</h2>
+                <p>Define la inversión, el plazo objetivo y la contribución real por trabajo antes de comparar una máquina con las mejoras de proceso.</p>
+              </div>
+              <div class="cnc-math">
+                <div><span>Capacidad × <b id="cncContribution">0 €</b></span><strong id="cncBenefit">0 €</strong><small>contribución anual de capacidad</small></div>
+                <div><span>Objetivo de inversión</span><strong id="cncTarget">A definir</strong><small>beneficio anual necesario</small></div>
+                <div class="verdict"><span id="cncVerdict">Introduce supuestos</span><small>incluye mantenimiento, financiación y riesgo</small></div>
+              </div>
+            </article>
+          </div>
         </section>
 
         <section id="data" class="view" aria-labelledby="dataHeading">
@@ -986,7 +1038,7 @@ function switchView(view) {
   state.activeView = view;
   $$(".view").forEach((section) => section.classList.toggle("active", section.id === view));
   $$("[data-view-target]").forEach((button) => button.classList.toggle("active", button.dataset.viewTarget === view));
-  $("#viewTitle").textContent = ({ summary: "Resumen", production: "Producción", profit: "Rentabilidad", data: "Datos y conexión" })[view];
+  $("#viewTitle").textContent = ({ summary: "Resumen", production: "Producción", profit: "Estimaciones", strategy: "Estrategia", data: "Datos y conexión" })[view];
   $(".sidebar").classList.remove("open");
   if (view === "summary") requestAnimationFrame(renderSummary);
   if (view === "production") requestAnimationFrame(renderProduction);
