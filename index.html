@@ -544,6 +544,9 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
 const ASSUMPTIONS_KEY = "litos-control-assumptions-v1";
 const FINANCE_KEY = "litos-control-finance-v1";
 const AUTO_REFRESH_MS = 60 * 1000;
+// Apps Script can need a cold start. Keep the JSONP callback alive long
+// enough for that response instead of treating a valid late answer as failed.
+const FEED_TIMEOUT_MS = 45 * 1000;
 // This URL is added only after the Apps Script feed is deployed. The feed is
 // anonymous by design, but it contains only the whitelisted operational data
 // defined in apps-script/Code.gs — never the Sheet itself or client details.
@@ -1387,7 +1390,7 @@ function refreshPublicFeed() {
     }
   };
   script.onerror = fail;
-  timer = window.setTimeout(fail, 12000);
+  timer = window.setTimeout(fail, FEED_TIMEOUT_MS);
   const separator = DATA_FEED_URL.includes("?") ? "&" : "?";
   script.src = `${DATA_FEED_URL}${separator}callback=${encodeURIComponent(callbackName)}&v=${Date.now()}`;
   document.head.append(script);
