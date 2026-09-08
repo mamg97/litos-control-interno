@@ -222,7 +222,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
               <div class="panel-head">
                 <div>
                   <p class="eyebrow">RITMO DE ENTRADA</p>
-                  <h2>Pedidos por periodo</h2>
+                  <h2 id="summaryChartHeading">Pedidos por periodo</h2>
                 </div>
                 <div class="summary-chart-controls">
                   <label>Año <select id="summaryYear" aria-label="Año del gráfico de pedidos"><option value="">Cargando años…</option></select></label>
@@ -233,7 +233,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
               <div class="canvas-wrap"><canvas id="ordersChart" aria-label="Gráfico de pedidos por periodo" role="img"></canvas></div>
               <div class="history-matrix-head">
                 <div><p class="eyebrow">HISTÓRICO COMPLETO</p><p>Todos los años permanecen visibles; el año seleccionado se resalta.</p></div>
-                <label>Tabla <select id="summaryTableMetric" aria-label="Indicador de la tabla histórica"><option value="orders">Pedidos</option><option value="revenue">Ingresos estimados</option><option value="costs">Gastos estimados</option><option value="profit">Beneficio estimado</option></select></label>
+                <label>Indicador <select id="summaryTableMetric" aria-label="Indicador de la gráfica y tabla histórica"><option value="orders">Pedidos</option><option value="revenue">Ingresos estimados</option><option value="costs">Gastos estimados</option><option value="profit">Beneficio estimado</option></select></label>
               </div>
               <div id="summaryMetricTable" class="metric-strip" aria-label="Histórico por año"></div>
             </article>
@@ -1020,31 +1020,36 @@ function drawOrdersChart(data, metric = "orders") {
   const canvas = $("#ordersChart");
   const { ctx, width, height } = setupCanvas(canvas);
   const left = metric === "orders" ? 38 : 58, right = 12, top = 28, bottom = 33;
-  const max = Math.max(...data.map(([, value]) => value), 1);
+  const values = data.map(([, value]) => value);
+  const max = Math.max(...values, 0, 1);
+  const min = Math.min(...values, 0);
+  const range = Math.max(max - min, 1);
+  const plotHeight = height - top - bottom;
+  const yFor = (value) => top + ((max - value) / range) * plotHeight;
+  const zeroY = yFor(0);
+  const colours = { orders: "#10726e", revenue: "#5b9b96", costs: "#d4953f", profit: "#0e3137" };
+  const barColour = colours[metric] || colours.orders;
   ctx.clearRect(0, 0, width, height);
   ctx.font = "11px Manrope"; ctx.fillStyle = "#799194"; ctx.strokeStyle = "#e4edeb"; ctx.lineWidth = 1;
   [0, .5, 1].forEach((ratio) => {
-    const y = top + (height - top - bottom) * ratio;
+    const y = top + plotHeight * ratio;
     ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(width - right, y); ctx.stroke();
-    const scaleValue = max * (1 - ratio);
-    ctx.fillText(metric === "orders" ? formatInt.format(Math.round(scaleValue)) : formatMoney(scaleValue), 2, y + 4);
+    const scaleValue = max - range * ratio;
+    ctx.fillText(chartValue(scaleValue, metric), 2, y + 4);
   });
   if (!data.length) return;
-  const step = (width - left - right) / Math.max(1, data.length - 1);
-  ctx.beginPath();
+  const slot = (width - left - right) / data.length;
+  const barWidth = Math.max(5, Math.min(42, slot * .58));
   data.forEach(([label, value], index) => {
-    const x = left + index * step;
-    const y = top + (height - top - bottom) * (1 - value / max);
-    index ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
-  });
-  ctx.lineTo(left + (data.length - 1) * step, height - bottom); ctx.lineTo(left, height - bottom); ctx.closePath();
-  const gradient = ctx.createLinearGradient(0, top, 0, height - bottom); gradient.addColorStop(0, "rgba(16,114,110,.22)"); gradient.addColorStop(1, "rgba(16,114,110,0)"); ctx.fillStyle = gradient; ctx.fill();
-  ctx.beginPath(); ctx.strokeStyle = "#10726e"; ctx.lineWidth = 2.5;
-  data.forEach(([, value], index) => { const x = left + index * step; const y = top + (height - top - bottom) * (1 - value / max); index ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
-  data.forEach(([label, value], index) => {
-    const x = left + index * step; const y = top + (height - top - bottom) * (1 - value / max);
-    ctx.fillStyle = "#10726e"; ctx.beginPath(); ctx.arc(x, y, 3.1, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = "#0e3137"; ctx.font = "600 10px DM Mono"; ctx.textAlign = "center"; ctx.fillText(chartValue(value, metric), x, Math.max(13, y - 10));
+    const x = left + slot * index + slot / 2;
+    const y = yFor(value);
+    const barTop = Math.min(y, zeroY);
+    const barHeight = Math.max(1, Math.abs(zeroY - y));
+    ctx.fillStyle = metric === "profit" && value < 0 ? "#c86c58" : barColour;
+    ctx.fillRect(x - barWidth / 2, barTop, barWidth, barHeight);
+    ctx.fillStyle = "#0e3137"; ctx.font = "600 10px DM Mono"; ctx.textAlign = "center";
+    const valueLabelY = value < 0 ? Math.min(height - 20, barTop + barHeight + 13) : Math.max(13, barTop - 8);
+    ctx.fillText(chartValue(value, metric), x, valueLabelY);
     if (index % 2 === 0 || data.length < 9 || width >= 940) { ctx.fillStyle = "#799194"; ctx.font = "11px Manrope"; ctx.fillText(label, x, height - 12); }
   });
   ctx.textAlign = "start";
@@ -1282,6 +1287,13 @@ function renderSummary() {
   const finance = calculateFinance(yearRows);
   const years = availableDataYears();
   const granularity = selectedSummaryGranularity();
+  const metric = selectedSummaryTableMetric();
+  const metricLabels = {
+    orders: "Pedidos",
+    revenue: "Ingresos estimados",
+    costs: "Gastos estimados",
+    profit: "Beneficio estimado"
+  };
   const firstDate = state.rows
     .map((row) => parseDate(row["Fecha ficha"]))
     .filter(Boolean)
@@ -1306,13 +1318,14 @@ function renderSummary() {
   $("#lastUpdate").textContent = connected
     ? `Actualizado ${new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeStyle: "short" }).format(updateDate || new Date())}`
     : "Actualizando datos";
+  $("#summaryChartHeading").textContent = `${metricLabels[metric]} por periodo`;
   $("#summaryChartNote").textContent = connected && year
-    ? `Pedidos ${granularity === "quarter" ? "por trimestre" : "por mes"} · ${year}`
+    ? `${metricLabels[metric]} ${granularity === "quarter" ? "por trimestre" : "por mes"} · ${year}`
     : "Pendiente de actualización";
   const series = performanceSeries(year || new Date().getFullYear(), granularity);
-  drawOrdersChart(series.map((point) => [point.label, point.orders]), "orders");
+  drawOrdersChart(series.map((point) => [point.label, metricValue(point, metric)]), metric);
   drawFinancialSummaryChart(series);
-  renderMetricStrip(years, year, granularity, selectedSummaryTableMetric());
+  renderMetricStrip(years, year, granularity, metric);
   drawModelsChart(s.models);
 }
 
