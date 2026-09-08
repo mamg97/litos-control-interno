@@ -1321,7 +1321,8 @@ function refreshPublicFeed() {
       renderFinance();
       updateConnectionUI();
       showToast(`${formatInt.format(state.rows.length)} fichas actualizadas.`);
-    } catch {
+    } catch (error) {
+      console.error("LITOS: error al actualizar el panel", error);
       state.connected = false;
       updateConnectionUI();
       renderSummary();
