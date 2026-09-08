@@ -1389,7 +1389,11 @@ function refreshPublicFeed() {
       cleanUp();
     }
   };
-  script.onerror = fail;
+  // Apps Script follows a redirect before it serves the JSONP payload. Some
+  // browsers can emit an error during that hand-off and still execute the
+  // callback afterwards, so the timer is the single failure authority. This
+  // prevents us from deleting the callback just before a valid payload lands.
+  script.onerror = () => {};
   timer = window.setTimeout(fail, FEED_TIMEOUT_MS);
   const separator = DATA_FEED_URL.includes("?") ? "&" : "?";
   script.src = `${DATA_FEED_URL}${separator}callback=${encodeURIComponent(callbackName)}&v=${Date.now()}`;
