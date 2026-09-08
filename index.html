@@ -471,6 +471,9 @@ function materialFor(row) {
   const normalized = text(row["Material normalizado"]);
   if (normalized) return normalized === "Material aportado" ? "Material aportado · M.S." : normalized;
   const value = normalize(raw);
+  // In the workshop's terminology, “Absoluto” is shorthand for the same
+  // material as “Negro absoluto”; keep both spellings in one demand group.
+  if (value === "absoluto" || value.includes("negro absoluto")) return "Granito negro absoluto";
   if (value.includes("blanco")) return "Mármol blanco Macael · M.S.";
   if (value === "suyo" || value === "suya") {
     return isReform(row) ? "Piedra existente" : "Material aportado · M.S.";
