@@ -102,14 +102,16 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
 
 .strategy-grid { display: grid; grid-template-columns: minmax(360px,1.15fr) minmax(310px,.85fr); gap: 1rem; margin-bottom: 1rem; }.strategy-intro, .strategy-inputs { padding: 1.55rem; }.strategy-intro { background: linear-gradient(145deg, #eff9f7, #fbfcf8); }.strategy-intro h2 { max-width: 540px; margin-bottom: .65rem; font-size: 1.55rem; }.strategy-intro > p:not(.eyebrow) { max-width: 650px; margin: 0; color: var(--ink-soft); font-size: .85rem; line-height: 1.65; }.strategy-roadmap { display: grid; grid-template-columns: repeat(3,1fr); gap: .85rem; margin-top: 1.35rem; }.strategy-roadmap div { display: grid; grid-template-columns: 1.55rem 1fr; gap: .5rem; align-items: start; }.strategy-roadmap span { display: grid; width: 1.55rem; height: 1.55rem; place-items: center; border-radius: 6px; background: #ccebe7; color: var(--teal); font-family: "DM Mono", monospace; font-size: .65rem; }.strategy-roadmap p { margin: 0; color: var(--ink-soft); font-size: .73rem; line-height: 1.5; }.strategy-roadmap strong { color: var(--ink); }.strategy-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-bottom: 1rem; }.strategy-card { min-height: 185px; padding: 1.35rem; }.strategy-card h2 { margin-bottom: .5rem; font-size: 1rem; }.strategy-card p:not(.eyebrow) { margin: 0; color: var(--ink-soft); font-size: .78rem; line-height: 1.58; }.strategy-decision-grid { grid-template-columns: minmax(340px,.75fr) minmax(430px,1.25fr); }.strategy-decision-grid .cnc-panel { margin-top: 0; }.strategy-inputs .assumptions-form { grid-template-columns: 1fr; margin-top: 1rem; }.strategy-inputs .form-note { margin-top: .85rem; }
 
+.finance-kpis { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 1rem; margin-bottom: 1rem; }.finance-kpis article { min-height: 118px; padding: 1rem 1.15rem; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfc; }.finance-kpis span, .finance-kpis small { display: block; color: var(--ink-soft); font-size: .7rem; }.finance-kpis strong { display: block; margin: .35rem 0; color: var(--deep); font-family: "DM Mono", monospace; font-size: 1.35rem; letter-spacing: -.06em; }.sankey-panel { padding: 1.35rem; }.finance-sankey { min-height: 500px; margin-top: .75rem; overflow-x: auto; overflow-y: hidden; border: 1px solid #e2ecea; border-radius: 12px; background: linear-gradient(180deg, #fbfefd, #f5faf9); }.finance-sankey svg { display: block; width: 100%; min-width: 820px; height: auto; }.finance-sankey .empty-state { margin: 0; padding: 5rem 1rem; text-align: center; }.sankey-column-title { fill: #718b8d; font-family: "DM Mono", monospace; font-size: 12px; font-weight: 500; letter-spacing: 1.3px; }.sankey-node rect { stroke-width: 1.15; }.sankey-node-label { fill: #244448; font-family: "Manrope", Arial, sans-serif; font-size: 12px; font-weight: 800; }.sankey-node-value { fill: #5e797b; font-family: "DM Mono", monospace; font-size: 11px; }.sankey-node.income rect { fill: #e6f2f8; stroke: #92b6ca; }.sankey-node.center rect { fill: var(--deep); stroke: var(--deep); }.sankey-node.center .sankey-node-label, .sankey-node.center .sankey-node-value { fill: white; }.sankey-node.material rect { fill: #f5eee2; stroke: #d8bd8c; }.sankey-node.consumables rect { fill: #fff4da; stroke: #e1bc6a; }.sankey-node.fixed rect { fill: #edf0f5; stroke: #aebaca; }.sankey-node.direct rect { fill: #f5ebf1; stroke: #d0a6bf; }.sankey-node.labour rect { fill: #ecebe3; stroke: #c5c0a8; }.sankey-node.margin rect { fill: #e4f4eb; stroke: #8fc5a5; }.sankey-node.warning rect { fill: #fff0e8; stroke: #da985d; }.sankey-link { stroke: none; opacity: .8; transition: opacity .16s ease; }.sankey-link:hover { opacity: 1; }.income-link { fill: rgba(49, 117, 156, .30); }.material-link { fill: rgba(176, 133, 69, .31); }.consumables-link { fill: rgba(213, 160, 45, .30); }.fixed-link { fill: rgba(112, 133, 164, .25); }.direct-link { fill: rgba(173, 97, 139, .27); }.labour-link { fill: rgba(137, 131, 96, .28); }.margin-link { fill: rgba(48, 140, 91, .30); }.warning-link { fill: rgba(202, 108, 46, .34); }.finance-scope { margin: 1rem 0 0; padding: .8rem .9rem; border-left: 3px solid #8bc5bf; border-radius: 0 8px 8px 0; background: #f4faf8; color: var(--ink-soft); font-size: .73rem; line-height: 1.55; }.finance-scope strong { color: var(--ink); }.finance-layout { display: grid; grid-template-columns: minmax(430px,1.25fr) minmax(310px,.75fr); gap: 1rem; margin-top: 1rem; }.finance-inputs, .cost-register, .finance-register-note { padding: 1.45rem; }.finance-inputs .panel-head { margin-bottom: .2rem; }.finance-form { display: grid; grid-template-columns: 1fr 1fr; gap: .85rem; margin-top: 1rem; }.finance-form label { display: grid; gap: .35rem; color: var(--ink-soft); font-size: .72rem; font-weight: 700; }.finance-form input { min-height: 38px; padding: .45rem .6rem; border: 1px solid #cfe0de; border-radius: 8px; background: white; color: var(--ink); font-size: .82rem; outline-color: var(--teal); }.cost-register { background: #fffdf8; }.cost-register h2 { margin-bottom: .9rem; }.cost-list { display: grid; gap: .1rem; }.cost-list div { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: .8rem; padding: .65rem 0; border-bottom: 1px solid #eee8d9; color: #607274; font-size: .74rem; line-height: 1.35; }.cost-list strong, .cost-register-total strong { color: #6e4d19; font-family: "DM Mono", monospace; font-size: .76rem; white-space: nowrap; }.cost-register-total { display: flex; justify-content: space-between; gap: 1rem; margin-top: .8rem; padding-top: .8rem; border-top: 1px solid #e4d8be; color: #735b32; font-size: .78rem; font-weight: 800; }.finance-register-note { display: grid; grid-template-columns: minmax(230px,.65fr) minmax(0,1.35fr); column-gap: 1.5rem; align-items: start; margin-top: 1rem; background: #f5f8f7; }.finance-register-note .eyebrow { grid-column: 1 / -1; }.finance-register-note h2 { margin-bottom: 0; font-size: 1.1rem; }.finance-register-note p:not(.eyebrow) { margin: 0; color: var(--ink-soft); font-size: .79rem; line-height: 1.65; }
+
 .data-layout { display: grid; grid-template-columns: minmax(330px,1.1fr) minmax(300px,.9fr); gap: 1rem; }.connection-panel, .settings-panel, .privacy-panel { padding: 1.55rem; }.connection-heading { display: flex; align-items: center; gap: .85rem; }.connection-heading h2, .settings-panel h2 { margin-bottom: 0; }.connection-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 11px; background: var(--teal-light); color: var(--teal); font-family: "DM Mono", monospace; font-size: 1.3rem; }.connection-panel > p { margin: 1.1rem 0; color: var(--ink-soft); font-size: .87rem; }.connection-status { display: grid; grid-template-columns: .55rem auto 1fr; align-items: center; gap: .48rem; padding: .75rem .85rem; border-radius: 9px; background: #f5f8f7; color: var(--ink); }.connection-status > span { width: .48rem; height: .48rem; border-radius: 50%; background: #b3bdbd; }.connection-status.connected > span { background: var(--green); }.connection-status b { font-size: .8rem; }.connection-status small { color: var(--ink-soft); font-size: .68rem; }.connection-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1rem; }.settings-panel { display: grid; align-content: start; gap: .75rem; }.settings-panel .eyebrow { margin-bottom: -.35rem; }.settings-panel label { gap: .27rem; }.settings-panel .button { justify-self: start; margin-top: .2rem; }
 .trace-panel { margin-top: 1rem; padding: 1.25rem; }.trace-table-wrap { margin-top: 1rem; overflow-x: auto; }.trace-table { width: 100%; min-width: 700px; border-collapse: collapse; font-size: .78rem; }.trace-table th { padding: .55rem .7rem; border-bottom: 1px solid var(--line); color: var(--ink-soft); font-family: "DM Mono", monospace; font-size: .64rem; font-weight: 500; letter-spacing: .06em; text-align: left; text-transform: uppercase; }.trace-table td { padding: .67rem .7rem; border-bottom: 1px solid #edf2f1; color: #345457; vertical-align: top; }.trace-table tbody tr:last-child td { border-bottom: 0; }.trace-table td:first-child, .trace-table td:nth-child(2), .trace-table td:last-child { color: var(--deep); font-family: "DM Mono", monospace; font-size: .73rem; }.trace-table .empty-state { color: var(--ink-soft); font-family: "Manrope", Arial, sans-serif; text-align: center; }
 .privacy-panel { margin-top: 1rem; background: #fbfcfc; }.privacy-rules { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.2rem; margin-top: 1rem; }.privacy-rules div { display: flex; gap: .65rem; }.privacy-rules span { display: grid; flex: 0 0 1.65rem; height: 1.65rem; place-items: center; border-radius: 6px; background: var(--teal-light); color: var(--teal); font-family: "DM Mono", monospace; font-size: .65rem; }.privacy-rules p { margin: 0; color: var(--ink-soft); font-size: .77rem; line-height: 1.55; }.privacy-rules strong { color: var(--ink); }
 
 .toast { position: fixed; z-index: 20; right: 1rem; bottom: 1rem; max-width: 360px; padding: .8rem 1rem; border-radius: 10px; background: var(--deep); box-shadow: var(--shadow); color: white; font-size: .8rem; opacity: 0; pointer-events: none; transform: translateY(8px); transition: opacity .2s, transform .2s; }.toast.visible { opacity: 1; transform: translateY(0); }
 
-@media (max-width: 1120px) { .kpi-grid { grid-template-columns: repeat(2,1fr); }.overview-grid, .bottom-grid, .profit-layout, .data-layout, .cnc-panel, .strategy-grid, .strategy-decision-grid { grid-template-columns: 1fr; }.insight-panel { min-height: 230px; }.cnc-math { min-height: 155px; }.production-grid { grid-template-columns: 1fr; }.wide-table { grid-column: auto; } }
-@media (max-width: 760px) { .app-shell { display: block; }.sidebar { position: fixed; z-index: 14; left: -270px; width: 254px; transition: left .2s; }.sidebar.open { left: 0; box-shadow: 25px 0 50px rgba(0,0,0,.25); }.topbar { height: 64px; padding: 0 1rem; }.mobile-menu { display: inline-grid; width: 33px; height: 33px; place-items: center; border: 0; border-radius: 7px; background: #e6efee; color: var(--deep); }.breadcrumb { flex: 1; margin-left: .4rem; }.private-badge { display: none; }.view { padding: 1.75rem 1rem 3rem; }.page-heading { display: grid; gap: 1rem; }.heading-date { align-self: start; }.kpi-grid, .production-metrics, .privacy-rules, .assumptions-form, .strategy-cards, .strategy-roadmap { grid-template-columns: 1fr; }.kpi-card { min-height: 132px; }.filter-row { width: 100%; }.filter-row label { flex: 1; min-width: 125px; }.canvas-wrap { height: 220px; }.cnc-math { grid-template-columns: 1fr; }.topbar-actions .button { padding: .45rem .6rem; font-size: .72rem; }.connection-status { grid-template-columns: .55rem 1fr; }.connection-status small { grid-column: 2; }.privacy-rules { gap: .8rem; } }
+@media (max-width: 1120px) { .kpi-grid { grid-template-columns: repeat(2,1fr); }.overview-grid, .bottom-grid, .profit-layout, .data-layout, .cnc-panel, .strategy-grid, .strategy-decision-grid, .finance-layout, .finance-register-note { grid-template-columns: 1fr; }.finance-kpis { grid-template-columns: repeat(2,1fr); }.insight-panel { min-height: 230px; }.cnc-math { min-height: 155px; }.production-grid { grid-template-columns: 1fr; }.wide-table { grid-column: auto; } }
+@media (max-width: 760px) { .app-shell { display: block; }.sidebar { position: fixed; z-index: 14; left: -270px; width: 254px; transition: left .2s; }.sidebar.open { left: 0; box-shadow: 25px 0 50px rgba(0,0,0,.25); }.topbar { height: 64px; padding: 0 1rem; }.mobile-menu { display: inline-grid; width: 33px; height: 33px; place-items: center; border: 0; border-radius: 7px; background: #e6efee; color: var(--deep); }.breadcrumb { flex: 1; margin-left: .4rem; }.private-badge { display: none; }.view { padding: 1.75rem 1rem 3rem; }.page-heading { display: grid; gap: 1rem; }.heading-date { align-self: start; }.kpi-grid, .production-metrics, .privacy-rules, .assumptions-form, .strategy-cards, .strategy-roadmap, .finance-kpis, .finance-form { grid-template-columns: 1fr; }.kpi-card { min-height: 132px; }.filter-row { width: 100%; }.filter-row label { flex: 1; min-width: 125px; }.canvas-wrap { height: 220px; }.cnc-math { grid-template-columns: 1fr; }.topbar-actions .button { padding: .45rem .6rem; font-size: .72rem; }.connection-status { grid-template-columns: .55rem 1fr; }.connection-status small { grid-column: 2; }.privacy-rules { gap: .8rem; }.finance-sankey { min-height: 430px; }.finance-register-note .eyebrow { grid-column: auto; } }
 
 </style>
   </head>
@@ -133,6 +135,9 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
           </button>
           <button class="nav-link" type="button" data-view-target="profit">
             <span class="nav-icon">↗</span> Estimaciones
+          </button>
+          <button class="nav-link" type="button" data-view-target="finance">
+            <span class="nav-icon">≈</span> Ingresos y gastos
           </button>
           <button class="nav-link" type="button" data-view-target="strategy">
             <span class="nav-icon">◇</span> Estrategia
@@ -370,6 +375,74 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
           </div>
         </section>
 
+        <section id="finance" class="view" aria-labelledby="financeHeading">
+          <div class="page-heading compact">
+            <div>
+              <p class="eyebrow">FLUJO ECONÓMICO</p>
+              <h1 id="financeHeading">Ingresos y gastos, en un solo flujo.</h1>
+              <p class="page-lead">El año y los pedidos proceden del libro maestro. La facturación usa el precio medio conocido hasta que se incorporen importes facturados y facturas al control financiero.</p>
+            </div>
+            <div class="filter-row finance-period-filter">
+              <label>Año operativo <select id="financeYear"><option value="">Cargando años…</option></select></label>
+            </div>
+          </div>
+
+          <div class="finance-kpis">
+            <article><span>Pedidos del periodo</span><strong id="financeOrders">—</strong><small id="financePeriod">Datos operativos pendientes</small></article>
+            <article><span>Ingresos de pedidos</span><strong id="financeRevenue">—</strong><small>precio medio de referencia</small></article>
+            <article><span>Gasto documentado / estimado</span><strong id="financeCosts">—</strong><small>materia prima y consumibles</small></article>
+            <article><span>Margen disponible</span><strong id="financeMargin">—</strong><small>antes de gastos pendientes e impuestos</small></article>
+          </div>
+
+          <article class="panel sankey-panel">
+            <div class="panel-head">
+              <div><p class="eyebrow">SANKEY OPERATIVO</p><h2>De los pedidos al margen disponible</h2></div>
+              <span class="chart-note" id="financeFlowStatus">Actualizando pedidos</span>
+            </div>
+            <div id="financeSankey" class="finance-sankey" role="img" aria-label="Diagrama Sankey de ingresos y gastos operativos"></div>
+            <p class="finance-scope"><strong>Lectura correcta:</strong> el margen disponible no equivale todavía al beneficio final. Faltan por registrar mano de obra, impuestos y cualquier factura que siga pendiente. La materia prima se estima por la placa frontal de cada ficha, con un 10 % de merma, y no incluye bases, cornisas ni remates.</p>
+          </article>
+
+          <div class="finance-layout">
+            <article class="panel finance-inputs">
+              <div class="panel-head"><div><p class="eyebrow">VALORES A CONTRASTAR</p><h2>Ingresos y gastos registrados</h2></div><button id="resetFinance" class="button secondary" type="button">Restablecer</button></div>
+              <div class="finance-form">
+                <label>Precio medio por pedido (€)<input id="financeAveragePrice" type="number" min="0" step="1" value="200" /></label>
+                <label>Otros ingresos facturados (€)<input id="financeOtherIncome" type="number" min="0" step="1" value="0" /></label>
+                <label>Luz · Gana / Romboc (€)<input id="financeElectricity" type="number" min="0" step="1" value="0" /></label>
+                <label>Agua y residuos · Acciona (€)<input id="financeWaterWaste" type="number" min="0" step="1" value="0" /></label>
+                <label>Internet · O2 (€)<input id="financeInternet" type="number" min="0" step="1" value="0" /></label>
+                <label>Letras · Bronces Jordá (€)<input id="financeLetters" type="number" min="0" step="1" value="0" /></label>
+                <label>Transporte y colocación (€)<input id="financeTransport" type="number" min="0" step="1" value="0" /></label>
+                <label>Mano de obra / autónomos (€)<input id="financeLabour" type="number" min="0" step="1" value="0" /></label>
+                <label>Otros gastos (€)<input id="financeOtherCosts" type="number" min="0" step="1" value="0" /></label>
+              </div>
+              <p class="form-note">Estos campos se guardan solo en este dispositivo mientras se crea el registro financiero del libro maestro. Introduce totales del año seleccionado, con IVA según el mismo criterio en todas las partidas.</p>
+            </article>
+
+            <article class="panel cost-register">
+              <p class="eyebrow">GASTOS YA CONOCIDOS</p>
+              <h2>Base anual de consumibles</h2>
+              <div class="cost-list">
+                <div><span>Corindón · 24 sacos × 65 €</span><strong>1.560 €</strong></div>
+                <div><span>Goma de plantillas · 14 rollos × 85 €</span><strong>1.190 €</strong></div>
+                <div><span>Pintura · referencia 55 botes × 4,50 €</span><strong>248 €</strong></div>
+                <div><span>Silicona de colores · 24 botes × 9 €</span><strong>216 €</strong></div>
+                <div><span>Masilla · 6 botes × 15 €</span><strong>90 €</strong></div>
+                <div><span>Lijas · carborundo y diamante</span><strong>300 €</strong></div>
+              </div>
+              <div class="cost-register-total"><span>Consumibles de referencia</span><strong id="financeConsumables">3.604 €</strong></div>
+              <p id="materialEstimateNote" class="form-note">La estimación de materia prima se calculará al recibir los pedidos del año.</p>
+            </article>
+          </div>
+
+          <article class="panel finance-register-note">
+            <p class="eyebrow">SIGUIENTE PASO DE CONTROL</p>
+            <h2>Completar las facturas para convertir el modelo en cuenta de resultados.</h2>
+            <p>Quedan pendientes de incorporar las facturas de electricidad, agua y residuos, internet y letras; también los costes de transporte, mano de obra e impuestos. Cuando estén registrados por fecha y categoría en el libro maestro, este flujo podrá dejar de usar campos locales y reflejar importes reales por periodo.</p>
+          </article>
+        </section>
+
         <section id="data" class="view" aria-labelledby="dataHeading">
           <div class="page-heading compact">
             <div>
@@ -419,6 +492,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <script type="module">
 const ASSUMPTIONS_KEY = "litos-control-assumptions-v1";
+const FINANCE_KEY = "litos-control-finance-v1";
 const AUTO_REFRESH_MS = 60 * 1000;
 // This URL is added only after the Apps Script feed is deployed. The feed is
 // anonymous by design, but it contains only the whitelisted operational data
@@ -451,6 +525,25 @@ const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 const formatInt = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 0 });
 const formatMoney = (value) => `${formatInt.format(Math.round(value))} €`;
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+const FINANCE_DEFAULTS = Object.freeze({
+  financeAveragePrice: 200,
+  financeOtherIncome: 0,
+  financeElectricity: 0,
+  financeWaterWaste: 0,
+  financeInternet: 0,
+  financeLetters: 0,
+  financeTransport: 0,
+  financeLabour: 0,
+  financeOtherCosts: 0
+});
+
+const KNOWN_CONSUMABLES = Object.freeze({
+  abrasives: 1560 + 300,
+  templates: 14 * 85,
+  finishing: (55 * 4.5) + (24 * 9) + (6 * 15)
+});
 
 function showToast(message) {
   const toast = $("#toast");
@@ -534,6 +627,22 @@ function materialFor(row) {
     return isReform(row) ? "Piedra existente" : "Material aportado · M.S.";
   }
   return raw || "Sin material";
+}
+
+function materialRateFor(row) {
+  const value = normalize(rawMaterialFor(row));
+  // “Suyo” is either existing stone in a reform or material supplied by M.S.;
+  // white Macael is also supplied by M.S. None is a workshop stone purchase.
+  if (!value || value === "suyo" || value === "suya" || (value.includes("blanco") && !value.includes("italiano"))) return 0;
+  if (value.includes("negro absoluto") || value === "absoluto") return 110;
+  if (value.includes("labrador")) return 80;
+  if (value.includes("verde pradera")) return 75;
+  if (value.includes("sudafrica")) return 69;
+  if (value.includes("blanco italiano")) return 62;
+  if (value.includes("gris quintana")) return 45;
+  if (value.includes("champan") || value.includes("gris perla") || value.includes("pardino")) return 30;
+  if (value.includes("gris")) return 55;
+  return null;
 }
 
 function numberFromFields(row, preferredFields, matchesHeader) {
@@ -900,6 +1009,195 @@ function setupFilters() {
   model.replaceChildren(new Option("Todos los modelos", "all"), ...models.map((value) => new Option(value, value)));
   if ([...year.options].some((option) => option.value === currentYear)) year.value = currentYear;
   if ([...model.options].some((option) => option.value === currentModel)) model.value = currentModel;
+  setupFinanceYearFilter(years);
+}
+
+function setupFinanceYearFilter(years = []) {
+  const select = $("#financeYear");
+  if (!select) return;
+  const current = select.value;
+  if (!years.length) {
+    select.replaceChildren(new Option("Sin pedidos con fecha", ""));
+    return;
+  }
+  select.replaceChildren(...years.map((value) => new Option(String(value), String(value))));
+  select.value = years.map(String).includes(current) ? current : String(years[0]);
+}
+
+function financeValue(id) {
+  return numberAt({ value: $(`#${id}`).value }, "value") || 0;
+}
+
+function financeRows() {
+  const year = $("#financeYear")?.value;
+  return state.rows.filter((row) => {
+    const date = parseDate(row["Fecha ficha"]);
+    return date && String(date.getFullYear()) === year;
+  });
+}
+
+function estimateMaterial(rows) {
+  let amount = 0;
+  let covered = 0;
+  let withMeasure = 0;
+  rows.forEach((row) => {
+    const size = sizeDetailsFor(row);
+    const rate = materialRateFor(row);
+    if (!size) return;
+    withMeasure += 1;
+    if (rate === null) return;
+    covered += 1;
+    const width = numberFromFields(row, ["Ancho total (cm)"], (header) => isSlabMeasureHeader(header, "ancho"));
+    const height = writtenHeightFor(row);
+    if (width === null || height === null) return;
+    amount += (width * height / 10000) * 1.1 * rate;
+  });
+  return { amount, covered, withMeasure };
+}
+
+function svgEl(name, attrs = {}) {
+  const node = document.createElementNS(SVG_NS, name);
+  Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, String(value)));
+  return node;
+}
+
+function sankeyRibbon(sx, sy, tx, ty, thickness) {
+  const width = Math.max(3, thickness);
+  const middle = (sx + tx) / 2;
+  return `M ${sx} ${sy - width / 2} C ${middle} ${sy - width / 2}, ${middle} ${ty - width / 2}, ${tx} ${ty - width / 2} L ${tx} ${ty + width / 2} C ${middle} ${ty + width / 2}, ${middle} ${sy + width / 2}, ${sx} ${sy + width / 2} Z`;
+}
+
+function addSankeyNode(svg, { x, y, width, label, value, tone, align = "start" }) {
+  const group = svgEl("g", { class: `sankey-node ${tone}` });
+  group.append(svgEl("rect", { x, y: y - 23, width, height: 46, rx: 8 }));
+  const labelEl = svgEl("text", { x: x + (align === "end" ? width - 11 : 11), y: y - 3, "text-anchor": align, class: "sankey-node-label" });
+  labelEl.textContent = label;
+  const valueEl = svgEl("text", { x: x + (align === "end" ? width - 11 : 11), y: y + 13, "text-anchor": align, class: "sankey-node-value" });
+  valueEl.textContent = formatMoney(value);
+  group.append(labelEl, valueEl);
+  svg.append(group);
+}
+
+function renderFinanceSankey(finance) {
+  const root = $("#financeSankey");
+  root.replaceChildren();
+  if (!state.connected) {
+    const empty = document.createElement("p");
+    empty.className = "empty-state";
+    empty.textContent = "El flujo se completará al recibir los pedidos operativos.";
+    root.append(empty);
+    return;
+  }
+  const outputs = finance.outputs.filter((entry) => entry.value > 0);
+  const rows = Math.max(outputs.length, 3);
+  const height = Math.max(500, rows * 66 + 112);
+  const svg = svgEl("svg", { viewBox: `0 0 1060 ${height}`, xmlns: SVG_NS, "aria-hidden": "true" });
+  const labels = [[36, "INGRESOS"], [425, "CAJA OPERATIVA"], [766, "DESTINO"]];
+  labels.forEach(([x, content]) => { const node = svgEl("text", { x, y: 34, class: "sankey-column-title" }); node.textContent = content; svg.append(node); });
+  const top = 82;
+  const available = height - top - 42;
+  const total = Math.max(finance.flowTotal, 1);
+  const gap = 14;
+  const scale = Math.min(Math.max(0, available - Math.max(0, outputs.length - 1) * gap) / total, 2.25);
+  let cursor = top;
+  const ports = outputs.map((entry) => {
+    const thickness = Math.max(7, entry.value * scale);
+    const port = { ...entry, y: cursor + thickness / 2, thickness };
+    cursor += thickness + gap;
+    return port;
+  });
+  const centerY = top + available / 2;
+  const incomeParts = finance.incomes.filter((entry) => entry.value > 0);
+  let incomeCursor = top;
+  const incomePorts = incomeParts.map((entry) => {
+    const thickness = Math.max(7, entry.value * scale);
+    const port = { ...entry, y: incomeCursor + thickness / 2, thickness };
+    incomeCursor += thickness + gap;
+    return port;
+  });
+  incomePorts.forEach((entry) => {
+    const link = svgEl("path", { d: sankeyRibbon(276, entry.y, 425, centerY, entry.thickness), class: "sankey-link income-link" });
+    link.append(document.createElementNS(SVG_NS, "title")).textContent = `${entry.label}: ${formatMoney(entry.value)}`;
+    svg.append(link);
+  });
+  ports.forEach((entry) => {
+    const link = svgEl("path", { d: sankeyRibbon(635, centerY, 766, entry.y, entry.thickness), class: `sankey-link ${entry.tone}-link` });
+    link.append(document.createElementNS(SVG_NS, "title")).textContent = `${entry.label}: ${formatMoney(entry.value)}`;
+    svg.append(link);
+  });
+  incomePorts.forEach((entry) => addSankeyNode(svg, { x: 36, y: entry.y, width: 240, label: entry.label, value: entry.value, tone: "income" }));
+  addSankeyNode(svg, { x: 425, y: centerY, width: 210, label: "Recursos operativos", value: finance.flowTotal, tone: "center" });
+  ports.forEach((entry) => addSankeyNode(svg, { x: 766, y: entry.y, width: 258, label: entry.label, value: entry.value, tone: entry.tone }));
+  root.append(svg);
+}
+
+function renderFinance() {
+  const rows = financeRows();
+  const averagePrice = financeValue("financeAveragePrice");
+  const otherIncome = financeValue("financeOtherIncome");
+  const material = estimateMaterial(rows);
+  const consumables = Object.values(KNOWN_CONSUMABLES).reduce((total, value) => total + value, 0);
+  const manual = [
+    ["Electricidad", financeValue("financeElectricity"), "fixed"],
+    ["Agua y residuos", financeValue("financeWaterWaste"), "fixed"],
+    ["Internet", financeValue("financeInternet"), "fixed"],
+    ["Letras", financeValue("financeLetters"), "direct"],
+    ["Transporte y colocación", financeValue("financeTransport"), "direct"],
+    ["Mano de obra / autónomos", financeValue("financeLabour"), "labour"],
+    ["Otros gastos", financeValue("financeOtherCosts"), "fixed"]
+  ].map(([label, value, tone]) => ({ label, value, tone }));
+  const revenueOrders = rows.length * averagePrice;
+  const revenue = revenueOrders + otherIncome;
+  const costs = material.amount + consumables + manual.reduce((total, entry) => total + entry.value, 0);
+  const margin = revenue - costs;
+  const outputs = [
+    { label: "Materia prima estimada", value: material.amount, tone: "material" },
+    { label: "Abrasivos y lijas", value: KNOWN_CONSUMABLES.abrasives, tone: "consumables" },
+    { label: "Plantillas", value: KNOWN_CONSUMABLES.templates, tone: "consumables" },
+    { label: "Pintura, silicona y masilla", value: KNOWN_CONSUMABLES.finishing, tone: "consumables" },
+    ...manual,
+    ...(margin >= 0 ? [{ label: "Margen disponible", value: margin, tone: "margin" }] : [])
+  ];
+  const finance = {
+    revenue,
+    flowTotal: revenue + Math.max(0, -margin),
+    outputs,
+    incomes: [
+      { label: `Pedidos registrados (${rows.length})`, value: revenueOrders },
+      { label: "Otros ingresos facturados", value: otherIncome },
+      ...(margin < 0 ? [{ label: "Necesidad de caja", value: Math.abs(margin) }] : [])
+    ]
+  };
+  $("#financeOrders").textContent = state.connected ? formatInt.format(rows.length) : "—";
+  $("#financePeriod").textContent = state.connected ? `Año ${$("#financeYear").value || "sin fecha"}` : "Datos operativos pendientes";
+  $("#financeRevenue").textContent = state.connected ? formatMoney(revenue) : "—";
+  $("#financeCosts").textContent = state.connected ? formatMoney(costs) : "—";
+  $("#financeMargin").textContent = state.connected ? formatMoney(margin) : "—";
+  $("#financeConsumables").textContent = formatMoney(consumables);
+  $("#materialEstimateNote").textContent = state.connected
+    ? `${formatMoney(material.amount)} calculados sobre ${material.covered} de ${material.withMeasure} fichas con medida completa y material identificable. Incluye 10 % de merma; material aportado y reforma se contabilizan a 0 € de compra.`
+    : "La estimación de materia prima se calculará al recibir los pedidos del año.";
+  $("#financeFlowStatus").textContent = state.connected ? `${rows.length} pedidos reales · año ${$("#financeYear").value}` : "Actualizando pedidos";
+  renderFinanceSankey(finance);
+  const values = Object.fromEntries(Object.keys(FINANCE_DEFAULTS).map((id) => [id, financeValue(id)]));
+  localStorage.setItem(FINANCE_KEY, JSON.stringify(values));
+}
+
+function loadFinanceSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(FINANCE_KEY) || "{}");
+    Object.entries(FINANCE_DEFAULTS).forEach(([id, value]) => { $(`#${id}`).value = Number.isFinite(saved[id]) ? saved[id] : value; });
+  } catch {
+    Object.entries(FINANCE_DEFAULTS).forEach(([id, value]) => { $(`#${id}`).value = value; });
+  }
+  renderFinance();
+}
+
+function resetFinance() {
+  Object.entries(FINANCE_DEFAULTS).forEach(([id, value]) => { $(`#${id}`).value = value; });
+  localStorage.removeItem(FINANCE_KEY);
+  renderFinance();
+  showToast("Valores financieros restablecidos.");
 }
 
 function updateBenefit() {
@@ -973,6 +1271,7 @@ function refreshPublicFeed() {
     renderSummary();
     renderProduction();
     renderRecentOrders();
+    renderFinance();
     showToast("El servicio de consulta todavía se está activando.");
     return;
   }
@@ -999,6 +1298,7 @@ function refreshPublicFeed() {
     renderSummary();
     renderProduction();
     renderRecentOrders();
+    renderFinance();
     showToast("No se pudieron actualizar los datos. Vuelve a intentarlo en unos segundos.");
   };
   window[callbackName] = (payload) => {
@@ -1014,6 +1314,7 @@ function refreshPublicFeed() {
       renderSummary();
       renderProduction();
       renderRecentOrders();
+      renderFinance();
       updateConnectionUI();
       showToast(`${formatInt.format(state.rows.length)} fichas actualizadas.`);
     } catch {
@@ -1022,6 +1323,7 @@ function refreshPublicFeed() {
       renderSummary();
       renderProduction();
       renderRecentOrders();
+      renderFinance();
       showToast("El servicio devolvió datos no válidos.");
     } finally {
       cleanUp();
@@ -1038,23 +1340,27 @@ function switchView(view) {
   state.activeView = view;
   $$(".view").forEach((section) => section.classList.toggle("active", section.id === view));
   $$("[data-view-target]").forEach((button) => button.classList.toggle("active", button.dataset.viewTarget === view));
-  $("#viewTitle").textContent = ({ summary: "Resumen", production: "Producción", profit: "Estimaciones", strategy: "Estrategia", data: "Datos y conexión" })[view];
+  $("#viewTitle").textContent = ({ summary: "Resumen", production: "Producción", profit: "Estimaciones", finance: "Ingresos y gastos", strategy: "Estrategia", data: "Datos y conexión" })[view];
   $(".sidebar").classList.remove("open");
   if (view === "summary") requestAnimationFrame(renderSummary);
   if (view === "production") requestAnimationFrame(renderProduction);
+  if (view === "finance") requestAnimationFrame(renderFinance);
 }
 
 function init() {
-  updateConnectionUI(); setupFilters(); renderSummary(); renderProduction(); loadAssumptions();
+  updateConnectionUI(); setupFilters(); renderSummary(); renderProduction(); loadAssumptions(); loadFinanceSettings();
   renderRecentOrders();
   $$("[data-view-target]").forEach((button) => button.addEventListener("click", () => switchView(button.dataset.viewTarget)));
   $("#mobileMenu").addEventListener("click", () => $(".sidebar").classList.toggle("open"));
   $("#refreshData").addEventListener("click", refreshPublicFeed);
   $("#yearFilter").addEventListener("change", renderProduction); $("#modelFilter").addEventListener("change", renderProduction);
   ["#assumptionOrders", "#assumptionPrice", "#assumptionProcurement", "#assumptionExtraJobs", "#assumptionContribution", "#assumptionRework", "#assumptionCncCapacity", "#assumptionCncInvestment", "#assumptionCncPayback"].forEach((selector) => $(selector).addEventListener("input", updateBenefit));
+  ["#financeAveragePrice", "#financeOtherIncome", "#financeElectricity", "#financeWaterWaste", "#financeInternet", "#financeLetters", "#financeTransport", "#financeLabour", "#financeOtherCosts"].forEach((selector) => $(selector).addEventListener("input", renderFinance));
+  $("#financeYear").addEventListener("change", renderFinance);
   $("#resetAssumptions").addEventListener("click", resetAssumptions);
+  $("#resetFinance").addEventListener("click", resetFinance);
   window.setInterval(refreshPublicFeed, AUTO_REFRESH_MS);
-  window.addEventListener("resize", () => { if (state.activeView === "summary") renderSummary(); });
+  window.addEventListener("resize", () => { if (state.activeView === "summary") renderSummary(); if (state.activeView === "finance") renderFinance(); });
   refreshPublicFeed();
 }
 
