@@ -104,13 +104,15 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
 
 .finance-kpis { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 1rem; margin-bottom: 1rem; }.finance-kpis article { min-height: 118px; padding: 1rem 1.15rem; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfc; }.finance-kpis span, .finance-kpis small { display: block; color: var(--ink-soft); font-size: .7rem; }.finance-kpis strong { display: block; margin: .35rem 0; color: var(--deep); font-family: "DM Mono", monospace; font-size: 1.35rem; letter-spacing: -.06em; }.sankey-panel { padding: 1.35rem; }.finance-sankey { min-height: 500px; margin-top: .75rem; overflow-x: auto; overflow-y: hidden; border: 1px solid #e2ecea; border-radius: 12px; background: linear-gradient(180deg, #fbfefd, #f5faf9); }.finance-sankey svg { display: block; width: 100%; min-width: 820px; height: auto; }.finance-sankey .empty-state { margin: 0; padding: 5rem 1rem; text-align: center; }.sankey-column-title { fill: #718b8d; font-family: "DM Mono", monospace; font-size: 12px; font-weight: 500; letter-spacing: 1.3px; }.sankey-node rect { stroke-width: 1.15; }.sankey-node-label { fill: #244448; font-family: "Manrope", Arial, sans-serif; font-size: 12px; font-weight: 800; }.sankey-node-value { fill: #5e797b; font-family: "DM Mono", monospace; font-size: 11px; }.sankey-node.income rect { fill: #e6f2f8; stroke: #92b6ca; }.sankey-node.center rect { fill: var(--deep); stroke: var(--deep); }.sankey-node.center .sankey-node-label, .sankey-node.center .sankey-node-value { fill: white; }.sankey-node.material rect { fill: #f5eee2; stroke: #d8bd8c; }.sankey-node.consumables rect { fill: #fff4da; stroke: #e1bc6a; }.sankey-node.fixed rect { fill: #edf0f5; stroke: #aebaca; }.sankey-node.direct rect { fill: #f5ebf1; stroke: #d0a6bf; }.sankey-node.labour rect { fill: #ecebe3; stroke: #c5c0a8; }.sankey-node.margin rect { fill: #e4f4eb; stroke: #8fc5a5; }.sankey-node.warning rect { fill: #fff0e8; stroke: #da985d; }.sankey-link { stroke: none; opacity: .8; transition: opacity .16s ease; }.sankey-link:hover { opacity: 1; }.income-link { fill: rgba(49, 117, 156, .30); }.material-link { fill: rgba(176, 133, 69, .31); }.consumables-link { fill: rgba(213, 160, 45, .30); }.fixed-link { fill: rgba(112, 133, 164, .25); }.direct-link { fill: rgba(173, 97, 139, .27); }.labour-link { fill: rgba(137, 131, 96, .28); }.margin-link { fill: rgba(48, 140, 91, .30); }.warning-link { fill: rgba(202, 108, 46, .34); }.finance-scope { margin: 1rem 0 0; padding: .8rem .9rem; border-left: 3px solid #8bc5bf; border-radius: 0 8px 8px 0; background: #f4faf8; color: var(--ink-soft); font-size: .73rem; line-height: 1.55; }.finance-scope strong { color: var(--ink); }.finance-layout { display: grid; grid-template-columns: minmax(430px,1.25fr) minmax(310px,.75fr); gap: 1rem; margin-top: 1rem; }.finance-inputs, .cost-register, .finance-register-note { padding: 1.45rem; }.finance-inputs .panel-head { margin-bottom: .2rem; }.finance-form { display: grid; grid-template-columns: 1fr 1fr; gap: .85rem; margin-top: 1rem; }.finance-form label { display: grid; gap: .35rem; color: var(--ink-soft); font-size: .72rem; font-weight: 700; }.finance-form input { min-height: 38px; padding: .45rem .6rem; border: 1px solid #cfe0de; border-radius: 8px; background: white; color: var(--ink); font-size: .82rem; outline-color: var(--teal); }.cost-register { background: #fffdf8; }.cost-register h2 { margin-bottom: .9rem; }.cost-list { display: grid; gap: .1rem; }.cost-list div { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: .8rem; padding: .65rem 0; border-bottom: 1px solid #eee8d9; color: #607274; font-size: .74rem; line-height: 1.35; }.cost-list strong, .cost-register-total strong { color: #6e4d19; font-family: "DM Mono", monospace; font-size: .76rem; white-space: nowrap; }.cost-register-total { display: flex; justify-content: space-between; gap: 1rem; margin-top: .8rem; padding-top: .8rem; border-top: 1px solid #e4d8be; color: #735b32; font-size: .78rem; font-weight: 800; }.finance-register-note { display: grid; grid-template-columns: minmax(230px,.65fr) minmax(0,1.35fr); column-gap: 1.5rem; align-items: start; margin-top: 1rem; background: #f5f8f7; }.finance-register-note .eyebrow { grid-column: 1 / -1; }.finance-register-note h2 { margin-bottom: 0; font-size: 1.1rem; }.finance-register-note p:not(.eyebrow) { margin: 0; color: var(--ink-soft); font-size: .79rem; line-height: 1.65; }
 
+.sources-panel { padding: 1.35rem; }.sources-table-wrap { margin-top: 1rem; overflow-x: auto; }.sources-table { width: 100%; min-width: 1040px; border-collapse: collapse; font-size: .76rem; }.sources-table th { padding: .6rem .7rem; border-bottom: 1px solid var(--line); color: var(--ink-soft); font-family: "DM Mono", monospace; font-size: .64rem; font-weight: 500; letter-spacing: .06em; text-align: left; text-transform: uppercase; }.sources-table td { padding: .85rem .7rem; border-bottom: 1px solid #edf2f1; color: #486266; line-height: 1.45; vertical-align: top; }.sources-table tbody tr:last-child td { border-bottom: 0; }.sources-table td:first-child { min-width: 135px; color: var(--deep); }.sources-table strong, .sources-table small { display: block; }.sources-table strong { color: var(--ink); font-size: .78rem; }.sources-table small { margin-top: .16rem; color: var(--ink-soft); font-size: .68rem; }.source-status { display: inline-flex; align-items: center; min-height: 22px; margin-bottom: .25rem; padding: 0 .46rem; border-radius: 999px; font-family: "DM Mono", monospace; font-size: .62rem; font-weight: 700; letter-spacing: .02em; white-space: nowrap; }.source-status.pending { background: #fff4da; color: #906514; }.source-status.portal { background: #f5ebf1; color: #86516e; }.source-status.active { background: #e4f4eb; color: #2d7955; }.source-status.staged { background: #edf0f5; color: #506b8c; }.sources-guides { display: grid; grid-template-columns: minmax(300px,.8fr) minmax(420px,1.2fr); gap: 1rem; margin-top: 1rem; }.source-guide { padding: 1.45rem; }.source-guide h2 { margin-bottom: .65rem; font-size: 1.1rem; }.source-guide > p:not(.eyebrow) { margin: 0; color: var(--ink-soft); font-size: .8rem; line-height: 1.65; }.privacy-guide { background: #f5f8f7; }.automation-guide { background: #fbfcfc; }.automation-guide ol { display: grid; gap: .7rem; margin: .85rem 0 0; padding: 0; list-style: none; }.automation-guide li { display: grid; grid-template-columns: 1.5rem minmax(0,1fr); gap: .55rem; align-items: start; }.automation-guide li span { display: grid; width: 1.5rem; height: 1.5rem; place-items: center; border-radius: 6px; background: var(--teal-light); color: var(--teal); font-family: "DM Mono", monospace; font-size: .6rem; }.automation-guide li p { margin: 0; color: var(--ink-soft); font-size: .76rem; line-height: 1.48; }.automation-guide li strong { color: var(--ink); }
+
 .data-layout { display: grid; grid-template-columns: minmax(330px,1.1fr) minmax(300px,.9fr); gap: 1rem; }.connection-panel, .settings-panel, .privacy-panel { padding: 1.55rem; }.connection-heading { display: flex; align-items: center; gap: .85rem; }.connection-heading h2, .settings-panel h2 { margin-bottom: 0; }.connection-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 11px; background: var(--teal-light); color: var(--teal); font-family: "DM Mono", monospace; font-size: 1.3rem; }.connection-panel > p { margin: 1.1rem 0; color: var(--ink-soft); font-size: .87rem; }.connection-status { display: grid; grid-template-columns: .55rem auto 1fr; align-items: center; gap: .48rem; padding: .75rem .85rem; border-radius: 9px; background: #f5f8f7; color: var(--ink); }.connection-status > span { width: .48rem; height: .48rem; border-radius: 50%; background: #b3bdbd; }.connection-status.connected > span { background: var(--green); }.connection-status b { font-size: .8rem; }.connection-status small { color: var(--ink-soft); font-size: .68rem; }.connection-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1rem; }.settings-panel { display: grid; align-content: start; gap: .75rem; }.settings-panel .eyebrow { margin-bottom: -.35rem; }.settings-panel label { gap: .27rem; }.settings-panel .button { justify-self: start; margin-top: .2rem; }
 .trace-panel { margin-top: 1rem; padding: 1.25rem; }.trace-table-wrap { margin-top: 1rem; overflow-x: auto; }.trace-table { width: 100%; min-width: 700px; border-collapse: collapse; font-size: .78rem; }.trace-table th { padding: .55rem .7rem; border-bottom: 1px solid var(--line); color: var(--ink-soft); font-family: "DM Mono", monospace; font-size: .64rem; font-weight: 500; letter-spacing: .06em; text-align: left; text-transform: uppercase; }.trace-table td { padding: .67rem .7rem; border-bottom: 1px solid #edf2f1; color: #345457; vertical-align: top; }.trace-table tbody tr:last-child td { border-bottom: 0; }.trace-table td:first-child, .trace-table td:nth-child(2), .trace-table td:last-child { color: var(--deep); font-family: "DM Mono", monospace; font-size: .73rem; }.trace-table .empty-state { color: var(--ink-soft); font-family: "Manrope", Arial, sans-serif; text-align: center; }
 .privacy-panel { margin-top: 1rem; background: #fbfcfc; }.privacy-rules { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.2rem; margin-top: 1rem; }.privacy-rules div { display: flex; gap: .65rem; }.privacy-rules span { display: grid; flex: 0 0 1.65rem; height: 1.65rem; place-items: center; border-radius: 6px; background: var(--teal-light); color: var(--teal); font-family: "DM Mono", monospace; font-size: .65rem; }.privacy-rules p { margin: 0; color: var(--ink-soft); font-size: .77rem; line-height: 1.55; }.privacy-rules strong { color: var(--ink); }
 
 .toast { position: fixed; z-index: 20; right: 1rem; bottom: 1rem; max-width: 360px; padding: .8rem 1rem; border-radius: 10px; background: var(--deep); box-shadow: var(--shadow); color: white; font-size: .8rem; opacity: 0; pointer-events: none; transform: translateY(8px); transition: opacity .2s, transform .2s; }.toast.visible { opacity: 1; transform: translateY(0); }
 
-@media (max-width: 1120px) { .kpi-grid { grid-template-columns: repeat(2,1fr); }.overview-grid, .bottom-grid, .profit-layout, .data-layout, .cnc-panel, .strategy-grid, .strategy-decision-grid, .finance-layout, .finance-register-note { grid-template-columns: 1fr; }.finance-kpis { grid-template-columns: repeat(2,1fr); }.insight-panel { min-height: 230px; }.cnc-math { min-height: 155px; }.production-grid { grid-template-columns: 1fr; }.wide-table { grid-column: auto; } }
+@media (max-width: 1120px) { .kpi-grid { grid-template-columns: repeat(2,1fr); }.overview-grid, .bottom-grid, .profit-layout, .data-layout, .cnc-panel, .strategy-grid, .strategy-decision-grid, .finance-layout, .finance-register-note, .sources-guides { grid-template-columns: 1fr; }.finance-kpis { grid-template-columns: repeat(2,1fr); }.insight-panel { min-height: 230px; }.cnc-math { min-height: 155px; }.production-grid { grid-template-columns: 1fr; }.wide-table { grid-column: auto; } }
 @media (max-width: 760px) { .app-shell { display: block; }.sidebar { position: fixed; z-index: 14; left: -270px; width: 254px; transition: left .2s; }.sidebar.open { left: 0; box-shadow: 25px 0 50px rgba(0,0,0,.25); }.topbar { height: 64px; padding: 0 1rem; }.mobile-menu { display: inline-grid; width: 33px; height: 33px; place-items: center; border: 0; border-radius: 7px; background: #e6efee; color: var(--deep); }.breadcrumb { flex: 1; margin-left: .4rem; }.private-badge { display: none; }.view { padding: 1.75rem 1rem 3rem; }.page-heading { display: grid; gap: 1rem; }.heading-date { align-self: start; }.kpi-grid, .production-metrics, .privacy-rules, .assumptions-form, .strategy-cards, .strategy-roadmap, .finance-kpis, .finance-form { grid-template-columns: 1fr; }.kpi-card { min-height: 132px; }.filter-row { width: 100%; }.filter-row label { flex: 1; min-width: 125px; }.canvas-wrap { height: 220px; }.cnc-math { grid-template-columns: 1fr; }.topbar-actions .button { padding: .45rem .6rem; font-size: .72rem; }.connection-status { grid-template-columns: .55rem 1fr; }.connection-status small { grid-column: 2; }.privacy-rules { gap: .8rem; }.finance-sankey { min-height: 430px; }.finance-register-note .eyebrow { grid-column: auto; } }
 
 </style>
@@ -138,6 +140,9 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
           </button>
           <button class="nav-link" type="button" data-view-target="finance">
             <span class="nav-icon">≈</span> Ingresos y gastos
+          </button>
+          <button class="nav-link" type="button" data-view-target="sources">
+            <span class="nav-icon">⌁</span> Fuentes
           </button>
           <button class="nav-link" type="button" data-view-target="strategy">
             <span class="nav-icon">◇</span> Estrategia
@@ -443,6 +448,51 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
           </article>
         </section>
 
+        <section id="sources" class="view" aria-labelledby="sourcesHeading">
+          <div class="page-heading compact">
+            <div>
+              <p class="eyebrow">TRAZABILIDAD FINANCIERA</p>
+              <h1 id="sourcesHeading">Cada cifra tiene una fuente.</h1>
+              <p class="page-lead">Este mapa define de dónde debe llegar cada dato antes de entrar en el libro maestro. Los datos personales, los buzones y la identificación exacta de los suministros no se publican.</p>
+            </div>
+          </div>
+
+          <article class="panel sources-panel">
+            <div class="panel-head"><div><p class="eyebrow">MAPA DE ENTRADAS</p><h2>Fuentes operativas y reglas de validación</h2></div><span class="chart-note">Estado actual y siguiente conexión</span></div>
+            <div class="sources-table-wrap">
+              <table class="sources-table">
+                <thead><tr><th>Dato</th><th>Origen de recepción</th><th>Destino en el control</th><th>Regla antes de registrar</th><th>Automatización</th></tr></thead>
+                <tbody>
+                  <tr><td><strong>Pedidos M.S.</strong><small>Fichas JPG</small></td><td>Buzón operativo de pedidos · adjuntos JPG</td><td>Pedidos · primero bandeja de revisión</td><td>Extraer ficha, comprobar ID de trabajo y evitar duplicados antes de pasar al maestro.</td><td><span class="source-status pending">Pendiente</span><small>Captura de adjuntos + OCR + revisión</small></td></tr>
+                  <tr><td><strong>Electricidad</strong><small>Gana / Romboc</small></td><td>Buzón de facturación B · remitente validado de Gana Energía</td><td>Facturas · electricidad</td><td>Clasificar PDF por fecha, importe, periodo y suministro antes de consolidar.</td><td><span class="source-status pending">Pendiente</span><small>Etiqueta de correo + importación</small></td></tr>
+                  <tr><td><strong>Agua y residuos</strong><small>Acciona</small></td><td>Portal de Acciona; las notificaciones no sustituyen a la factura descargada.</td><td>Facturas · agua y residuos</td><td>Incluir solo los dos suministros del taller, identificados de forma privada en el libro maestro.</td><td><span class="source-status portal">Portal requerido</span><small>Descarga y validación</small></td></tr>
+                  <tr><td><strong>Internet</strong><small>O2</small></td><td>Buzón de facturación A · facturas O2</td><td>Facturas · internet</td><td>Guardar PDF, fecha de emisión, periodo e importe con un identificador de factura único.</td><td><span class="source-status pending">Pendiente</span><small>Importación de correo</small></td></tr>
+                  <tr><td><strong>Letras</strong><small>Bronce / inox</small></td><td>Buzón de facturación A · proveedor de letras</td><td>Facturas · letras</td><td>Vincular, cuando sea posible, al ID del trabajo y separar bronce de acero inoxidable.</td><td><span class="source-status pending">Pendiente</span><small>Importación de correo</small></td></tr>
+                  <tr><td><strong>Piedra</strong><small>Compra estimada</small></td><td>Pedidos + tabla de costes por m² y proveedor</td><td>Estimación de materia prima</td><td>Aplicar 10 % de merma. «Suyo» en reforma es piedra existente; «Suyo» en pedido nuevo y blanco Macael son aportación de M.S.</td><td><span class="source-status active">Estimador activo</span><small>Reconciliar después con factura de compra</small></td></tr>
+                  <tr><td><strong>Consumibles</strong><small>Goma, abrasivos y acabado</small></td><td>Estimación anual conocida + facturas y control de existencias</td><td>Gastos · consumibles</td><td>Contrastar la base anual con compras reales y ajustar cantidades al cierre de cada año.</td><td><span class="source-status staged">Base inicial</span><small>Registro financiero pendiente</small></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <div class="sources-guides">
+            <article class="panel source-guide privacy-guide">
+              <p class="eyebrow">PRIVACIDAD</p>
+              <h2>El portal muestra la trazabilidad, no las credenciales.</h2>
+              <p>Los nombres personales, correos completos, direcciones, números de contrato y archivos de facturas viven únicamente en el entorno privado. La web solo enseña categorías, fuentes y reglas de control.</p>
+            </article>
+            <article class="panel source-guide automation-guide">
+              <p class="eyebrow">ORDEN DE AUTOMATIZACIÓN</p>
+              <ol>
+                <li><span>01</span><p>Crear las pestañas privadas de <strong>Facturas</strong> y <strong>Entradas para revisión</strong>.</p></li>
+                <li><span>02</span><p>Conectar los dos buzones mediante permisos separados y filtrar solo proveedores autorizados.</p></li>
+                <li><span>03</span><p>Enviar adjuntos y OCR a revisión; nunca escribir una factura o pedido sin validar directamente en el maestro.</p></li>
+                <li><span>04</span><p>Incorporar las descargas del portal Acciona y conciliar por periodo al cierre mensual.</p></li>
+              </ol>
+            </article>
+          </div>
+        </section>
+
         <section id="data" class="view" aria-labelledby="dataHeading">
           <div class="page-heading compact">
             <div>
@@ -622,7 +672,8 @@ function materialFor(row) {
   // In the workshop's terminology, “Absoluto” is shorthand for the same
   // material as “Negro absoluto”; keep both spellings in one demand group.
   if (value === "absoluto" || value.includes("negro absoluto")) return "Granito negro absoluto";
-  if (value.includes("blanco")) return "Mármol blanco Macael · M.S.";
+  if (value.includes("italia") || value.includes("italiano")) return "Mármol blanco italiano";
+  if (value.includes("blanco") || value.includes("macael")) return "Mármol blanco Macael · M.S.";
   if (value === "suyo" || value === "suya") {
     return isReform(row) ? "Piedra existente" : "Material aportado · M.S.";
   }
@@ -633,12 +684,12 @@ function materialRateFor(row) {
   const value = normalize(rawMaterialFor(row));
   // “Suyo” is either existing stone in a reform or material supplied by M.S.;
   // white Macael is also supplied by M.S. None is a workshop stone purchase.
-  if (!value || value === "suyo" || value === "suya" || (value.includes("blanco") && !value.includes("italiano"))) return 0;
+  if (!value || value === "suyo" || value === "suya" || value.includes("macael") || (value.includes("blanco") && !value.includes("italiano") && !value.includes("italia"))) return 0;
   if (value.includes("negro absoluto") || value === "absoluto") return 110;
   if (value.includes("labrador")) return 80;
   if (value.includes("verde pradera")) return 75;
-  if (value.includes("sudafrica")) return 69;
-  if (value.includes("blanco italiano")) return 62;
+  if (value.includes("sudafrica") || value.includes("sud africa") || value.includes("sur africa")) return 69;
+  if (value.includes("blanco italiano") || value.includes("italia")) return 62;
   if (value.includes("gris quintana")) return 45;
   if (value.includes("champan") || value.includes("gris perla") || value.includes("pardino")) return 30;
   if (value.includes("gris")) return 55;
@@ -1089,41 +1140,43 @@ function renderFinanceSankey(finance) {
     return;
   }
   const outputs = finance.outputs.filter((entry) => entry.value > 0);
-  const rows = Math.max(outputs.length, 3);
-  const height = Math.max(500, rows * 66 + 112);
+  const rows = Math.max(outputs.length, 4);
+  const rowGap = 68;
+  const height = Math.max(500, rows * rowGap + 112);
   const svg = svgEl("svg", { viewBox: `0 0 1060 ${height}`, xmlns: SVG_NS, "aria-hidden": "true" });
   const labels = [[36, "INGRESOS"], [425, "CAJA OPERATIVA"], [766, "DESTINO"]];
   labels.forEach(([x, content]) => { const node = svgEl("text", { x, y: 34, class: "sankey-column-title" }); node.textContent = content; svg.append(node); });
   const top = 82;
-  const available = height - top - 42;
-  const total = Math.max(finance.flowTotal, 1);
-  const gap = 14;
-  const scale = Math.min(Math.max(0, available - Math.max(0, outputs.length - 1) * gap) / total, 2.25);
-  let cursor = top;
-  const ports = outputs.map((entry) => {
-    const thickness = Math.max(7, entry.value * scale);
-    const port = { ...entry, y: cursor + thickness / 2, thickness };
-    cursor += thickness + gap;
-    return port;
-  });
-  const centerY = top + available / 2;
+  const centerY = Math.round(height / 2 + 7);
+  // The previous version used the chart height as a full-width scale. That
+  // made a 20k revenue ribbon fill the entire canvas and forced destination
+  // cards to overlap. A capped visual scale keeps the amounts legible while
+  // their exact values remain in every node and hover tooltip.
+  const scale = Math.min(140 / Math.max(finance.flowTotal, 1), 0.024);
+  const ribbonThickness = (value) => Math.max(4, Math.min(140, value * scale));
+  const outputStart = top + 24;
+  const ports = outputs.map((entry, index) => ({
+    ...entry,
+    y: outputStart + index * rowGap,
+    thickness: ribbonThickness(entry.value)
+  }));
   const incomeParts = finance.incomes.filter((entry) => entry.value > 0);
-  let incomeCursor = top;
-  const incomePorts = incomeParts.map((entry) => {
-    const thickness = Math.max(7, entry.value * scale);
-    const port = { ...entry, y: incomeCursor + thickness / 2, thickness };
-    incomeCursor += thickness + gap;
-    return port;
-  });
+  const incomePorts = incomeParts.map((entry, index) => ({
+    ...entry,
+    y: centerY + (index - (incomeParts.length - 1) / 2) * rowGap,
+    thickness: ribbonThickness(entry.value)
+  }));
   incomePorts.forEach((entry) => {
-    const link = svgEl("path", { d: sankeyRibbon(276, entry.y, 425, centerY, entry.thickness), class: "sankey-link income-link" });
+    const inletY = centerY + (entry.y - centerY) * 0.18;
+    const link = svgEl("path", { d: sankeyRibbon(276, entry.y, 425, inletY, entry.thickness), class: "sankey-link income-link" });
     const tooltip = document.createElementNS(SVG_NS, "title");
     tooltip.textContent = `${entry.label}: ${formatMoney(entry.value)}`;
     link.append(tooltip);
     svg.append(link);
   });
-  ports.forEach((entry) => {
-    const link = svgEl("path", { d: sankeyRibbon(635, centerY, 766, entry.y, entry.thickness), class: `sankey-link ${entry.tone}-link` });
+  ports.forEach((entry, index) => {
+    const outletY = centerY + (index - (ports.length - 1) / 2) * 11;
+    const link = svgEl("path", { d: sankeyRibbon(635, outletY, 766, entry.y, entry.thickness), class: `sankey-link ${entry.tone}-link` });
     const tooltip = document.createElementNS(SVG_NS, "title");
     tooltip.textContent = `${entry.label}: ${formatMoney(entry.value)}`;
     link.append(tooltip);
@@ -1344,7 +1397,7 @@ function switchView(view) {
   state.activeView = view;
   $$(".view").forEach((section) => section.classList.toggle("active", section.id === view));
   $$("[data-view-target]").forEach((button) => button.classList.toggle("active", button.dataset.viewTarget === view));
-  $("#viewTitle").textContent = ({ summary: "Resumen", production: "Producción", profit: "Estimaciones", finance: "Ingresos y gastos", strategy: "Estrategia", data: "Datos y conexión" })[view];
+  $("#viewTitle").textContent = ({ summary: "Resumen", production: "Producción", profit: "Estimaciones", finance: "Ingresos y gastos", sources: "Fuentes", strategy: "Estrategia", data: "Datos y conexión" })[view];
   $(".sidebar").classList.remove("open");
   if (view === "summary") requestAnimationFrame(renderSummary);
   if (view === "production") requestAnimationFrame(renderProduction);
