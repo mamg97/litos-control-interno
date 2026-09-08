@@ -1117,12 +1117,16 @@ function renderFinanceSankey(finance) {
   });
   incomePorts.forEach((entry) => {
     const link = svgEl("path", { d: sankeyRibbon(276, entry.y, 425, centerY, entry.thickness), class: "sankey-link income-link" });
-    link.append(document.createElementNS(SVG_NS, "title")).textContent = `${entry.label}: ${formatMoney(entry.value)}`;
+    const tooltip = document.createElementNS(SVG_NS, "title");
+    tooltip.textContent = `${entry.label}: ${formatMoney(entry.value)}`;
+    link.append(tooltip);
     svg.append(link);
   });
   ports.forEach((entry) => {
     const link = svgEl("path", { d: sankeyRibbon(635, centerY, 766, entry.y, entry.thickness), class: `sankey-link ${entry.tone}-link` });
-    link.append(document.createElementNS(SVG_NS, "title")).textContent = `${entry.label}: ${formatMoney(entry.value)}`;
+    const tooltip = document.createElementNS(SVG_NS, "title");
+    tooltip.textContent = `${entry.label}: ${formatMoney(entry.value)}`;
+    link.append(tooltip);
     svg.append(link);
   });
   incomePorts.forEach((entry) => addSankeyNode(svg, { x: 36, y: entry.y, width: 240, label: entry.label, value: entry.value, tone: "income" }));
