@@ -681,6 +681,22 @@ function parseDate(value) {
   return null;
 }
 
+// The reconciliation keeps the date on which a fiche arrived separate from
+// the date on which its work was delivered. Historical reporting is based on
+// the latter; a live order without a ledger record falls back to its fiche.
+function dashboardDate(row) {
+  return parseDate(row["Fecha para dashboard"] || row["Fecha entrega (estadillo)"] || row["Fecha ficha"]);
+}
+
+function recordedRevenue(row) {
+  return numberAt(row, "Importe trabajo / Debe (€)");
+}
+
+function revenueFor(row, fallbackPrice) {
+  const actual = recordedRevenue(row);
+  return actual === null ? fallbackPrice : actual;
+}
+
 function normalize(value) {
   return text(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
@@ -836,7 +852,11 @@ function mapPublicRows(records) {
   if (!Array.isArray(records)) return [];
   return records.map((record) => ({
     Pedido: text(record.id),
-    "Fecha ficha": text(record.date),
+    "Fecha ficha": text(record.orderDate),
+    "Fecha entrega (estadillo)": text(record.deliveredDate),
+    "Fecha para dashboard": text(record.date),
+    "Importe trabajo / Debe (€)": record.amount ?? "",
+    "Estado pedido": text(record.status),
     Modelo: text(record.model),
     Material: text(record.material),
     "Ancho total (cm)": record.width ?? "",
@@ -851,7 +871,7 @@ function mapPublicRows(records) {
 }
 
 function makeSummary(rows) {
-  const rowsWithDate = rows.map((row) => ({ ...row, _date: parseDate(row["Fecha ficha"]) })).filter((row) => row._date);
+  const rowsWithDate = rows.map((row) => ({ ...row, _date: dashboardDate(row) })).filter((row) => row._date);
   const latestYear = rowsWithDate.length ? Math.max(...rowsWithDate.map((row) => row._date.getFullYear())) : new Date().getFullYear();
   const inLatestYear = rowsWithDate.filter((row) => row._date.getFullYear() === latestYear);
   const measured = rows.filter((row) => sizeFor(row));
@@ -886,7 +906,7 @@ function makeSummary(rows) {
 
 function rowsForYear(year) {
   if (!year) return [];
-  return state.rows.filter((row) => parseDate(row["Fecha ficha"])?.getFullYear() === Number(year));
+  return state.rows.filter((row) => dashboardDate(row)?.getFullYear() === Number(year));
 }
 
 function selectedSummaryYear() {
@@ -907,7 +927,7 @@ function selectedFinanceGranularity() {
 }
 
 function availableDataYears() {
-  return [...new Set(state.rows.map((row) => parseDate(row["Fecha ficha"])?.getFullYear()).filter(Boolean))]
+  return [...new Set(state.rows.map((row) => dashboardDate(row)?.getFullYear()).filter(Boolean))]
     .sort((a, b) => b - a);
 }
 
@@ -921,7 +941,7 @@ function getFilteredRows() {
   const year = $("#yearFilter").value;
   const model = $("#modelFilter").value;
   return state.rows.filter((row) => {
-    const date = parseDate(row["Fecha ficha"]);
+    const date = dashboardDate(row);
     const yearMatches = year === "all" || (date && String(date.getFullYear()) === year);
     const modelMatches = model === "all" || familyFor(row.Modelo) === model;
     return yearMatches && modelMatches;
@@ -1071,8 +1091,8 @@ function performanceSeries(year, granularity = "year") {
   const share = periods.length ? 1 / periods.length : 0;
 
   return periods.map(({ label, months }) => {
-    const rows = annualRows.filter((row) => months.includes(parseDate(row["Fecha ficha"])?.getMonth()));
-    const revenue = rows.length * finance.averagePrice + finance.otherIncome * share;
+    const rows = annualRows.filter((row) => months.includes(dashboardDate(row)?.getMonth()));
+    const revenue = rows.reduce((total, row) => total + revenueFor(row, finance.averagePrice), 0) + finance.otherIncome * share;
     const costs = estimateMaterial(rows).amount + recurringCosts * share;
     return { label, orders: rows.length, revenue, costs, profit: revenue - costs };
   });
@@ -1234,13 +1254,17 @@ function renderRevenueForecast() {
   const rows = rowsForYear(year);
   const averagePrice = financeValue("financeAveragePrice");
   const orders = Array.from({ length: 12 }, () => 0);
+  const income = Array.from({ length: 12 }, () => 0);
   rows.forEach((row) => {
-    const date = parseDate(row["Fecha ficha"]);
-    if (date) orders[date.getMonth()] += 1;
+    const date = dashboardDate(row);
+    if (date) {
+      orders[date.getMonth()] += 1;
+      income[date.getMonth()] += revenueFor(row, averagePrice);
+    }
   });
   const lastActualMonth = orders.reduce((latest, count, month) => count > 0 ? month : latest, -1);
   const knownMonths = lastActualMonth >= 0 ? lastActualMonth + 1 : 0;
-  const actual = orders.map((count) => count * averagePrice);
+  const actual = income;
   const averageMonthly = knownMonths ? actual.slice(0, knownMonths).reduce((total, value) => total + value, 0) / knownMonths : 0;
   const forecast = actual.map((value, month) => month <= lastActualMonth ? value : averageMonthly);
   const projected = actual.slice(0, knownMonths).reduce((total, value) => total + value, 0) + forecast.slice(knownMonths).reduce((total, value) => total + value, 0);
@@ -1249,7 +1273,7 @@ function renderRevenueForecast() {
     note.textContent = !state.connected || !year
       ? "Pendiente de datos"
       : lastActualMonth < 0
-        ? `Sin pedidos registrados · año ${year}`
+        ? `Sin trabajos registrados · año ${year}`
         : lastActualMonth === 11
           ? `Año cerrado · ${formatMoney(projected)}`
           : `Cierre estimado: ${formatMoney(projected)}`;
@@ -1288,7 +1312,7 @@ function renderSummary() {
     profit: "Beneficio estimado"
   };
   const firstDate = state.rows
-    .map((row) => parseDate(row["Fecha ficha"]))
+    .map((row) => dashboardDate(row))
     .filter(Boolean)
     .sort((a, b) => a - b)[0];
   $("#totalOrders").textContent = connected ? formatInt.format(s.total) : "—";
@@ -1296,7 +1320,13 @@ function renderSummary() {
   $("#yearOrdersFoot").textContent = connected && year ? `Año ${year}` : "Pendiente de actualización";
   $("#summaryRevenue").textContent = connected ? formatMoney(finance.revenue) : "—";
   $("#summaryCosts").textContent = connected ? formatMoney(finance.costs) : "—";
-  $("#summaryRevenueFoot").textContent = connected && year ? `Estimación operativa · ${year}` : "Estimación operativa";
+  const recordedRows = yearRows.filter((row) => recordedRevenue(row) !== null).length;
+  const estimatedRows = Math.max(0, yearRows.length - recordedRows);
+  $("#summaryRevenueFoot").textContent = connected && year
+    ? recordedRows
+      ? `${recordedRows} importes reales${estimatedRows ? ` · ${estimatedRows} estimados` : ""} · ${year}`
+      : `Estimación operativa · ${year}`
+    : "Estimación operativa";
   $("#summaryCostsFoot").textContent = connected && year ? `Material, consumibles y gastos · ${year}` : "Pendiente de facturas";
   $("#measuredOrders").textContent = connected ? formatInt.format(s.measured) : "—";
   $("#distinctSizes").textContent = connected ? formatInt.format(s.distinctSizes) : "—";
@@ -1355,14 +1385,14 @@ function renderRecentOrders() {
   }
   const query = normalize($("#ordersSearch")?.value);
   const allRows = [...state.rows].sort((a, b) => {
-    const left = parseDate(a["Fecha ficha"])?.valueOf() || 0;
-    const right = parseDate(b["Fecha ficha"])?.valueOf() || 0;
+    const left = dashboardDate(a)?.valueOf() || 0;
+    const right = dashboardDate(b)?.valueOf() || 0;
     return right - left || text(b.Pedido).localeCompare(text(a.Pedido), "es", { numeric: true });
   });
   const rows = query
     ? allRows.filter((order) => normalize([
       order.Pedido,
-      order["Fecha ficha"],
+      order["Fecha para dashboard"],
       familyFor(order.Modelo),
       materialFor(order),
       sizeFor(order)
@@ -1385,7 +1415,7 @@ function renderRecentOrders() {
     const row = document.createElement("tr");
     const values = [
       order.Pedido,
-      formatOperationalDate(order["Fecha ficha"]),
+      formatOperationalDate(order["Fecha entrega (estadillo)"] || order["Fecha ficha"] || order["Fecha para dashboard"]),
       familyFor(order.Modelo),
       materialFor(order),
       sizeFor(order) || "Sin medida completa"
@@ -1456,7 +1486,7 @@ function financeValue(id) {
 function financeRows() {
   const year = $("#financeYear")?.value;
   return state.rows.filter((row) => {
-    const date = parseDate(row["Fecha ficha"]);
+    const date = dashboardDate(row);
     return date && String(date.getFullYear()) === year;
   });
 }
@@ -1494,7 +1524,13 @@ function calculateFinance(rows) {
     ["Mano de obra / autónomos", financeValue("financeLabour"), "labour"],
     ["Otros gastos", financeValue("financeOtherCosts"), "fixed"]
   ].map(([label, value, tone]) => ({ label, value, tone }));
-  const revenueOrders = rows.length * averagePrice;
+  // The Estadillo's Debe is the value of the delivered work. Cash advances
+  // are tracked separately in the private movements ledger and must not be
+  // added here a second time. Only still-unpriced orders use the explicit
+  // planning price fallback.
+  const recordedIncomeRows = rows.filter((row) => recordedRevenue(row) !== null).length;
+  const estimatedIncomeRows = rows.length - recordedIncomeRows;
+  const revenueOrders = rows.reduce((total, row) => total + revenueFor(row, averagePrice), 0);
   const revenue = revenueOrders + otherIncome;
   const costs = material.amount + consumables + manual.reduce((total, entry) => total + entry.value, 0);
   const margin = revenue - costs;
@@ -1513,13 +1549,15 @@ function calculateFinance(rows) {
     consumables,
     manual,
     revenueOrders,
+    recordedIncomeRows,
+    estimatedIncomeRows,
     revenue,
     costs,
     margin,
     flowTotal: revenue + Math.max(0, -margin),
     outputs,
     incomes: [
-      { label: `Ingresos estimados · ${rows.length} pedidos`, value: revenueOrders },
+      { label: `${recordedIncomeRows ? "Ingresos de estadillo" : "Ingresos estimados"} · ${rows.length} trabajos`, value: revenueOrders },
       { label: "Otros ingresos facturados", value: otherIncome },
       ...(margin < 0 ? [{ label: "Necesidad de caja", value: Math.abs(margin) }] : [])
     ]
@@ -1551,12 +1589,22 @@ function addSankeyNode(svg, { x, y, width, height = 52, label, value, tone, alig
 }
 
 function sankeyIncomeByModel(rows, finance) {
-  const groups = countBy(rows.map((row) => familyFor(row.Modelo))).map(([model, count]) => ({
-    label: `${model} · ${count} ${count === 1 ? "pedido" : "pedidos"}`,
-    value: count * finance.averagePrice,
-    tone: "income",
-    count
-  }));
+  const grouped = new Map();
+  rows.forEach((row) => {
+    const model = familyFor(row.Modelo);
+    const current = grouped.get(model) || { count: 0, value: 0 };
+    current.count += 1;
+    current.value += revenueFor(row, finance.averagePrice);
+    grouped.set(model, current);
+  });
+  const groups = [...grouped.entries()]
+    .map(([model, entry]) => ({
+      label: `${model} · ${entry.count} ${entry.count === 1 ? "pedido" : "pedidos"}`,
+      value: entry.value,
+      tone: "income",
+      count: entry.count
+    }))
+    .sort((left, right) => right.value - left.value);
   const modelIncome = groups.slice(0, 6);
   const remaining = groups.slice(6);
   if (remaining.length) {
@@ -1636,9 +1684,11 @@ function renderFinance() {
   $("#materialEstimateNote").textContent = state.connected
     ? `${formatMoney(material.amount)} calculados sobre ${material.covered} de ${material.withMeasure} fichas con medida completa y material identificable. Incluye 10 % de merma; material aportado y reforma se contabilizan a 0 € de compra.`
     : "La estimación de materia prima se calculará al recibir los pedidos del año.";
-  $("#financeFlowStatus").textContent = state.connected ? `${rows.length} pedidos reales · año ${$("#financeYear").value}` : "Actualizando pedidos";
+  $("#financeFlowStatus").textContent = state.connected
+    ? `${rows.length} trabajos · ${finance.recordedIncomeRows} importes de estadillo · año ${$("#financeYear").value}`
+    : "Actualizando pedidos";
   drawFinancialSummaryChart(performanceSeries(year, granularity));
-  $("#financeChartScope").textContent = `Importes estimados ${granularity === "quarter" ? "por trimestre" : "por mes"} a partir de los pedidos reales y de los costes configurados. El beneficio es ingresos menos gastos.`;
+  $("#financeChartScope").textContent = `Ingresos ${granularity === "quarter" ? "por trimestre" : "por mes"}: importe del estadillo cuando consta y precio configurado solo para pedidos sin importe. El beneficio es ingresos menos gastos.`;
   renderFinanceSankey(finance, sankeyIncomeByModel(rows, finance));
   const values = Object.fromEntries(Object.keys(FINANCE_DEFAULTS).map((id) => [id, financeValue(id)]));
   localStorage.setItem(FINANCE_KEY, JSON.stringify(values));
