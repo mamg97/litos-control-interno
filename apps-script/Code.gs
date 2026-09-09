@@ -50,7 +50,9 @@ function output_(payload, callback) {
 
 function cachedPayload_() {
   const cache = CacheService.getScriptCache();
-  const key = "litos-public-operational-feed-v1";
+  // Bump this key whenever the public schema changes so an older payload
+  // cannot be reused after a deployment.
+  const key = "litos-public-operational-feed-v2";
   const cached = cache.get(key);
   if (cached) return cached;
 

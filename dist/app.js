@@ -110,6 +110,8 @@ function dashboardDate(row) {
 }
 
 function recordedRevenue(row) {
+  const raw = row["Importe trabajo / Debe (€)"];
+  if (raw === null || raw === undefined || text(raw) === "") return null;
   return numberAt(row, "Importe trabajo / Debe (€)");
 }
 
@@ -1257,7 +1259,7 @@ function refreshPublicFeed() {
       renderFinance();
       if (state.activeView === "strategy") renderRevenueForecast();
       updateConnectionUI();
-      showToast(`${formatInt.format(state.rows.length)} fichas actualizadas.`);
+      showToast(`${formatInt.format(state.rows.length)} trabajos actualizados.`);
     } catch {
       state.connected = false;
       updateConnectionUI();
