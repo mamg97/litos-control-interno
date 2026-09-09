@@ -7,7 +7,6 @@
  * explicitly approved operational schema — never the Sheet or its rows.
  */
 
-const CACHE_SECONDS = 55;
 const FIELDS = Object.freeze({
   id: "Pedido",
   // The master book deliberately stores the original order date and the
@@ -49,23 +48,14 @@ function output_(payload, callback) {
 }
 
 function cachedPayload_() {
-  const cache = CacheService.getScriptCache();
-  // Bump this key whenever the public schema changes so an older payload
-  // cannot be reused after a deployment.
-  const key = "litos-public-operational-feed-v2";
-  const cached = cache.get(key);
-  if (cached) return cached;
-
-  const payload = JSON.stringify({
+  // The reconciled history is larger than Apps Script's safe cache-item
+  // limit. Serving this deliberately small, whitelisted feed directly keeps
+  // the dashboard live and avoids stale or failed cache reads.
+  return JSON.stringify({
     version: 1,
     generatedAt: new Date().toISOString(),
     records: readOperationalRows_()
   });
-  // Apps Script cache entries are limited to roughly 100 KB. A complete
-  // reconciled history can legitimately exceed that, so serve it directly
-  // rather than failing the public read. Small future payloads stay cached.
-  if (payload.length <= 95 * 1024) cache.put(key, payload, CACHE_SECONDS);
-  return payload;
 }
 
 function readOperationalRows_() {
