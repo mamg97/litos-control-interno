@@ -1,4 +1,4 @@
-name: Apply LITOS financial and production update
+name: Apply LITOS draft invoice support
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Patch dashboard sources
+      - name: Patch draft invoice support
         shell: bash
         run: |
           python - <<'PY'
@@ -29,229 +29,176 @@ jobs:
                   raise SystemExit(f"{label}: expected 1 occurrence, found {n}")
               return text.replace(old, new, 1)
 
-          def regex_once(text, pattern, replacement, label, flags=re.S):
-              new_text, n = re.subn(pattern, replacement, text, count=1, flags=flags)
-              if n != 1:
-                  raise SystemExit(f"{label}: expected 1 regex match, found {n}")
-              return new_text
-
-          # ---- Apps Script public feed ----
+          # ---- Apps Script feed / Drive document index ----
           p = Path("apps-script/Code.gs")
           s = p.read_text(encoding="utf-8")
-          if 'pvp: "P.V.P. (€)"' not in s:
+
+          if 'invoiceDraft: "Factura borrador (XLSX)"' not in s:
               s = once(
                   s,
-                  '  amount: "Importe trabajo / Debe (€)",\n',
-                  '  amount: "Importe trabajo / Debe (€)",\n  pvp: "P.V.P. (€)",\n  materialCost: "Coste material est. (€)",\n',
-                  "feed fields",
+                  '  invoice: "Archivo factura / albarán (XLSX)",\n',
+                  '  invoice: "Archivo factura / albarán (XLSX)",\n  invoiceDraft: "Factura borrador (XLSX)",\n',
+                  "draft document field",
               )
-          s = s.replace("    version: 4,", "    version: 5,", 1)
-          if 'pvp: numberOrNull_(read(row, FIELDS.pvp))' not in s:
+
+          if 'CURRENT_DOCUMENTS_FOLDER_ID' not in s:
               s = once(
                   s,
-                  '      amount: numberOrNull_(read(row, FIELDS.amount)),\n',
-                  '      amount: numberOrNull_(read(row, FIELDS.amount)),\n      pvp: numberOrNull_(read(row, FIELDS.pvp)),\n      materialCost: numberOrNull_(read(row, FIELDS.materialCost)),\n',
-                  "feed row economics",
+                  'const HISTORIC_DOCUMENTS_FOLDER_ID = "1RjvspVx85xu8BbisLjwDMToS148rfJ7-";\n',
+                  'const HISTORIC_DOCUMENTS_FOLDER_ID = "1RjvspVx85xu8BbisLjwDMToS148rfJ7-";\nconst CURRENT_DOCUMENTS_FOLDER_ID = "1eUAupqLzfBhkiEexWqpI3JtYReT8c9A_";\n',
+                  "current documents folder",
               )
+
+          s = s.replace("    version: 5,", "    version: 6,", 1)
+
+          if 'const currentDocuments = currentDocumentIndex_();' not in s:
+              s = once(
+                  s,
+                  '  const richValues = sheet.getDataRange().getRichTextValues();\n',
+                  '  const richValues = sheet.getDataRange().getRichTextValues();\n  const currentDocuments = currentDocumentIndex_();\n',
+                  "live document index",
+              )
+
+          if 'const liveDocuments = currentDocuments.get(id);' not in s:
+              s = once(
+                  s,
+                  '    const rawMaterial = read(row, FIELDS.material);\n    return {\n',
+                  '    const rawMaterial = read(row, FIELDS.material);\n    const liveDocuments = currentDocuments.get(id);\n    const liveDocument = (type, field) => liveDocuments ? clean_(liveDocuments[type]) : readLink(rowIndex, field);\n    return {\n',
+                  "live document selection",
+              )
+
+          if 'invoiceDraftFile:' not in s:
+              s = once(
+                  s,
+                  '      invoiceFile: readLink(rowIndex, DOCUMENT_FIELDS.invoice),\n',
+                  '      invoiceFile: liveDocument("invoice", DOCUMENT_FIELDS.invoice),\n      invoiceDraftFile: liveDocument("invoiceDraft", DOCUMENT_FIELDS.invoiceDraft),\n',
+                  "feed draft invoice link",
+              )
+
+          if 'function currentDocumentIndex_()' not in s:
+              marker = 'function indexHistoricalDocuments_() {'
+              helper = '''function currentDocumentIndex_() {
+            const cache = CacheService.getScriptCache();
+            const key = "litos-current-documents-v1";
+            const cached = cache.get(key);
+            if (cached) {
+              try { return new Map(Object.entries(JSON.parse(cached))); } catch (error) { /* rebuild below */ }
+            }
+            const documents = indexCurrentDocuments_();
+            try { cache.put(key, JSON.stringify(Object.fromEntries(documents)), 300); } catch (error) { /* cache is optional */ }
+            return documents;
+          }
+
+          function indexCurrentDocuments_() {
+            const folder = DriveApp.getFolderById(CURRENT_DOCUMENTS_FOLDER_ID);
+            const files = [];
+            collectFiles_(folder, files, {});
+            const documents = new Map();
+            files.forEach((file) => {
+              const match = clean_(file.getName()).match(/(?:^|[^0-9])(\\d{4})(?:[^0-9]|$)/);
+              if (!match) return;
+              const id = match[1];
+              const type = classifyDocument_(file.getName(), id);
+              if (!type) return;
+              const entry = documents.get(id) || {};
+              if (!entry[type]) entry[type] = file.getUrl();
+              documents.set(id, entry);
+            });
+            return documents;
+          }
+
+          '''
+              s = once(s, marker, helper + marker, "current document helpers")
+
+          if 'return "invoiceDraft";' not in s:
+              s = once(
+                  s,
+                  '  if (["xlsx", "xls"].includes(ext)) return "invoice";\n',
+                  '  if (["xlsx", "xls"].includes(ext)) {\n    if (/(?:^|[-_ ])borrador(?:[-_ .]|$)/.test(normalized)) return "invoiceDraft";\n    return "invoice";\n  }\n',
+                  "draft filename classifier",
+              )
+
+          # Keep the maintenance command able to populate the new draft column too.
+          if 'makeLink(links.invoiceDraft)' not in s:
+              s = once(
+                  s,
+                  '    return [makeLink(links.invoice), makeLink(links.corel), makeLink(links.note), makeLink(links.attachments)];\n',
+                  '    return [makeLink(links.invoice), makeLink(links.invoiceDraft), makeLink(links.corel), makeLink(links.note), makeLink(links.attachments)];\n',
+                  "populate draft result",
+              )
+              s = once(
+                  s,
+                  '    DOCUMENT_FIELDS.invoice,\n    DOCUMENT_FIELDS.corel,\n',
+                  '    DOCUMENT_FIELDS.invoice,\n    DOCUMENT_FIELDS.invoiceDraft,\n    DOCUMENT_FIELDS.corel,\n',
+                  "populate draft target",
+              )
+
           p.write_text(s, encoding="utf-8")
 
-          # ---- Browser application ----
+          # ---- Frontend ----
           p = Path("dist/app.js")
           s = p.read_text(encoding="utf-8")
 
-          s = regex_once(
-              s,
-              r'function recordedRevenue\(row\) \{.*?\n\}',
-              '''function recordedRevenue(row) {
-            const pvp = optionalNumberAt(row, "P.V.P. (€)");
-            if (pvp !== null) return pvp;
-            return optionalNumberAt(row, "Importe trabajo / Debe (€)");
-          }''',
-              "recordedRevenue",
-          )
-
-          # Do not retain the old generic-grey fallback: it was never a confirmed tariff.
-          s = s.replace('  if (value.includes("gris")) return 55;\n', '')
-
-          if "function optionalNumberAt(row, key)" not in s:
+          if '"Factura borrador (XLSX)": text(record.invoiceDraftFile)' not in s:
               s = once(
                   s,
-                  '''function numberAt(row, key) {
-            const value = row[key];
-            return parseNumber(value);
-          }''',
-                  '''function numberAt(row, key) {
-            const value = row[key];
-            return parseNumber(value);
-          }
-
-          function optionalNumberAt(row, key) {
-            const value = row[key];
-            if (value === null || value === undefined || text(value) === "") return null;
-            return parseNumber(value);
-          }''',
-                  "optionalNumberAt",
+                  '    "Archivo factura / albarán (XLSX)": text(record.invoiceFile),\n',
+                  '    "Archivo factura / albarán (XLSX)": text(record.invoiceFile),\n    "Factura borrador (XLSX)": text(record.invoiceDraftFile),\n',
+                  "frontend draft mapping",
               )
 
-          if '"P.V.P. (€)": record.pvp' not in s:
-              s = once(
-                  s,
-                  '    "Importe trabajo / Debe (€)": record.amount ?? "",\n',
-                  '    "Importe trabajo / Debe (€)": record.amount ?? "",\n    "P.V.P. (€)": record.pvp ?? record.amount ?? "",\n    "Coste material est. (€)": record.materialCost ?? "",\n',
-                  "public economics mapping",
+          if 'const draftInvoiceUrl = order["Factura borrador (XLSX)"];' not in s:
+              pattern = re.compile(
+                  r'''\n\s*\[\s*order\["Archivo factura / albarán \(XLSX\)"\],\s*order\["Archivo Corel \(CDR\)"\],\s*order\.Notas \|\| order\["Nota manuscrita"\],\s*order\["Imágenes anejas"\]\s*\]\.forEach\(\(url\) => \{\s*const cell = document\.createElement\("td"\);\s*if \(url\) \{\s*const link = document\.createElement\("a"\);\s*link\.href = url;\s*link\.target = "_blank";\s*link\.rel = "noopener noreferrer";\s*link\.textContent = "Abrir";\s*cell\.append\(link\);\s*\} else \{\s*cell\.textContent = "No disponible";\s*\}\s*row\.append\(cell\);\s*\}\);''',
+                  re.S,
               )
-          if '"Material normalizado": text(record.materialNormalized)' not in s:
-              s = once(
-                  s,
-                  '    Material: text(record.material),\n',
-                  '    Material: text(record.material),\n    "Material normalizado": text(record.materialNormalized),\n',
-                  "public normalized material mapping",
-              )
-          if '"Imágenes anejas": text(record.attachmentFile)' not in s:
-              s = once(
-                  s,
-                  '    "Nota manuscrita": text(record.noteFile)\n',
-                  '    Notas: text(record.noteFile),\n    "Nota manuscrita": text(record.noteFile),\n    "Imágenes anejas": text(record.attachmentFile)\n',
-                  "public document mapping",
-              )
-
-          if "function currentQuarterBounds" not in s:
-              helpers = '''function currentQuarterBounds(now = new Date()) {
-            const startMonth = Math.floor(now.getMonth() / 3) * 3;
-            return {
-              start: new Date(now.getFullYear(), startMonth, 1),
-              end: new Date(now.getFullYear(), startMonth + 3, 1)
-            };
-          }
-
-          function currentQuarterLabel(now = new Date()) {
-            return `T${Math.floor(now.getMonth() / 3) + 1} ${now.getFullYear()}`;
-          }
-
-          function productionReceiptDate(row) {
-            return parseDate(row["Fecha recepción (email)"] || row["Fecha ficha"] || row["Fecha para dashboard"]);
-          }
-
-          function isInProduction(row, now = new Date()) {
-            const receipt = productionReceiptDate(row);
-            if (!receipt) return false;
-            const { start, end } = currentQuarterBounds(now);
-            const hasInvoice = Boolean(text(row["Archivo factura / albarán (XLSX)"]));
-            return receipt >= start && receipt < end && !hasInvoice;
-          }
-
-          '''
-              s = once(s, "function traceRows() {", helpers + "function traceRows() {", "production helpers")
-
-          if "const productionOrders = new Set" not in s:
-              summary_line = '  $("#summaryCostsFoot").textContent = connected && year ? `Material, consumibles y gastos · ${year}` : "Pendiente de facturas";\n'
-              summary_block = summary_line + '''  const productionOrders = new Set(state.rows.filter((row) => isInProduction(row)).map((row) => text(row.Pedido))).size;
-            const productionKpi = $("#ordersInProduction");
-            productionKpi.textContent = connected ? formatInt.format(productionOrders) : "—";
-            productionKpi.closest(".kpi-card")?.classList.toggle("pending-kpi", !connected);
-            if (productionKpi.nextElementSibling) {
-              productionKpi.nextElementSibling.textContent = connected
-                ? `${currentQuarterLabel()} · sin factura/albarán`
-                : "Pendiente de actualización";
-            }
-          '''
-              s = once(s, summary_line, summary_block, "production KPI")
-
-          if "function estimatedMaterialCostFor(row)" not in s:
-              s = regex_once(
-                  s,
-                  r'function estimateMaterial\(rows\) \{.*?return \{ amount, covered, withMeasure \};\n\}',
-                  '''function estimatedMaterialCostFor(row) {
-            const stored = optionalNumberAt(row, "Coste material est. (€)");
-            if (stored !== null) return stored;
-            const rate = materialRateFor(row);
-            if (rate === null) return null;
-            const width = numberFromFields(row, ["Ancho total (cm)"], (header) => isSlabMeasureHeader(header, "ancho"));
-            const height = writtenHeightFor(row);
-            if (width === null || height === null || width <= 0 || height <= 0) return null;
-            return (width * height / 10000) * 1.1 * rate;
-          }
-
-          function estimateMaterial(rows) {
-            let amount = 0;
-            let covered = 0;
-            let withMeasure = 0;
-            rows.forEach((row) => {
-              if (sizeDetailsFor(row)) withMeasure += 1;
-              const cost = estimatedMaterialCostFor(row);
-              if (cost === null) return;
-              covered += 1;
-              amount += cost;
-            });
-            return { amount, covered, withMeasure };
-          }''',
-                  "material estimate",
-              )
-
-          s = s.replace("cell.colSpan = 9;", "cell.colSpan = 12;")
-
-          if "estimatedMaterialCostFor(order)" not in s:
-              pattern = r'''\[\s*order\["Archivo factura / albarán \(XLSX\)"\],\s*order\["Archivo Corel \(CDR\)"\],\s*order\["Nota manuscrita"\]\s*\]\.forEach\(\(url\) => \{'''
-              replacement = '''[
-              recordedRevenue(order),
-              estimatedMaterialCostFor(order)
-            ].forEach((amount) => {
-              const cell = document.createElement("td");
-              cell.textContent = amount === null ? "—" : formatMoney(amount);
-              row.append(cell);
-            });
+              replacement = '''
+            const invoiceUrl = order["Archivo factura / albarán (XLSX)"];
+            const draftInvoiceUrl = order["Factura borrador (XLSX)"];
             [
-              order["Archivo factura / albarán (XLSX)"],
-              order["Archivo Corel (CDR)"],
-              order.Notas || order["Nota manuscrita"],
-              order["Imágenes anejas"]
-            ].forEach((url) => {'''
-              s = regex_once(s, pattern, replacement, "trace economics/documents")
+              { url: invoiceUrl || draftInvoiceUrl, label: invoiceUrl ? "Abrir" : draftInvoiceUrl ? "Abrir borrador" : "", draft: !invoiceUrl && Boolean(draftInvoiceUrl) },
+              { url: order["Archivo Corel (CDR)"], label: "Abrir" },
+              { url: order.Notas || order["Nota manuscrita"], label: "Abrir" },
+              { url: order["Imágenes anejas"], label: "Abrir" }
+            ].forEach((documentInfo) => {
+              const cell = document.createElement("td");
+              if (documentInfo.url) {
+                const link = document.createElement("a");
+                link.href = documentInfo.url;
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                link.textContent = documentInfo.label;
+                if (documentInfo.draft) {
+                  link.dataset.documentStatus = "draft";
+                  link.title = "Borrador: al quitar _borrador del nombre del archivo pasará a definitiva";
+                }
+                cell.append(link);
+              } else {
+                cell.textContent = "No disponible";
+              }
+              row.append(cell);
+            });'''
+              s2, n = pattern.subn(replacement, s, count=1)
+              if n != 1:
+                  raise SystemExit(f"trace draft renderer: expected 1 match, found {n}")
+              s = s2
 
-          p.write_text(s, encoding="utf-8")
-
-          # ---- Static HTML ----
-          p = Path("index.html")
-          s = p.read_text(encoding="utf-8")
-          s = s.replace("min-width: 1120px;", "min-width: 1500px;", 1)
-
-          old_header = '<thead><tr><th>ID trabajo</th><th>Recepción (email)</th><th>Documento</th><th>Modelo</th><th>Material</th><th>Medida terminada</th><th>Factura / albarán</th><th>Corel</th><th>Nota</th></tr></thead>'
-          new_header = '<thead><tr><th>ID trabajo</th><th>Recepción (email)</th><th>Documento</th><th>Modelo</th><th>Material</th><th>Medida terminada</th><th>P.V.P.</th><th>Coste</th><th>Factura / albarán</th><th>Corel</th><th>Notas</th><th>Imágenes anejas</th></tr></thead>'
-          if old_header in s:
-              if s.count(old_header) != 2:
-                  raise SystemExit(f"HTML headers: expected 2, found {s.count(old_header)}")
-              s = s.replace(old_header, new_header)
-
-          s = s.replace('colspan="9"', 'colspan="12"')
-          s = s.replace(
-              '<div class="kpi-foot">Pendiente de registrar estado</div>',
-              '<div class="kpi-foot">Trimestre actual · sin factura/albarán</div>',
-              1,
-          )
-
-          if 'src="./dist/app.js"' not in s:
-              s = regex_once(
-                  s,
-                  r'    <script type="module">.*?</script>',
-                  '    <script type="module" src="./dist/app.js"></script>',
-                  "externalize app.js",
-              )
           p.write_text(s, encoding="utf-8")
           PY
 
-      - name: Validate JavaScript and diff
+      - name: Validate draft support
         run: |
           node --check dist/app.js
           git diff --check
-          grep -q 'src="./dist/app.js"' index.html
-          grep -q 'pvp: "P.V.P. (€)"' apps-script/Code.gs
-          grep -q 'function isInProduction' dist/app.js
-          grep -q '<th>P.V.P.</th><th>Coste</th>' index.html
+          grep -q 'invoiceDraft: "Factura borrador (XLSX)"' apps-script/Code.gs
+          grep -q 'return "invoiceDraft"' apps-script/Code.gs
+          grep -q 'currentDocumentIndex_' apps-script/Code.gs
+          grep -q 'Abrir borrador' dist/app.js
 
-      - name: Commit dashboard update
+      - name: Commit draft support
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add apps-script/Code.gs dist/app.js index.html
-          git commit -m "Add current-quarter production and order economics"
+          git add apps-script/Code.gs dist/app.js
+          git commit -m "Add draft invoice workflow and status"
           git push
