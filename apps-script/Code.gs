@@ -14,6 +14,7 @@ const FIELDS = Object.freeze({
   // work by the latter, while unfinished email orders keep their fiche date.
   date: "Fecha para dashboard",
   orderDate: "Fecha ficha",
+  receiptDate: "Fecha recepción (email)",
   deliveredDate: "Fecha entrega (estadillo)",
   amount: "Importe trabajo / Debe (€)",
   status: "Estado pedido",
@@ -28,6 +29,23 @@ const FIELDS = Object.freeze({
   stepMeasures: "Cotas/escalones (cm)",
   voleo: "Voleo (cm)"
 });
+
+const EXPENSE_FIELDS = Object.freeze({
+  month: "Mes",
+  category: "Categoría",
+  amount: "Importe (€)",
+  nature: "Naturaleza del dato"
+});
+
+const DOCUMENT_FIELDS = Object.freeze({
+  invoice: "Archivo factura / albarán (XLSX)",
+  corel: "Archivo Corel (CDR)",
+  note: "Nota manuscrita"
+});
+
+// Shared historical archive supplied for the reconciliation. Files remain
+// private in Drive; the generated URLs never alter their sharing settings.
+const HISTORIC_DOCUMENTS_FOLDER_ID = "1RjvspVx85xu8BbisLjwDMToS148rfJ7-";
 
 function doGet(event) {
   const parameter = (event && event.parameter) || {};
@@ -52,9 +70,14 @@ function cachedPayload_() {
   // limit. Serving this deliberately small, whitelisted feed directly keeps
   // the dashboard live and avoids stale or failed cache reads.
   return JSON.stringify({
-    version: 1,
+    version: 2,
     generatedAt: new Date().toISOString(),
-    records: readOperationalRows_()
+    records: readOperationalRows_(),
+    // The private ledger has invoice references and other audit columns. The
+    // public feed deliberately exposes just month, category, amount and
+    // whether it is real, prorrated or estimated — never a document or a
+    // supplier account.
+    expenses: readExpenseRows_()
   });
 }
 
@@ -63,6 +86,7 @@ function readOperationalRows_() {
   if (!sheet) throw new Error("No se encontró la pestaña Pedidos.");
 
   const values = sheet.getDataRange().getDisplayValues();
+  const richValues = sheet.getDataRange().getRichTextValues();
   const headerIndex = values.findIndex((row) => row.some((cell) => clean_(cell) === FIELDS.id));
   if (headerIndex < 0) throw new Error("No se encontró la cabecera Pedido.");
 
@@ -72,13 +96,20 @@ function readOperationalRows_() {
     const index = columns[field];
     return index === undefined ? "" : clean_(row[index]);
   };
+  const readLink = (rowIndex, field) => {
+    const index = columns[field];
+    if (index === undefined) return "";
+    const value = richValues[rowIndex + headerIndex + 1] && richValues[rowIndex + headerIndex + 1][index];
+    return value && value.getLinkUrl ? value.getLinkUrl() || "" : "";
+  };
 
-  return values.slice(headerIndex + 1).map((row) => {
+  return values.slice(headerIndex + 1).map((row, rowIndex) => {
     const id = read(row, FIELDS.id);
     if (!id) return null;
     const orderDate = read(row, FIELDS.orderDate);
+    const receiptDate = read(row, FIELDS.receiptDate);
     const deliveredDate = read(row, FIELDS.deliveredDate);
-    const dashboardDate = read(row, FIELDS.date) || deliveredDate || orderDate;
+    const dashboardDate = read(row, FIELDS.date) || deliveredDate || receiptDate || orderDate;
     return {
       id,
       // Only this approved operational subset is public. In particular, the
@@ -86,6 +117,7 @@ function readOperationalRows_() {
       // leave the private spreadsheet.
       date: normalizeDate_(dashboardDate),
       orderDate: normalizeDate_(orderDate),
+      receiptDate: normalizeDate_(receiptDate),
       deliveredDate: normalizeDate_(deliveredDate),
       amount: numberOrNull_(read(row, FIELDS.amount)),
       status: read(row, FIELDS.status),
@@ -98,7 +130,133 @@ function readOperationalRows_() {
       baseHeight: numberOrNull_(read(row, FIELDS.baseHeight)),
       topWidth: numberOrNull_(read(row, FIELDS.topWidth)),
       stepMeasures: read(row, FIELDS.stepMeasures),
-      voleo: numberOrNull_(read(row, FIELDS.voleo))
+      voleo: numberOrNull_(read(row, FIELDS.voleo)),
+      invoiceFile: readLink(rowIndex, DOCUMENT_FIELDS.invoice),
+      corelFile: readLink(rowIndex, DOCUMENT_FIELDS.corel),
+      noteFile: readLink(rowIndex, DOCUMENT_FIELDS.note)
+    };
+  }).filter(Boolean);
+}
+
+/**
+ * One-off/private maintenance command. Run it from the bound Apps Script
+ * editor when historical documents are added to Drive. It creates the three
+ * traceability columns when absent and writes only Drive links or the exact
+ * fallback text “No disponible”.
+ */
+function populateDocumentLinks_() {
+  const book = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = book.getSheetByName("Pedidos");
+  if (!sheet) throw new Error("No se encontró la pestaña Pedidos.");
+  const values = sheet.getDataRange().getDisplayValues();
+  const headerIndex = values.findIndex((row) => row.some((cell) => clean_(cell) === FIELDS.id));
+  if (headerIndex < 0) throw new Error("No se encontró la cabecera Pedido.");
+
+  let headers = values[headerIndex].map(clean_);
+  const missing = Object.values(DOCUMENT_FIELDS).filter((field) => !headers.includes(field));
+  if (missing.length) {
+    const last = sheet.getLastColumn();
+    sheet.insertColumnsAfter(last, missing.length);
+    sheet.getRange(headerIndex + 1, last + 1, 1, missing.length).setValues([missing]);
+    headers = [...headers, ...missing];
+  }
+  const columns = Object.fromEntries(headers.map((header, index) => [header, index]));
+  const documents = indexHistoricalDocuments_();
+  const body = sheet.getRange(headerIndex + 2, 1, Math.max(0, sheet.getLastRow() - headerIndex - 1), sheet.getLastColumn()).getDisplayValues();
+  const makeLink = (url) => {
+    const builder = SpreadsheetApp.newRichTextValue().setText(url ? "Abrir" : "No disponible");
+    if (url) builder.setLinkUrl(url);
+    return builder.build();
+  };
+  const results = body.map((row) => {
+    const id = clean_(row[columns[FIELDS.id]]);
+    const links = documents.get(id) || {};
+    return [makeLink(links.invoice), makeLink(links.corel), makeLink(links.note)];
+  });
+  const targetColumns = [DOCUMENT_FIELDS.invoice, DOCUMENT_FIELDS.corel, DOCUMENT_FIELDS.note].map((field) => columns[field] + 1);
+  targetColumns.forEach((column, index) => {
+    sheet.getRange(headerIndex + 2, column, results.length, 1).setRichTextValues(results.map((row) => [row[index]]));
+  });
+  return { rows: results.length, linked: countLinkedDocuments_(documents), folder: HISTORIC_DOCUMENTS_FOLDER_ID };
+}
+
+/**
+ * Entrada manual visible en Apps Script para actualizar los enlaces privados.
+ * El feed público únicamente lee las columnas ya preparadas por esta función.
+ */
+function populateDocumentLinks() {
+  return populateDocumentLinks_();
+}
+
+function indexHistoricalDocuments_() {
+  const folder = DriveApp.getFolderById(HISTORIC_DOCUMENTS_FOLDER_ID);
+  const files = [];
+  collectFiles_(folder, files, {});
+  const documents = new Map();
+  files.forEach((file) => {
+    const match = clean_(file.getName()).match(/(?:^|[^0-9])(\d{4})(?:[^0-9]|$)/);
+    if (!match) return;
+    const id = match[1];
+    const type = classifyDocument_(file.getName(), id);
+    if (!type) return;
+    const entry = documents.get(id) || {};
+    // The source hierarchy can contain copies. Keep the first matching Drive
+    // file rather than overwriting a valid link nondeterministically.
+    if (!entry[type]) entry[type] = file.getUrl();
+    documents.set(id, entry);
+  });
+  return documents;
+}
+
+function collectFiles_(folder, files, visited) {
+  const id = folder.getId();
+  if (visited[id]) return;
+  visited[id] = true;
+  const fileIterator = folder.getFiles();
+  while (fileIterator.hasNext()) files.push(fileIterator.next());
+  const folderIterator = folder.getFolders();
+  while (folderIterator.hasNext()) collectFiles_(folderIterator.next(), files, visited);
+}
+
+function classifyDocument_(name, id) {
+  const lower = clean_(name).toLowerCase();
+  const extension = lower.match(/\.([a-z0-9]+)$/);
+  const ext = extension ? extension[1] : "";
+  if (["xlsx", "xls"].includes(ext)) return "invoice";
+  if (ext === "cdr") return "corel";
+  if (["jpg", "jpeg", "png", "pdf"].includes(ext) && new RegExp(`^${id}[-_ ]0(?:[-_. ]|$)`).test(lower)) return "note";
+  return "";
+}
+
+function countLinkedDocuments_(documents) {
+  let count = 0;
+  documents.forEach((entry) => { count += Object.keys(entry).length; });
+  return count;
+}
+
+function readExpenseRows_() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Gastos");
+  if (!sheet) return [];
+
+  const values = sheet.getDataRange().getDisplayValues();
+  if (!values.length) return [];
+  const headers = values[0].map(clean_);
+  const columns = Object.fromEntries(headers.map((header, index) => [header, index]));
+  const read = (row, field) => {
+    const index = columns[field];
+    return index === undefined ? "" : clean_(row[index]);
+  };
+
+  return values.slice(1).map((row) => {
+    const month = normalizeMonth_(read(row, EXPENSE_FIELDS.month));
+    const category = read(row, EXPENSE_FIELDS.category);
+    const amount = numberOrNull_(read(row, EXPENSE_FIELDS.amount));
+    if (!month || !category || amount === null) return null;
+    return {
+      month,
+      category,
+      amount,
+      nature: read(row, EXPENSE_FIELDS.nature) || "Sin clasificar"
     };
   }).filter(Boolean);
 }
@@ -130,4 +288,13 @@ function normalizeDate_(value) {
   if (!spanish) return raw;
   const year = spanish[3].length === 2 ? `20${spanish[3]}` : spanish[3];
   return `${year}-${spanish[2].padStart(2, "0")}-${spanish[1].padStart(2, "0")}`;
+}
+
+function normalizeMonth_(value) {
+  const raw = clean_(value);
+  const iso = raw.match(/^(\d{4})[-/](\d{1,2})/);
+  if (!iso) return "";
+  const month = Number(iso[2]);
+  if (month < 1 || month > 12) return "";
+  return `${iso[1]}-${String(month).padStart(2, "0")}`;
 }

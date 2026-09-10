@@ -24,6 +24,7 @@ const emptySummary = {
 
 const state = {
   rows: [],
+  expenses: [],
   summary: emptySummary,
   connected: false,
   generatedAt: null,
@@ -106,7 +107,7 @@ function parseDate(value) {
 // the date on which its work was delivered. Historical reporting is based on
 // the latter; a live order without a ledger record falls back to its fiche.
 function dashboardDate(row) {
-  return parseDate(row["Fecha para dashboard"] || row["Fecha entrega (estadillo)"] || row["Fecha ficha"]);
+  return parseDate(row["Fecha para dashboard"] || row["Fecha entrega (estadillo)"] || row["Fecha recepción (email)"] || row["Fecha ficha"]);
 }
 
 function recordedRevenue(row) {
@@ -276,6 +277,7 @@ function mapPublicRows(records) {
   return records.map((record) => ({
     Pedido: text(record.id),
     "Fecha ficha": text(record.orderDate),
+    "Fecha recepción (email)": text(record.receiptDate),
     "Fecha entrega (estadillo)": text(record.deliveredDate),
     "Fecha para dashboard": text(record.date),
     "Importe trabajo / Debe (€)": record.amount ?? "",
@@ -289,8 +291,25 @@ function mapPublicRows(records) {
     "Alto base/croquis (cm)": record.baseHeight ?? "",
     "Ancho superior/remate (cm)": record.topWidth ?? "",
     "Cotas/escalones (cm)": text(record.stepMeasures),
-    "Voleo (cm)": record.voleo ?? ""
+    "Voleo (cm)": record.voleo ?? "",
+    "Archivo factura / albarán (XLSX)": text(record.invoiceFile),
+    "Archivo Corel (CDR)": text(record.corelFile),
+    "Nota manuscrita": text(record.noteFile)
   })).filter((row) => row.Pedido);
+}
+
+// Cost details remain in the private Sheet. The public feed contains only the
+// minimum aggregate required for the dashboard: monthly amount, category and
+// audit status. No invoice reference, address, email or supplier account is
+// added to the browser.
+function mapPublicExpenses(records) {
+  if (!Array.isArray(records)) return [];
+  return records.map((record) => {
+    const month = text(record.month);
+    const category = text(record.category);
+    const amount = parseNumber(record.amount);
+    return { month, category, amount, nature: text(record.nature) || "Sin clasificar" };
+  }).filter((record) => /^\d{4}-(0[1-9]|1[0-2])$/.test(record.month) && record.category && record.amount !== null);
 }
 
 function makeSummary(rows) {
@@ -509,14 +528,17 @@ function periodsFor(year, granularity) {
 function performanceSeries(year, granularity = "year") {
   const periods = periodsFor(year, granularity);
   const annualRows = rowsForYear(year);
-  const finance = calculateFinance(annualRows);
-  const recurringCosts = finance.consumables + finance.manual.reduce((total, entry) => total + entry.value, 0);
+  const finance = calculateFinance(annualRows, year);
+  const ledger = expenseLedgerForYear(year);
+  const localManual = finance.manual.filter((entry) => !ledger.totals.has(entry.label));
+  const recurringCosts = finance.consumables + localManual.reduce((total, entry) => total + entry.value, 0);
   const share = periods.length ? 1 / periods.length : 0;
 
   return periods.map(({ label, months }) => {
     const rows = annualRows.filter((row) => months.includes(dashboardDate(row)?.getMonth()));
     const revenue = rows.reduce((total, row) => total + revenueFor(row, finance.averagePrice), 0) + finance.otherIncome * share;
-    const costs = estimateMaterial(rows).amount + recurringCosts * share;
+    const ledgerCosts = [...ledger.totals.keys()].reduce((total, category) => total + monthlyLedgerAmount(year, months, category), 0);
+    const costs = estimateMaterial(rows).amount + recurringCosts * share + ledgerCosts;
     return { label, orders: rows.length, revenue, costs, profit: revenue - costs };
   });
 }
@@ -726,7 +748,7 @@ function renderSummary() {
   const connected = state.connected;
   const year = selectedSummaryYear();
   const yearRows = rowsForYear(year);
-  const finance = calculateFinance(yearRows);
+  const finance = calculateFinance(yearRows, year);
   const years = availableDataYears();
   const granularity = selectedSummaryGranularity();
   const metric = selectedSummaryMetric();
@@ -790,15 +812,41 @@ function formatOperationalDate(value) {
   return date ? new Intl.DateTimeFormat("es-ES", { dateStyle: "short" }).format(date) : text(value) || "—";
 }
 
-function renderRecentOrders() {
-  const table = $("#recentOrders");
-  const count = $("#traceCount");
+function traceDate(order) {
+  // The traceability view follows actual receipt chronology. Older records
+  // inherit the fiche date, so they remain consistently ordered.
+  return parseDate(order["Fecha recepción (email)"] || order["Fecha ficha"] || order["Fecha para dashboard"]);
+}
+
+function traceRows() {
+  return [...state.rows].sort((a, b) => {
+    const left = traceDate(a)?.valueOf() || 0;
+    const right = traceDate(b)?.valueOf() || 0;
+    return right - left || text(b.Pedido).localeCompare(text(a.Pedido), "es", { numeric: true });
+  });
+}
+
+function matchesTraceQuery(order, query) {
+  return !query || normalize([
+    order.Pedido,
+    order["Fecha para dashboard"],
+    order["Fecha recepción (email)"],
+    order["Fecha ficha"],
+    familyFor(order.Modelo),
+    materialFor(order),
+    sizeFor(order)
+  ].join(" ")).includes(query);
+}
+
+function renderTraceTable({ bodySelector, countSelector, searchSelector }) {
+  const table = $(bodySelector);
+  const count = $(countSelector);
   if (!table) return;
   table.replaceChildren();
   if (!state.connected) {
     const row = document.createElement("tr");
     const cell = document.createElement("td");
-    cell.colSpan = 5;
+    cell.colSpan = 9;
     cell.className = "empty-state";
     cell.textContent = "Actualizando datos operativos…";
     row.append(cell);
@@ -806,28 +854,16 @@ function renderRecentOrders() {
     if (count) count.textContent = "Actualizando registros";
     return;
   }
-  const query = normalize($("#ordersSearch")?.value);
-  const allRows = [...state.rows].sort((a, b) => {
-    const left = dashboardDate(a)?.valueOf() || 0;
-    const right = dashboardDate(b)?.valueOf() || 0;
-    return right - left || text(b.Pedido).localeCompare(text(a.Pedido), "es", { numeric: true });
-  });
-  const rows = query
-    ? allRows.filter((order) => normalize([
-      order.Pedido,
-      order["Fecha para dashboard"],
-      familyFor(order.Modelo),
-      materialFor(order),
-      sizeFor(order)
-    ].join(" ")).includes(query))
-    : allRows;
+  const query = normalize($(searchSelector)?.value);
+  const allRows = traceRows();
+  const rows = allRows.filter((order) => matchesTraceQuery(order, query));
   if (count) count.textContent = query
     ? `${formatInt.format(rows.length)} de ${formatInt.format(allRows.length)} trabajos`
-    : `${formatInt.format(allRows.length)} trabajos · ID y fecha reales`;
+    : `${formatInt.format(allRows.length)} trabajos · recepción real`;
   if (!rows.length) {
     const row = document.createElement("tr");
     const cell = document.createElement("td");
-    cell.colSpan = 5;
+    cell.colSpan = 9;
     cell.className = "empty-state";
     cell.textContent = "No hay trabajos que coincidan con la búsqueda.";
     row.append(cell);
@@ -836,20 +872,43 @@ function renderRecentOrders() {
   }
   rows.forEach((order) => {
     const row = document.createElement("tr");
-    const values = [
+    [
       order.Pedido,
-      formatOperationalDate(order["Fecha entrega (estadillo)"] || order["Fecha ficha"] || order["Fecha para dashboard"]),
+      formatOperationalDate(order["Fecha recepción (email)"]),
+      formatOperationalDate(order["Fecha ficha"]),
       familyFor(order.Modelo),
       materialFor(order),
       sizeFor(order) || "Sin medida completa"
-    ];
-    values.forEach((value) => {
+    ].forEach((value) => {
       const cell = document.createElement("td");
       cell.textContent = value;
       row.append(cell);
     });
+    [
+      order["Archivo factura / albarán (XLSX)"],
+      order["Archivo Corel (CDR)"],
+      order["Nota manuscrita"]
+    ].forEach((url) => {
+      const cell = document.createElement("td");
+      if (url) {
+        const link = document.createElement("a");
+        link.href = url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = "Abrir";
+        cell.append(link);
+      } else {
+        cell.textContent = "No disponible";
+      }
+      row.append(cell);
+    });
     table.append(row);
   });
+}
+
+function renderRecentOrders() {
+  renderTraceTable({ bodySelector: "#recentOrders", countSelector: "#traceCount", searchSelector: "#ordersSearch" });
+  renderTraceTable({ bodySelector: "#summaryOrders", countSelector: "#summaryTraceCount", searchSelector: "#summaryOrdersSearch" });
 }
 
 function setupFilters() {
@@ -914,6 +973,47 @@ function financeRows() {
   });
 }
 
+const SUPPLY_EXPENSE_FIELDS = Object.freeze({
+  "Electricidad": "financeElectricity",
+  "Agua y residuos": "financeWaterWaste",
+  "Internet": "financeInternet"
+});
+
+function expenseRowsForYear(year) {
+  return state.expenses.filter((expense) => expense.month.startsWith(`${year}-`));
+}
+
+function expenseLedgerForYear(year) {
+  const rows = expenseRowsForYear(year);
+  const totals = new Map();
+  const nature = new Map();
+  rows.forEach((expense) => {
+    totals.set(expense.category, (totals.get(expense.category) || 0) + expense.amount);
+    const kinds = nature.get(expense.category) || new Map();
+    kinds.set(expense.nature, (kinds.get(expense.nature) || 0) + 1);
+    nature.set(expense.category, kinds);
+  });
+  return { rows, totals, nature };
+}
+
+function importedExpenseLabel(category, ledger) {
+  const kinds = ledger.nature.get(category);
+  if (!kinds?.size) return "";
+  const sourceBacked = (kinds.get("Factura real") || 0) + (kinds.get("Prorrateado de factura real") || 0);
+  const estimated = kinds.get("Estimado · media disponible") || 0;
+  const parts = [];
+  if (sourceBacked) parts.push(`${sourceBacked} meses con factura`);
+  if (estimated) parts.push(`${estimated} meses estimados`);
+  return parts.join(" · ");
+}
+
+function monthlyLedgerAmount(year, months, category) {
+  return state.expenses
+    .filter((expense) => expense.category === category && expense.month.startsWith(`${year}-`))
+    .filter((expense) => months.includes(Number(expense.month.slice(5, 7)) - 1))
+    .reduce((total, expense) => total + expense.amount, 0);
+}
+
 function estimateMaterial(rows) {
   let amount = 0;
   let covered = 0;
@@ -933,20 +1033,25 @@ function estimateMaterial(rows) {
   return { amount, covered, withMeasure };
 }
 
-function calculateFinance(rows) {
+function calculateFinance(rows, year = null) {
   const averagePrice = financeValue("financeAveragePrice");
   const otherIncome = financeValue("financeOtherIncome");
+  const reportYear = Number(year) || dashboardDate(rows[0])?.getFullYear() || Number($("#financeYear")?.value) || new Date().getFullYear();
+  const ledger = expenseLedgerForYear(reportYear);
   const material = estimateMaterial(rows);
   const consumables = Object.values(KNOWN_CONSUMABLES).reduce((total, value) => total + value, 0);
   const manual = [
-    ["Electricidad", financeValue("financeElectricity"), "fixed"],
-    ["Agua y residuos", financeValue("financeWaterWaste"), "fixed"],
-    ["Internet", financeValue("financeInternet"), "fixed"],
-    ["Letras", financeValue("financeLetters"), "direct"],
-    ["Transporte y colocación", financeValue("financeTransport"), "direct"],
-    ["Mano de obra / autónomos", financeValue("financeLabour"), "labour"],
-    ["Otros gastos", financeValue("financeOtherCosts"), "fixed"]
-  ].map(([label, value, tone]) => ({ label, value, tone }));
+    ["Electricidad", "financeElectricity", "fixed"],
+    ["Agua y residuos", "financeWaterWaste", "fixed"],
+    ["Internet", "financeInternet", "fixed"],
+    ["Letras", "financeLetters", "direct"],
+    ["Transporte y colocación", "financeTransport", "direct"],
+    ["Mano de obra / autónomos", "financeLabour", "labour"],
+    ["Otros gastos", "financeOtherCosts", "fixed"]
+  ].map(([label, field, tone]) => {
+    const imported = ledger.totals.get(label);
+    return { label, value: imported ?? financeValue(field), tone, imported: imported !== undefined, sourceNote: importedExpenseLabel(label, ledger) };
+  });
   // The Estadillo's Debe is the value of the delivered work. Cash advances
   // are tracked separately in the private movements ledger and must not be
   // added here a second time. Only still-unpriced orders use the explicit
@@ -967,7 +1072,9 @@ function calculateFinance(rows) {
   ];
   return {
     averagePrice,
+    reportYear,
     otherIncome,
+    ledger,
     material,
     consumables,
     manual,
@@ -1092,10 +1199,35 @@ function renderFinanceSankey(finance, incomeParts) {
   root.append(svg);
 }
 
+function syncImportedSupplyInputs(finance) {
+  Object.entries(SUPPLY_EXPENSE_FIELDS).forEach(([category, field]) => {
+    const input = $(`#${field}`);
+    const entry = finance.manual.find((manual) => manual.label === category);
+    if (!input || !entry) return;
+    if (entry.imported) {
+      input.value = entry.value.toFixed(2);
+      input.readOnly = true;
+      input.dataset.imported = "true";
+      input.title = entry.sourceNote || "Importado del libro maestro";
+    } else {
+      input.readOnly = false;
+      delete input.dataset.imported;
+      input.removeAttribute("title");
+    }
+  });
+}
+
+function ledgerDescription(finance) {
+  if (!finance.ledger.rows.length) return "Sin gastos importados todavía: los campos de suministro siguen siendo una referencia local.";
+  const factured = finance.ledger.rows.filter((row) => row.nature !== "Estimado · media disponible").length;
+  const estimated = finance.ledger.rows.length - factured;
+  return `Libro maestro: ${factured} meses respaldados por factura o prorrateo y ${estimated} meses estimados por media. Los campos de luz, agua y residuos e internet se bloquean para evitar doble contabilización.`;
+}
+
 function renderFinance() {
   const rows = financeRows();
-  const finance = calculateFinance(rows);
   const year = Number($("#financeYear")?.value) || new Date().getFullYear();
+  const finance = calculateFinance(rows, year);
   const granularity = selectedFinanceGranularity();
   const { material, consumables, revenue, costs, margin } = finance;
   $("#financeOrders").textContent = state.connected ? formatInt.format(rows.length) : "—";
@@ -1108,11 +1240,14 @@ function renderFinance() {
     ? `${formatMoney(material.amount)} calculados sobre ${material.covered} de ${material.withMeasure} fichas con medida completa y material identificable. Incluye 10 % de merma; material aportado y reforma se contabilizan a 0 € de compra.`
     : "La estimación de materia prima se calculará al recibir los pedidos del año.";
   $("#financeFlowStatus").textContent = state.connected
-    ? `${rows.length} trabajos · ${finance.recordedIncomeRows} importes de estadillo · año ${$("#financeYear").value}`
+    ? `${rows.length} trabajos · ${finance.recordedIncomeRows} importes de estadillo · ${finance.ledger.rows.length ? "gastos maestro" : "gastos pendientes"} · año ${$("#financeYear").value}`
     : "Actualizando pedidos";
   drawFinancialSummaryChart(performanceSeries(year, granularity));
-  $("#financeChartScope").textContent = `Ingresos ${granularity === "quarter" ? "por trimestre" : "por mes"}: importe del estadillo cuando consta y precio configurado solo para pedidos sin importe. El beneficio es ingresos menos gastos.`;
+  $("#financeChartScope").textContent = `Resultado ${granularity === "quarter" ? "por trimestre" : "por mes"}: ingresos del estadillo cuando constan, materia prima estimada y gastos del libro maestro. El beneficio es ingresos menos gastos.`;
   renderFinanceSankey(finance, sankeyIncomeByModel(rows, finance));
+  syncImportedSupplyInputs(finance);
+  const ledgerNote = $("#financeLedgerNote");
+  if (ledgerNote) ledgerNote.textContent = ledgerDescription(finance);
   const values = Object.fromEntries(Object.keys(FINANCE_DEFAULTS).map((id) => [id, financeValue(id)]));
   localStorage.setItem(FINANCE_KEY, JSON.stringify(values));
 }
@@ -1249,6 +1384,7 @@ function refreshPublicFeed() {
     try {
       if (!payload || !Array.isArray(payload.records)) throw new Error("Respuesta no válida");
       state.rows = mapPublicRows(payload.records);
+      state.expenses = mapPublicExpenses(payload.expenses);
       state.summary = makeSummary(state.rows);
       state.generatedAt = text(payload.generatedAt) || new Date().toISOString();
       state.connected = true;
@@ -1308,6 +1444,7 @@ function init() {
   $("#summaryMetric").addEventListener("change", renderSummary);
   $("#forecastYear").addEventListener("change", renderRevenueForecast);
   $("#ordersSearch").addEventListener("input", renderRecentOrders);
+  $("#summaryOrdersSearch").addEventListener("input", renderRecentOrders);
   ["#assumptionOrders", "#assumptionPrice", "#assumptionProcurement", "#assumptionExtraJobs", "#assumptionContribution", "#assumptionRework", "#assumptionCncCapacity", "#assumptionCncInvestment", "#assumptionCncPayback"].forEach((selector) => $(selector).addEventListener("input", updateBenefit));
   ["#financeAveragePrice", "#financeOtherIncome", "#financeElectricity", "#financeWaterWaste", "#financeInternet", "#financeLetters", "#financeTransport", "#financeLabour", "#financeOtherCosts"].forEach((selector) => $(selector).addEventListener("input", renderFinancialViews));
   $("#financeYear").addEventListener("change", renderFinancialViews);

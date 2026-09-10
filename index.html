@@ -112,7 +112,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
 .sources-panel { padding: 1.35rem; }.sources-table-wrap { margin-top: 1rem; overflow-x: auto; }.sources-table { width: 100%; min-width: 1040px; border-collapse: collapse; font-size: .76rem; }.sources-table th { padding: .6rem .7rem; border-bottom: 1px solid var(--line); color: var(--ink-soft); font-family: "DM Mono", monospace; font-size: .64rem; font-weight: 500; letter-spacing: .06em; text-align: left; text-transform: uppercase; }.sources-table td { padding: .85rem .7rem; border-bottom: 1px solid #edf2f1; color: #486266; line-height: 1.45; vertical-align: top; }.sources-table tbody tr:last-child td { border-bottom: 0; }.sources-table td:first-child { min-width: 135px; color: var(--deep); }.sources-table strong, .sources-table small { display: block; }.sources-table strong { color: var(--ink); font-size: .78rem; }.sources-table small { margin-top: .16rem; color: var(--ink-soft); font-size: .68rem; }.source-status { display: inline-flex; align-items: center; min-height: 22px; margin-bottom: .25rem; padding: 0 .46rem; border-radius: 999px; font-family: "DM Mono", monospace; font-size: .62rem; font-weight: 700; letter-spacing: .02em; white-space: nowrap; }.source-status.pending { background: #fff4da; color: #906514; }.source-status.portal { background: #f5ebf1; color: #86516e; }.source-status.active { background: #e4f4eb; color: #2d7955; }.source-status.staged { background: #edf0f5; color: #506b8c; }.sources-guides { display: grid; grid-template-columns: minmax(300px,.8fr) minmax(420px,1.2fr); gap: 1rem; margin-top: 1rem; }.source-guide { padding: 1.45rem; }.source-guide h2 { margin-bottom: .65rem; font-size: 1.1rem; }.source-guide > p:not(.eyebrow) { margin: 0; color: var(--ink-soft); font-size: .8rem; line-height: 1.65; }.privacy-guide { background: #f5f8f7; }.automation-guide { background: #fbfcfc; }.automation-guide ol { display: grid; gap: .7rem; margin: .85rem 0 0; padding: 0; list-style: none; }.automation-guide li { display: grid; grid-template-columns: 1.5rem minmax(0,1fr); gap: .55rem; align-items: start; }.automation-guide li span { display: grid; width: 1.5rem; height: 1.5rem; place-items: center; border-radius: 6px; background: var(--teal-light); color: var(--teal); font-family: "DM Mono", monospace; font-size: .6rem; }.automation-guide li p { margin: 0; color: var(--ink-soft); font-size: .76rem; line-height: 1.48; }.automation-guide li strong { color: var(--ink); }
 
 .data-layout { display: grid; grid-template-columns: minmax(330px,1.1fr) minmax(300px,.9fr); gap: 1rem; }.connection-panel, .settings-panel, .privacy-panel { padding: 1.55rem; }.connection-heading { display: flex; align-items: center; gap: .85rem; }.connection-heading h2, .settings-panel h2 { margin-bottom: 0; }.connection-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 11px; background: var(--teal-light); color: var(--teal); font-family: "DM Mono", monospace; font-size: 1.3rem; }.connection-panel > p { margin: 1.1rem 0; color: var(--ink-soft); font-size: .87rem; }.connection-status { display: grid; grid-template-columns: .55rem auto 1fr; align-items: center; gap: .48rem; padding: .75rem .85rem; border-radius: 9px; background: #f5f8f7; color: var(--ink); }.connection-status > span { width: .48rem; height: .48rem; border-radius: 50%; background: #b3bdbd; }.connection-status.connected > span { background: var(--green); }.connection-status b { font-size: .8rem; }.connection-status small { color: var(--ink-soft); font-size: .68rem; }.connection-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1rem; }.settings-panel { display: grid; align-content: start; gap: .75rem; }.settings-panel .eyebrow { margin-bottom: -.35rem; }.settings-panel label { gap: .27rem; }.settings-panel .button { justify-self: start; margin-top: .2rem; }
-.trace-panel { margin-top: 1rem; padding: 1.25rem; }.trace-toolbar { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin-top: 1rem; padding: .85rem .95rem; border: 1px solid #e1ecea; border-radius: 10px; background: #f7fbfa; }.trace-toolbar label { display: grid; flex: 0 1 360px; gap: .35rem; color: var(--ink-soft); font-size: .68rem; font-weight: 800; }.trace-toolbar input { min-height: 37px; padding: .45rem .65rem; border: 1px solid #cfe0de; border-radius: 8px; background: white; color: var(--ink); font: inherit; font-size: .78rem; outline-color: var(--teal); }.trace-toolbar p { margin: 0; color: var(--ink-soft); font-size: .72rem; line-height: 1.45; text-align: right; }.trace-table-wrap { margin-top: 1rem; overflow-x: auto; max-height: 760px; border-bottom: 1px solid var(--line); }.trace-table { width: 100%; min-width: 700px; border-collapse: collapse; font-size: .78rem; }.trace-table th { position: sticky; top: 0; z-index: 1; padding: .55rem .7rem; border-bottom: 1px solid var(--line); background: #fbfcfc; color: var(--ink-soft); font-family: "DM Mono", monospace; font-size: .64rem; font-weight: 500; letter-spacing: .06em; text-align: left; text-transform: uppercase; }.trace-table td { padding: .67rem .7rem; border-bottom: 1px solid #edf2f1; color: #345457; vertical-align: top; }.trace-table tbody tr:last-child td { border-bottom: 0; }.trace-table td:first-child, .trace-table td:nth-child(2), .trace-table td:last-child { color: var(--deep); font-family: "DM Mono", monospace; font-size: .73rem; }.trace-table .empty-state { color: var(--ink-soft); font-family: "Manrope", Arial, sans-serif; text-align: center; }
+.trace-panel { margin-top: 1rem; padding: 1.25rem; }.summary-trace-panel { margin-top: 1rem; }.trace-toolbar { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin-top: 1rem; padding: .85rem .95rem; border: 1px solid #e1ecea; border-radius: 10px; background: #f7fbfa; }.trace-toolbar label { display: grid; flex: 0 1 360px; gap: .35rem; color: var(--ink-soft); font-size: .68rem; font-weight: 800; }.trace-toolbar input { min-height: 37px; padding: .45rem .65rem; border: 1px solid #cfe0de; border-radius: 8px; background: white; color: var(--ink); font: inherit; font-size: .78rem; outline-color: var(--teal); }.trace-toolbar p { margin: 0; color: var(--ink-soft); font-size: .72rem; line-height: 1.45; text-align: right; }.trace-table-wrap { margin-top: 1rem; overflow-x: auto; max-height: 760px; border-bottom: 1px solid var(--line); }.trace-table { width: 100%; min-width: 1120px; border-collapse: collapse; font-size: .78rem; }.trace-table th { position: sticky; top: 0; z-index: 1; padding: .55rem .7rem; border-bottom: 1px solid var(--line); background: #fbfcfc; color: var(--ink-soft); font-family: "DM Mono", monospace; font-size: .64rem; font-weight: 500; letter-spacing: .06em; text-align: left; text-transform: uppercase; }.trace-table td { padding: .67rem .7rem; border-bottom: 1px solid #edf2f1; color: #345457; vertical-align: top; }.trace-table tbody tr:last-child td { border-bottom: 0; }.trace-table td:first-child, .trace-table td:nth-child(2) { color: var(--deep); font-family: "DM Mono", monospace; font-size: .73rem; }.trace-table td:nth-child(n+7) { white-space: nowrap; }.trace-table a { color: var(--teal); font-weight: 800; text-decoration: none; }.trace-table a:hover { text-decoration: underline; }.trace-table .empty-state { color: var(--ink-soft); font-family: "Manrope", Arial, sans-serif; text-align: center; }
 .privacy-panel { margin-top: 1rem; background: #fbfcfc; }.privacy-rules { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.2rem; margin-top: 1rem; }.privacy-rules div { display: flex; gap: .65rem; }.privacy-rules span { display: grid; flex: 0 0 1.65rem; height: 1.65rem; place-items: center; border-radius: 6px; background: var(--teal-light); color: var(--teal); font-family: "DM Mono", monospace; font-size: .65rem; }.privacy-rules p { margin: 0; color: var(--ink-soft); font-size: .77rem; line-height: 1.55; }.privacy-rules strong { color: var(--ink); }
 
 .toast { position: fixed; z-index: 20; right: 1rem; bottom: 1rem; max-width: 360px; padding: .8rem 1rem; border-radius: 10px; background: var(--deep); box-shadow: var(--shadow); color: white; font-size: .8rem; opacity: 0; pointer-events: none; transform: translateY(8px); transition: opacity .2s, transform .2s; }.toast.visible { opacity: 1; transform: translateY(0); }
@@ -238,6 +238,20 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
               <div id="summaryMetricTable" class="metric-strip" aria-label="Histórico por año"></div>
             </article>
           </div>
+
+          <article class="panel trace-panel summary-trace-panel">
+            <div class="panel-head"><div><p class="eyebrow">TRAZABILIDAD OPERATIVA</p><h2>Todos los trabajos y sus archivos</h2></div><span class="chart-note" id="summaryTraceCount">ID y fechas reales</span></div>
+            <div class="trace-toolbar">
+              <label for="summaryOrdersSearch">Buscar en el histórico<input id="summaryOrdersSearch" type="search" autocomplete="off" placeholder="ID, modelo, material o medida" /></label>
+              <p>Todos los registros, del más reciente al más antiguo por recepción.</p>
+            </div>
+            <div class="trace-table-wrap">
+              <table class="trace-table">
+                <thead><tr><th>ID trabajo</th><th>Recepción (email)</th><th>Documento</th><th>Modelo</th><th>Material</th><th>Medida terminada</th><th>Factura / albarán</th><th>Corel</th><th>Nota</th></tr></thead>
+                <tbody id="summaryOrders"><tr><td colspan="9" class="empty-state">Actualizando datos operativos…</td></tr></tbody>
+              </table>
+            </div>
+          </article>
         </section>
 
         <section id="production" class="view" aria-labelledby="productionHeading">
@@ -453,15 +467,15 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
               <div class="finance-form">
                 <label>Precio medio por pedido (€)<input id="financeAveragePrice" type="number" min="0" step="1" value="200" /></label>
                 <label>Otros ingresos facturados (€)<input id="financeOtherIncome" type="number" min="0" step="1" value="0" /></label>
-                <label>Luz · Gana / Romboc (€)<input id="financeElectricity" type="number" min="0" step="1" value="0" /></label>
-                <label>Agua y residuos · Acciona (€)<input id="financeWaterWaste" type="number" min="0" step="1" value="0" /></label>
-                <label>Internet · O2 (€)<input id="financeInternet" type="number" min="0" step="1" value="0" /></label>
+                <label>Luz · libro maestro (€)<input id="financeElectricity" type="number" min="0" step="0.01" value="0" /></label>
+                <label>Agua y residuos · libro maestro (€)<input id="financeWaterWaste" type="number" min="0" step="0.01" value="0" /></label>
+                <label>Internet · libro maestro (€)<input id="financeInternet" type="number" min="0" step="0.01" value="0" /></label>
                 <label>Letras · Bronces Jordá (€)<input id="financeLetters" type="number" min="0" step="1" value="0" /></label>
                 <label>Transporte y colocación (€)<input id="financeTransport" type="number" min="0" step="1" value="0" /></label>
                 <label>Mano de obra / autónomos (€)<input id="financeLabour" type="number" min="0" step="1" value="0" /></label>
                 <label>Otros gastos (€)<input id="financeOtherCosts" type="number" min="0" step="1" value="0" /></label>
               </div>
-              <p class="form-note">Estos campos se guardan solo en este dispositivo mientras se crea el registro financiero del libro maestro. Introduce totales del año seleccionado, con IVA según el mismo criterio en todas las partidas.</p>
+              <p id="financeLedgerNote" class="form-note">Los suministros se leerán del libro maestro al actualizar los datos. El resto de partidas sigue siendo editable hasta que se registre su factura.</p>
             </article>
 
             <article class="panel cost-register">
@@ -482,8 +496,8 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
 
           <article class="panel finance-register-note">
             <p class="eyebrow">SIGUIENTE PASO DE CONTROL</p>
-            <h2>Completar las facturas para convertir el modelo en cuenta de resultados.</h2>
-            <p>Quedan pendientes de incorporar las facturas de electricidad, agua y residuos, internet y letras; también los costes de transporte, mano de obra e impuestos. Cuando estén registrados por fecha y categoría en el libro maestro, este flujo podrá dejar de usar campos locales y reflejar importes reales por periodo.</p>
+            <h2>Convertir cada partida pendiente en un apunte contable trazable.</h2>
+            <p>Electricidad, agua y residuos e internet ya están registrados por mes en el libro maestro, diferenciando factura, prorrateo y estimación. Quedan por incorporar letras, transporte, mano de obra, impuestos y compras reales de piedra y consumibles.</p>
           </article>
         </section>
 
@@ -503,9 +517,9 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
                 <thead><tr><th>Dato</th><th>Origen de recepción</th><th>Destino en el control</th><th>Regla antes de registrar</th><th>Automatización</th></tr></thead>
                 <tbody>
                   <tr><td><strong>Pedidos M.S.</strong><small>Fichas JPG</small></td><td>Buzón operativo de pedidos · adjuntos JPG</td><td>Pedidos · primero bandeja de revisión</td><td>Extraer ficha, comprobar ID de trabajo y evitar duplicados antes de pasar al maestro.</td><td><span class="source-status pending">Pendiente</span><small>Captura de adjuntos + OCR + revisión</small></td></tr>
-                  <tr><td><strong>Electricidad</strong><small>Gana / Romboc</small></td><td>Buzón de facturación B · remitente validado de Gana Energía</td><td>Facturas · electricidad</td><td>Clasificar PDF por fecha, importe, periodo y suministro antes de consolidar.</td><td><span class="source-status pending">Pendiente</span><small>Etiqueta de correo + importación</small></td></tr>
-                  <tr><td><strong>Agua y residuos</strong><small>Acciona</small></td><td>Portal de Acciona; las notificaciones no sustituyen a la factura descargada.</td><td>Facturas · agua y residuos</td><td>Incluir solo los dos suministros del taller, identificados de forma privada en el libro maestro.</td><td><span class="source-status portal">Portal requerido</span><small>Descarga y validación</small></td></tr>
-                  <tr><td><strong>Internet</strong><small>O2</small></td><td>Buzón de facturación A · facturas O2</td><td>Facturas · internet</td><td>Guardar PDF, fecha de emisión, periodo e importe con un identificador de factura único.</td><td><span class="source-status pending">Pendiente</span><small>Importación de correo</small></td></tr>
+                  <tr><td><strong>Electricidad</strong><small>Gana / Romboc</small></td><td>Buzón de facturación B · remitente validado de Gana Energía</td><td>Gastos · electricidad</td><td>Clasificar PDF por fecha, importe y periodo. Los meses históricos sin documento quedan identificados como media estimada.</td><td><span class="source-status active">Importado</span><small>2 facturas reales + meses históricos estimados</small></td></tr>
+                  <tr><td><strong>Agua y residuos</strong><small>Acciona</small></td><td>Portal de Acciona; las notificaciones no sustituyen a la factura descargada.</td><td>Gastos · agua y residuos</td><td>Incluir solo los suministros del taller. Las facturas trimestrales se reparten entre sus tres meses de servicio.</td><td><span class="source-status active">Importado</span><small>22 facturas trimestrales prorrateadas</small></td></tr>
+                  <tr><td><strong>Internet</strong><small>O2</small></td><td>Buzón de facturación A · facturas O2</td><td>Gastos · internet</td><td>Guardar fecha de emisión, periodo e importe; cualquier hueco histórico queda señalado como estimación.</td><td><span class="source-status active">Importado</span><small>6 facturas reales + meses históricos estimados</small></td></tr>
                   <tr><td><strong>Letras</strong><small>Bronce / inox</small></td><td>Buzón de facturación A · proveedor de letras</td><td>Facturas · letras</td><td>Vincular, cuando sea posible, al ID del trabajo y separar bronce de acero inoxidable.</td><td><span class="source-status pending">Pendiente</span><small>Importación de correo</small></td></tr>
                   <tr><td><strong>Piedra</strong><small>Compra estimada</small></td><td>Pedidos + tabla de costes por m² y proveedor</td><td>Estimación de materia prima</td><td>Aplicar 10 % de merma. «Suyo» en reforma es piedra existente; «Suyo» en pedido nuevo y blanco Macael son aportación de M.S.</td><td><span class="source-status active">Estimador activo</span><small>Reconciliar después con factura de compra</small></td></tr>
                   <tr><td><strong>Consumibles</strong><small>Goma, abrasivos y acabado</small></td><td>Estimación anual conocida + facturas y control de existencias</td><td>Gastos · consumibles</td><td>Contrastar la base anual con compras reales y ajustar cantidades al cierre de cada año.</td><td><span class="source-status staged">Base inicial</span><small>Registro financiero pendiente</small></td></tr>
@@ -543,8 +557,8 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
             <article class="panel settings-panel">
               <p class="eyebrow">ALCANCE DE LOS DATOS</p>
               <h2>Qué se muestra</h2>
-              <p class="form-note">Cada registro conserva el ID de trabajo, la fecha, el modelo, el material y las medidas reales. Las alturas terminadas descuentan 4 cm de escalón y tapa.</p>
-              <p class="form-note">No se publican nombres, inscripciones, fotografías, archivos, especificaciones libres ni el enlace o ID del libro maestro.</p>
+              <p class="form-note">Cada registro conserva el ID de trabajo, la fecha de recepción del correo, la fecha del documento, el modelo, el material y las medidas reales. Las alturas terminadas descuentan 4 cm de escalón y tapa.</p>
+              <p class="form-note">No se publican nombres, inscripciones, fotografías, especificaciones libres ni el enlace o ID del libro maestro. Los botones de archivo solo abren documentos privados de Drive y respetan los permisos existentes.</p>
             </article>
           </div>
 
@@ -552,12 +566,12 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
             <div class="panel-head"><div><p class="eyebrow">TRAZABILIDAD</p><h2>Todos los trabajos registrados</h2></div><span class="chart-note" id="traceCount">ID y fecha reales</span></div>
             <div class="trace-toolbar">
               <label for="ordersSearch">Buscar en el histórico<input id="ordersSearch" type="search" autocomplete="off" placeholder="ID, modelo, material o medida" /></label>
-              <p>Se muestran todos los registros recibidos, ordenados por fecha.</p>
+              <p>Todos los registros, del más reciente al más antiguo por recepción.</p>
             </div>
             <div class="trace-table-wrap">
               <table class="trace-table">
-                <thead><tr><th>ID trabajo</th><th>Fecha</th><th>Modelo</th><th>Material</th><th>Medida terminada</th></tr></thead>
-                <tbody id="recentOrders"><tr><td colspan="5" class="empty-state">Actualizando datos operativos…</td></tr></tbody>
+                <thead><tr><th>ID trabajo</th><th>Recepción (email)</th><th>Documento</th><th>Modelo</th><th>Material</th><th>Medida terminada</th><th>Factura / albarán</th><th>Corel</th><th>Nota</th></tr></thead>
+                <tbody id="recentOrders"><tr><td colspan="9" class="empty-state">Actualizando datos operativos…</td></tr></tbody>
               </table>
             </div>
           </article>
@@ -603,6 +617,7 @@ const emptySummary = {
 
 const state = {
   rows: [],
+  expenses: [],
   summary: emptySummary,
   connected: false,
   generatedAt: null,
@@ -685,7 +700,7 @@ function parseDate(value) {
 // the date on which its work was delivered. Historical reporting is based on
 // the latter; a live order without a ledger record falls back to its fiche.
 function dashboardDate(row) {
-  return parseDate(row["Fecha para dashboard"] || row["Fecha entrega (estadillo)"] || row["Fecha ficha"]);
+  return parseDate(row["Fecha para dashboard"] || row["Fecha entrega (estadillo)"] || row["Fecha recepción (email)"] || row["Fecha ficha"]);
 }
 
 function recordedRevenue(row) {
@@ -855,6 +870,7 @@ function mapPublicRows(records) {
   return records.map((record) => ({
     Pedido: text(record.id),
     "Fecha ficha": text(record.orderDate),
+    "Fecha recepción (email)": text(record.receiptDate),
     "Fecha entrega (estadillo)": text(record.deliveredDate),
     "Fecha para dashboard": text(record.date),
     "Importe trabajo / Debe (€)": record.amount ?? "",
@@ -868,8 +884,25 @@ function mapPublicRows(records) {
     "Alto base/croquis (cm)": record.baseHeight ?? "",
     "Ancho superior/remate (cm)": record.topWidth ?? "",
     "Cotas/escalones (cm)": text(record.stepMeasures),
-    "Voleo (cm)": record.voleo ?? ""
+    "Voleo (cm)": record.voleo ?? "",
+    "Archivo factura / albarán (XLSX)": text(record.invoiceFile),
+    "Archivo Corel (CDR)": text(record.corelFile),
+    "Nota manuscrita": text(record.noteFile)
   })).filter((row) => row.Pedido);
+}
+
+// Cost details remain in the private Sheet. The public feed contains only the
+// minimum aggregate required for the dashboard: monthly amount, category and
+// audit status. No invoice reference, address, email or supplier account is
+// added to the browser.
+function mapPublicExpenses(records) {
+  if (!Array.isArray(records)) return [];
+  return records.map((record) => {
+    const month = text(record.month);
+    const category = text(record.category);
+    const amount = parseNumber(record.amount);
+    return { month, category, amount, nature: text(record.nature) || "Sin clasificar" };
+  }).filter((record) => /^\d{4}-(0[1-9]|1[0-2])$/.test(record.month) && record.category && record.amount !== null);
 }
 
 function makeSummary(rows) {
@@ -1088,14 +1121,17 @@ function periodsFor(year, granularity) {
 function performanceSeries(year, granularity = "year") {
   const periods = periodsFor(year, granularity);
   const annualRows = rowsForYear(year);
-  const finance = calculateFinance(annualRows);
-  const recurringCosts = finance.consumables + finance.manual.reduce((total, entry) => total + entry.value, 0);
+  const finance = calculateFinance(annualRows, year);
+  const ledger = expenseLedgerForYear(year);
+  const localManual = finance.manual.filter((entry) => !ledger.totals.has(entry.label));
+  const recurringCosts = finance.consumables + localManual.reduce((total, entry) => total + entry.value, 0);
   const share = periods.length ? 1 / periods.length : 0;
 
   return periods.map(({ label, months }) => {
     const rows = annualRows.filter((row) => months.includes(dashboardDate(row)?.getMonth()));
     const revenue = rows.reduce((total, row) => total + revenueFor(row, finance.averagePrice), 0) + finance.otherIncome * share;
-    const costs = estimateMaterial(rows).amount + recurringCosts * share;
+    const ledgerCosts = [...ledger.totals.keys()].reduce((total, category) => total + monthlyLedgerAmount(year, months, category), 0);
+    const costs = estimateMaterial(rows).amount + recurringCosts * share + ledgerCosts;
     return { label, orders: rows.length, revenue, costs, profit: revenue - costs };
   });
 }
@@ -1305,7 +1341,7 @@ function renderSummary() {
   const connected = state.connected;
   const year = selectedSummaryYear();
   const yearRows = rowsForYear(year);
-  const finance = calculateFinance(yearRows);
+  const finance = calculateFinance(yearRows, year);
   const years = availableDataYears();
   const granularity = selectedSummaryGranularity();
   const metric = selectedSummaryMetric();
@@ -1369,15 +1405,41 @@ function formatOperationalDate(value) {
   return date ? new Intl.DateTimeFormat("es-ES", { dateStyle: "short" }).format(date) : text(value) || "—";
 }
 
-function renderRecentOrders() {
-  const table = $("#recentOrders");
-  const count = $("#traceCount");
+function traceDate(order) {
+  // The traceability view follows actual receipt chronology. Older records
+  // inherit the fiche date, so they remain consistently ordered.
+  return parseDate(order["Fecha recepción (email)"] || order["Fecha ficha"] || order["Fecha para dashboard"]);
+}
+
+function traceRows() {
+  return [...state.rows].sort((a, b) => {
+    const left = traceDate(a)?.valueOf() || 0;
+    const right = traceDate(b)?.valueOf() || 0;
+    return right - left || text(b.Pedido).localeCompare(text(a.Pedido), "es", { numeric: true });
+  });
+}
+
+function matchesTraceQuery(order, query) {
+  return !query || normalize([
+    order.Pedido,
+    order["Fecha para dashboard"],
+    order["Fecha recepción (email)"],
+    order["Fecha ficha"],
+    familyFor(order.Modelo),
+    materialFor(order),
+    sizeFor(order)
+  ].join(" ")).includes(query);
+}
+
+function renderTraceTable({ bodySelector, countSelector, searchSelector }) {
+  const table = $(bodySelector);
+  const count = $(countSelector);
   if (!table) return;
   table.replaceChildren();
   if (!state.connected) {
     const row = document.createElement("tr");
     const cell = document.createElement("td");
-    cell.colSpan = 5;
+    cell.colSpan = 9;
     cell.className = "empty-state";
     cell.textContent = "Actualizando datos operativos…";
     row.append(cell);
@@ -1385,28 +1447,16 @@ function renderRecentOrders() {
     if (count) count.textContent = "Actualizando registros";
     return;
   }
-  const query = normalize($("#ordersSearch")?.value);
-  const allRows = [...state.rows].sort((a, b) => {
-    const left = dashboardDate(a)?.valueOf() || 0;
-    const right = dashboardDate(b)?.valueOf() || 0;
-    return right - left || text(b.Pedido).localeCompare(text(a.Pedido), "es", { numeric: true });
-  });
-  const rows = query
-    ? allRows.filter((order) => normalize([
-      order.Pedido,
-      order["Fecha para dashboard"],
-      familyFor(order.Modelo),
-      materialFor(order),
-      sizeFor(order)
-    ].join(" ")).includes(query))
-    : allRows;
+  const query = normalize($(searchSelector)?.value);
+  const allRows = traceRows();
+  const rows = allRows.filter((order) => matchesTraceQuery(order, query));
   if (count) count.textContent = query
     ? `${formatInt.format(rows.length)} de ${formatInt.format(allRows.length)} trabajos`
-    : `${formatInt.format(allRows.length)} trabajos · ID y fecha reales`;
+    : `${formatInt.format(allRows.length)} trabajos · recepción real`;
   if (!rows.length) {
     const row = document.createElement("tr");
     const cell = document.createElement("td");
-    cell.colSpan = 5;
+    cell.colSpan = 9;
     cell.className = "empty-state";
     cell.textContent = "No hay trabajos que coincidan con la búsqueda.";
     row.append(cell);
@@ -1415,20 +1465,43 @@ function renderRecentOrders() {
   }
   rows.forEach((order) => {
     const row = document.createElement("tr");
-    const values = [
+    [
       order.Pedido,
-      formatOperationalDate(order["Fecha entrega (estadillo)"] || order["Fecha ficha"] || order["Fecha para dashboard"]),
+      formatOperationalDate(order["Fecha recepción (email)"]),
+      formatOperationalDate(order["Fecha ficha"]),
       familyFor(order.Modelo),
       materialFor(order),
       sizeFor(order) || "Sin medida completa"
-    ];
-    values.forEach((value) => {
+    ].forEach((value) => {
       const cell = document.createElement("td");
       cell.textContent = value;
       row.append(cell);
     });
+    [
+      order["Archivo factura / albarán (XLSX)"],
+      order["Archivo Corel (CDR)"],
+      order["Nota manuscrita"]
+    ].forEach((url) => {
+      const cell = document.createElement("td");
+      if (url) {
+        const link = document.createElement("a");
+        link.href = url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = "Abrir";
+        cell.append(link);
+      } else {
+        cell.textContent = "No disponible";
+      }
+      row.append(cell);
+    });
     table.append(row);
   });
+}
+
+function renderRecentOrders() {
+  renderTraceTable({ bodySelector: "#recentOrders", countSelector: "#traceCount", searchSelector: "#ordersSearch" });
+  renderTraceTable({ bodySelector: "#summaryOrders", countSelector: "#summaryTraceCount", searchSelector: "#summaryOrdersSearch" });
 }
 
 function setupFilters() {
@@ -1493,6 +1566,47 @@ function financeRows() {
   });
 }
 
+const SUPPLY_EXPENSE_FIELDS = Object.freeze({
+  "Electricidad": "financeElectricity",
+  "Agua y residuos": "financeWaterWaste",
+  "Internet": "financeInternet"
+});
+
+function expenseRowsForYear(year) {
+  return state.expenses.filter((expense) => expense.month.startsWith(`${year}-`));
+}
+
+function expenseLedgerForYear(year) {
+  const rows = expenseRowsForYear(year);
+  const totals = new Map();
+  const nature = new Map();
+  rows.forEach((expense) => {
+    totals.set(expense.category, (totals.get(expense.category) || 0) + expense.amount);
+    const kinds = nature.get(expense.category) || new Map();
+    kinds.set(expense.nature, (kinds.get(expense.nature) || 0) + 1);
+    nature.set(expense.category, kinds);
+  });
+  return { rows, totals, nature };
+}
+
+function importedExpenseLabel(category, ledger) {
+  const kinds = ledger.nature.get(category);
+  if (!kinds?.size) return "";
+  const sourceBacked = (kinds.get("Factura real") || 0) + (kinds.get("Prorrateado de factura real") || 0);
+  const estimated = kinds.get("Estimado · media disponible") || 0;
+  const parts = [];
+  if (sourceBacked) parts.push(`${sourceBacked} meses con factura`);
+  if (estimated) parts.push(`${estimated} meses estimados`);
+  return parts.join(" · ");
+}
+
+function monthlyLedgerAmount(year, months, category) {
+  return state.expenses
+    .filter((expense) => expense.category === category && expense.month.startsWith(`${year}-`))
+    .filter((expense) => months.includes(Number(expense.month.slice(5, 7)) - 1))
+    .reduce((total, expense) => total + expense.amount, 0);
+}
+
 function estimateMaterial(rows) {
   let amount = 0;
   let covered = 0;
@@ -1512,20 +1626,25 @@ function estimateMaterial(rows) {
   return { amount, covered, withMeasure };
 }
 
-function calculateFinance(rows) {
+function calculateFinance(rows, year = null) {
   const averagePrice = financeValue("financeAveragePrice");
   const otherIncome = financeValue("financeOtherIncome");
+  const reportYear = Number(year) || dashboardDate(rows[0])?.getFullYear() || Number($("#financeYear")?.value) || new Date().getFullYear();
+  const ledger = expenseLedgerForYear(reportYear);
   const material = estimateMaterial(rows);
   const consumables = Object.values(KNOWN_CONSUMABLES).reduce((total, value) => total + value, 0);
   const manual = [
-    ["Electricidad", financeValue("financeElectricity"), "fixed"],
-    ["Agua y residuos", financeValue("financeWaterWaste"), "fixed"],
-    ["Internet", financeValue("financeInternet"), "fixed"],
-    ["Letras", financeValue("financeLetters"), "direct"],
-    ["Transporte y colocación", financeValue("financeTransport"), "direct"],
-    ["Mano de obra / autónomos", financeValue("financeLabour"), "labour"],
-    ["Otros gastos", financeValue("financeOtherCosts"), "fixed"]
-  ].map(([label, value, tone]) => ({ label, value, tone }));
+    ["Electricidad", "financeElectricity", "fixed"],
+    ["Agua y residuos", "financeWaterWaste", "fixed"],
+    ["Internet", "financeInternet", "fixed"],
+    ["Letras", "financeLetters", "direct"],
+    ["Transporte y colocación", "financeTransport", "direct"],
+    ["Mano de obra / autónomos", "financeLabour", "labour"],
+    ["Otros gastos", "financeOtherCosts", "fixed"]
+  ].map(([label, field, tone]) => {
+    const imported = ledger.totals.get(label);
+    return { label, value: imported ?? financeValue(field), tone, imported: imported !== undefined, sourceNote: importedExpenseLabel(label, ledger) };
+  });
   // The Estadillo's Debe is the value of the delivered work. Cash advances
   // are tracked separately in the private movements ledger and must not be
   // added here a second time. Only still-unpriced orders use the explicit
@@ -1546,7 +1665,9 @@ function calculateFinance(rows) {
   ];
   return {
     averagePrice,
+    reportYear,
     otherIncome,
+    ledger,
     material,
     consumables,
     manual,
@@ -1671,10 +1792,35 @@ function renderFinanceSankey(finance, incomeParts) {
   root.append(svg);
 }
 
+function syncImportedSupplyInputs(finance) {
+  Object.entries(SUPPLY_EXPENSE_FIELDS).forEach(([category, field]) => {
+    const input = $(`#${field}`);
+    const entry = finance.manual.find((manual) => manual.label === category);
+    if (!input || !entry) return;
+    if (entry.imported) {
+      input.value = entry.value.toFixed(2);
+      input.readOnly = true;
+      input.dataset.imported = "true";
+      input.title = entry.sourceNote || "Importado del libro maestro";
+    } else {
+      input.readOnly = false;
+      delete input.dataset.imported;
+      input.removeAttribute("title");
+    }
+  });
+}
+
+function ledgerDescription(finance) {
+  if (!finance.ledger.rows.length) return "Sin gastos importados todavía: los campos de suministro siguen siendo una referencia local.";
+  const factured = finance.ledger.rows.filter((row) => row.nature !== "Estimado · media disponible").length;
+  const estimated = finance.ledger.rows.length - factured;
+  return `Libro maestro: ${factured} meses respaldados por factura o prorrateo y ${estimated} meses estimados por media. Los campos de luz, agua y residuos e internet se bloquean para evitar doble contabilización.`;
+}
+
 function renderFinance() {
   const rows = financeRows();
-  const finance = calculateFinance(rows);
   const year = Number($("#financeYear")?.value) || new Date().getFullYear();
+  const finance = calculateFinance(rows, year);
   const granularity = selectedFinanceGranularity();
   const { material, consumables, revenue, costs, margin } = finance;
   $("#financeOrders").textContent = state.connected ? formatInt.format(rows.length) : "—";
@@ -1687,11 +1833,14 @@ function renderFinance() {
     ? `${formatMoney(material.amount)} calculados sobre ${material.covered} de ${material.withMeasure} fichas con medida completa y material identificable. Incluye 10 % de merma; material aportado y reforma se contabilizan a 0 € de compra.`
     : "La estimación de materia prima se calculará al recibir los pedidos del año.";
   $("#financeFlowStatus").textContent = state.connected
-    ? `${rows.length} trabajos · ${finance.recordedIncomeRows} importes de estadillo · año ${$("#financeYear").value}`
+    ? `${rows.length} trabajos · ${finance.recordedIncomeRows} importes de estadillo · ${finance.ledger.rows.length ? "gastos maestro" : "gastos pendientes"} · año ${$("#financeYear").value}`
     : "Actualizando pedidos";
   drawFinancialSummaryChart(performanceSeries(year, granularity));
-  $("#financeChartScope").textContent = `Ingresos ${granularity === "quarter" ? "por trimestre" : "por mes"}: importe del estadillo cuando consta y precio configurado solo para pedidos sin importe. El beneficio es ingresos menos gastos.`;
+  $("#financeChartScope").textContent = `Resultado ${granularity === "quarter" ? "por trimestre" : "por mes"}: ingresos del estadillo cuando constan, materia prima estimada y gastos del libro maestro. El beneficio es ingresos menos gastos.`;
   renderFinanceSankey(finance, sankeyIncomeByModel(rows, finance));
+  syncImportedSupplyInputs(finance);
+  const ledgerNote = $("#financeLedgerNote");
+  if (ledgerNote) ledgerNote.textContent = ledgerDescription(finance);
   const values = Object.fromEntries(Object.keys(FINANCE_DEFAULTS).map((id) => [id, financeValue(id)]));
   localStorage.setItem(FINANCE_KEY, JSON.stringify(values));
 }
@@ -1828,6 +1977,7 @@ function refreshPublicFeed() {
     try {
       if (!payload || !Array.isArray(payload.records)) throw new Error("Respuesta no válida");
       state.rows = mapPublicRows(payload.records);
+      state.expenses = mapPublicExpenses(payload.expenses);
       state.summary = makeSummary(state.rows);
       state.generatedAt = text(payload.generatedAt) || new Date().toISOString();
       state.connected = true;
@@ -1887,6 +2037,7 @@ function init() {
   $("#summaryMetric").addEventListener("change", renderSummary);
   $("#forecastYear").addEventListener("change", renderRevenueForecast);
   $("#ordersSearch").addEventListener("input", renderRecentOrders);
+  $("#summaryOrdersSearch").addEventListener("input", renderRecentOrders);
   ["#assumptionOrders", "#assumptionPrice", "#assumptionProcurement", "#assumptionExtraJobs", "#assumptionContribution", "#assumptionRework", "#assumptionCncCapacity", "#assumptionCncInvestment", "#assumptionCncPayback"].forEach((selector) => $(selector).addEventListener("input", updateBenefit));
   ["#financeAveragePrice", "#financeOtherIncome", "#financeElectricity", "#financeWaterWaste", "#financeInternet", "#financeLetters", "#financeTransport", "#financeLabour", "#financeOtherCosts"].forEach((selector) => $(selector).addEventListener("input", renderFinancialViews));
   $("#financeYear").addEventListener("change", renderFinancialViews);
