@@ -302,6 +302,7 @@ function mapPublicRows(records) {
     "Cotas/escalones (cm)": text(record.stepMeasures),
     "Voleo (cm)": record.voleo ?? "",
     "Archivo factura / albarán (XLSX)": text(record.invoiceFile),
+    "Factura borrador (XLSX)": text(record.invoiceDraftFile),
     "Archivo Corel (CDR)": text(record.corelFile),
     Notas: text(record.noteFile),
     "Nota manuscrita": text(record.noteFile),
@@ -936,25 +937,31 @@ function renderTraceTable({ bodySelector, countSelector, searchSelector }) {
     cell.textContent = amount === null ? "—" : formatMoney(amount);
     row.append(cell);
   });
+  const invoiceUrl = order["Archivo factura / albarán (XLSX)"];
+  const draftInvoiceUrl = order["Factura borrador (XLSX)"];
   [
-    order["Archivo factura / albarán (XLSX)"],
-    order["Archivo Corel (CDR)"],
-    order.Notas || order["Nota manuscrita"],
-    order["Imágenes anejas"]
-  ].forEach((url) => {
-      const cell = document.createElement("td");
-      if (url) {
-        const link = document.createElement("a");
-        link.href = url;
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        link.textContent = "Abrir";
-        cell.append(link);
-      } else {
-        cell.textContent = "No disponible";
+    { url: invoiceUrl || draftInvoiceUrl, label: invoiceUrl ? "Abrir" : draftInvoiceUrl ? "Abrir borrador" : "", draft: !invoiceUrl && Boolean(draftInvoiceUrl) },
+    { url: order["Archivo Corel (CDR)"], label: "Abrir" },
+    { url: order.Notas || order["Nota manuscrita"], label: "Abrir" },
+    { url: order["Imágenes anejas"], label: "Abrir" }
+  ].forEach((documentInfo) => {
+    const cell = document.createElement("td");
+    if (documentInfo.url) {
+      const link = document.createElement("a");
+      link.href = documentInfo.url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = documentInfo.label;
+      if (documentInfo.draft) {
+        link.dataset.documentStatus = "draft";
+        link.title = "Borrador: al quitar _borrador del nombre del archivo pasará a definitiva";
       }
-      row.append(cell);
-    });
+      cell.append(link);
+    } else {
+      cell.textContent = "No disponible";
+    }
+    row.append(cell);
+  });
     table.append(row);
   });
 }

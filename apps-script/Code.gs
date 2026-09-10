@@ -42,6 +42,7 @@ const EXPENSE_FIELDS = Object.freeze({
 
 const DOCUMENT_FIELDS = Object.freeze({
   invoice: "Archivo factura / albarán (XLSX)",
+  invoiceDraft: "Factura borrador (XLSX)",
   corel: "Archivo Corel (CDR)",
   note: "Notas",
   attachments: "Imágenes anejas"
@@ -50,6 +51,7 @@ const DOCUMENT_FIELDS = Object.freeze({
 // Shared historical archive supplied for the reconciliation. Files remain
 // private in Drive; the generated URLs never alter their sharing settings.
 const HISTORIC_DOCUMENTS_FOLDER_ID = "1RjvspVx85xu8BbisLjwDMToS148rfJ7-";
+const CURRENT_DOCUMENTS_FOLDER_ID = "1eUAupqLzfBhkiEexWqpI3JtYReT8c9A_";
 
 function doGet(event) {
   const parameter = (event && event.parameter) || {};
@@ -74,7 +76,7 @@ function cachedPayload_() {
   // limit. Serving this deliberately small, whitelisted feed directly keeps
   // the dashboard live and avoids stale or failed cache reads.
   return JSON.stringify({
-    version: 5,
+    version: 6,
     generatedAt: new Date().toISOString(),
     records: readOperationalRows_(),
     // The private ledger has invoice references and other audit columns. The
@@ -91,6 +93,7 @@ function readOperationalRows_() {
 
   const values = sheet.getDataRange().getDisplayValues();
   const richValues = sheet.getDataRange().getRichTextValues();
+  const currentDocuments = currentDocumentIndex_();
   const headerIndex = values.findIndex((row) => row.some((cell) => clean_(cell) === FIELDS.id));
   if (headerIndex < 0) throw new Error("No se encontró la cabecera Pedido.");
 
@@ -115,6 +118,8 @@ function readOperationalRows_() {
     const deliveredDate = read(row, FIELDS.deliveredDate);
     const dashboardDate = read(row, FIELDS.date) || deliveredDate || receiptDate || orderDate;
     const rawMaterial = read(row, FIELDS.material);
+    const liveDocuments = currentDocuments.get(id);
+    const liveDocument = (type, field) => liveDocuments ? clean_(liveDocuments[type]) : readLink(rowIndex, field);
     return {
       id,
       // Only this approved operational subset is public. In particular, the
@@ -139,7 +144,8 @@ function readOperationalRows_() {
       topWidth: numberOrNull_(read(row, FIELDS.topWidth)),
       stepMeasures: read(row, FIELDS.stepMeasures),
       voleo: numberOrNull_(read(row, FIELDS.voleo)),
-      invoiceFile: readLink(rowIndex, DOCUMENT_FIELDS.invoice),
+      invoiceFile: liveDocument("invoice", DOCUMENT_FIELDS.invoice),
+      invoiceDraftFile: liveDocument("invoiceDraft", DOCUMENT_FIELDS.invoiceDraft),
       corelFile: readLink(rowIndex, DOCUMENT_FIELDS.corel),
       noteFile: readLink(rowIndex, DOCUMENT_FIELDS.note),
       attachmentFile: readLink(rowIndex, DOCUMENT_FIELDS.attachments)
@@ -180,10 +186,11 @@ function populateDocumentLinks_() {
   const results = body.map((row) => {
     const id = clean_(row[columns[FIELDS.id]]);
     const links = documents.get(id) || {};
-    return [makeLink(links.invoice), makeLink(links.corel), makeLink(links.note), makeLink(links.attachments)];
+    return [makeLink(links.invoice), makeLink(links.invoiceDraft), makeLink(links.corel), makeLink(links.note), makeLink(links.attachments)];
   });
   const targetColumns = [
     DOCUMENT_FIELDS.invoice,
+    DOCUMENT_FIELDS.invoiceDraft,
     DOCUMENT_FIELDS.corel,
     DOCUMENT_FIELDS.note,
     DOCUMENT_FIELDS.attachments
@@ -200,6 +207,36 @@ function populateDocumentLinks_() {
  */
 function populateDocumentLinks() {
   return populateDocumentLinks_();
+}
+
+function currentDocumentIndex_() {
+  const cache = CacheService.getScriptCache();
+  const key = "litos-current-documents-v1";
+  const cached = cache.get(key);
+  if (cached) {
+    try { return new Map(Object.entries(JSON.parse(cached))); } catch (error) { /* rebuild below */ }
+  }
+  const documents = indexCurrentDocuments_();
+  try { cache.put(key, JSON.stringify(Object.fromEntries(documents)), 300); } catch (error) { /* cache is optional */ }
+  return documents;
+}
+
+function indexCurrentDocuments_() {
+  const folder = DriveApp.getFolderById(CURRENT_DOCUMENTS_FOLDER_ID);
+  const files = [];
+  collectFiles_(folder, files, {});
+  const documents = new Map();
+  files.forEach((file) => {
+    const match = clean_(file.getName()).match(/(?:^|[^0-9])(\d{4})(?:[^0-9]|$)/);
+    if (!match) return;
+    const id = match[1];
+    const type = classifyDocument_(file.getName(), id);
+    if (!type) return;
+    const entry = documents.get(id) || {};
+    if (!entry[type]) entry[type] = file.getUrl();
+    documents.set(id, entry);
+  });
+  return documents;
 }
 
 function indexHistoricalDocuments_() {
@@ -237,7 +274,10 @@ function classifyDocument_(name, id) {
   const normalized = lower.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const extension = normalized.match(/\.([a-z0-9]+)$/);
   const ext = extension ? extension[1] : "";
-  if (["xlsx", "xls"].includes(ext)) return "invoice";
+  if (["xlsx", "xls"].includes(ext)) {
+    if (/(?:^|[-_ ])borrador(?:[-_ .]|$)/.test(normalized)) return "invoiceDraft";
+    return "invoice";
+  }
   if (ext === "cdr") return "corel";
   if (!["jpg", "jpeg", "png", "pdf"].includes(ext)) return "";
 
