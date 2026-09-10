@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Replace PVP with final sheet total
         shell: bash
         run: |
@@ -25,40 +27,28 @@ jobs:
                   raise SystemExit(f"{label}: expected 1 occurrence, found {n}")
               return text.replace(old, new, 1)
 
-          p = Path('apps-script/Code.gs')
-          s = p.read_text(encoding='utf-8')
-          s = once(s, '  pvp: "P.V.P. (€)",', '  finalPrice: "Precio final (€)",', 'backend field')
-          s = once(s, '      pvp: numberOrNull_(read(row, FIELDS.pvp)),', '      finalPrice: numberOrNull_(read(row, FIELDS.finalPrice)),', 'backend output')
-          p.write_text(s, encoding='utf-8')
+          p = Path("apps-script/Code.gs")
+          s = p.read_text(encoding="utf-8")
+          s = once(s, '  pvp: "P.V.P. (€)",', '  finalPrice: "Precio final (€)",', "backend field")
+          s = once(s, '      pvp: numberOrNull_(read(row, FIELDS.pvp)),', '      finalPrice: numberOrNull_(read(row, FIELDS.finalPrice)),', "backend output")
+          p.write_text(s, encoding="utf-8")
 
-          p = Path('dist/app.js')
-          s = p.read_text(encoding='utf-8')
-          old = '''function recordedRevenue(row) {
-  const pvp = optionalNumberAt(row, "P.V.P. (€)");
-  if (pvp !== null) return pvp;
-  return optionalNumberAt(row, "Importe trabajo / Debe (€)");
-}'''
-          new = '''function recordedFinalPrice(row) {
-  return optionalNumberAt(row, "Precio final (€)");
-}
+          p = Path("dist/app.js")
+          s = p.read_text(encoding="utf-8")
+          old = 'function recordedRevenue(row) {\n  const pvp = optionalNumberAt(row, "P.V.P. (€)");\n  if (pvp !== null) return pvp;\n  return optionalNumberAt(row, "Importe trabajo / Debe (€)");\n}'
+          new = 'function recordedFinalPrice(row) {\n  return optionalNumberAt(row, "Precio final (€)");\n}\n\nfunction recordedRevenue(row) {\n  const finalPrice = recordedFinalPrice(row);\n  if (finalPrice !== null) return finalPrice;\n  return optionalNumberAt(row, "Importe trabajo / Debe (€)");\n}'
+          s = once(s, old, new, "recorded final price")
+          s = once(s, '    "P.V.P. (€)": record.pvp ?? record.amount ?? "",', '    "Precio final (€)": record.finalPrice ?? record.pvp ?? "",', "public mapping")
+          s = once(s, '    recordedRevenue(order),\n    estimatedMaterialCostFor(order)', '    recordedFinalPrice(order),\n    estimatedMaterialCostFor(order)', "trace price")
+          p.write_text(s, encoding="utf-8")
 
-function recordedRevenue(row) {
-  const finalPrice = recordedFinalPrice(row);
-  if (finalPrice !== null) return finalPrice;
-  return optionalNumberAt(row, "Importe trabajo / Debe (€)");
-}'''
-          s = once(s, old, new, 'recorded final price')
-          s = once(s, '    "P.V.P. (€)": record.pvp ?? record.amount ?? "",', '    "Precio final (€)": record.finalPrice ?? record.pvp ?? "",', 'public mapping')
-          s = once(s, '    recordedRevenue(order),\n    estimatedMaterialCostFor(order)', '    recordedFinalPrice(order),\n    estimatedMaterialCostFor(order)', 'trace price')
-          p.write_text(s, encoding='utf-8')
-
-          p = Path('index.html')
-          s = p.read_text(encoding='utf-8')
-          n = s.count('<th>P.V.P.</th>')
+          p = Path("index.html")
+          s = p.read_text(encoding="utf-8")
+          n = s.count("<th>P.V.P.</th>")
           if n != 2:
-              raise SystemExit(f'index headers: expected 2, found {n}')
-          s = s.replace('<th>P.V.P.</th>', '<th>Precio final</th>')
-          p.write_text(s, encoding='utf-8')
+              raise SystemExit(f"index headers: expected 2, found {n}")
+          s = s.replace("<th>P.V.P.</th>", "<th>Precio final</th>")
+          p.write_text(s, encoding="utf-8")
           PY
 
       - name: Validate
