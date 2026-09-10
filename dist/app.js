@@ -111,9 +111,13 @@ function dashboardDate(row) {
   return parseDate(row["Fecha para dashboard"] || row["Fecha entrega (estadillo)"] || row["Fecha recepción (email)"] || row["Fecha ficha"]);
 }
 
+function recordedFinalPrice(row) {
+  return optionalNumberAt(row, "Precio final (€)");
+}
+
 function recordedRevenue(row) {
-  const pvp = optionalNumberAt(row, "P.V.P. (€)");
-  if (pvp !== null) return pvp;
+  const finalPrice = recordedFinalPrice(row);
+  if (finalPrice !== null) return finalPrice;
   return optionalNumberAt(row, "Importe trabajo / Debe (€)");
 }
 
@@ -287,7 +291,7 @@ function mapPublicRows(records) {
     "Fecha entrega (estadillo)": text(record.deliveredDate),
     "Fecha para dashboard": text(record.date),
     "Importe trabajo / Debe (€)": record.amount ?? "",
-    "P.V.P. (€)": record.pvp ?? record.amount ?? "",
+    "Precio final (€)": record.finalPrice ?? record.pvp ?? "",
     "Coste material est. (€)": record.materialCost ?? "",
     "Estado pedido": text(record.status),
     Modelo: text(record.model),
@@ -930,7 +934,7 @@ function renderTraceTable({ bodySelector, countSelector, searchSelector }) {
       row.append(cell);
     });
     [
-    recordedRevenue(order),
+    recordedFinalPrice(order),
     estimatedMaterialCostFor(order)
   ].forEach((amount) => {
     const cell = document.createElement("td");
