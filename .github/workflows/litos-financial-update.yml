@@ -234,8 +234,9 @@ jobs:
           if source.count(old_header) != 2:
               raise SystemExit(f"HTML trace headers: expected 2, found {source.count(old_header)}")
           source = source.replace(old_header, new_header)
-          if source.count('colspan="9"') != 2:
-              raise SystemExit(f"HTML initial colspan: expected 2, found {source.count('colspan=\"9\"')}")
+          initial_colspans = source.count('colspan="9"')
+          if initial_colspans != 2:
+              raise SystemExit(f"HTML initial colspan: expected 2, found {initial_colspans}")
           source = source.replace('colspan="9"', 'colspan="12"')
           source = replace_once(
               source,
