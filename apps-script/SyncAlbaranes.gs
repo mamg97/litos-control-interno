@@ -14,12 +14,21 @@
  * Los totales se cachean por fileId + fecha de modificación para no reconvertir archivos
  * que no han cambiado.
  *
+ * Apps Script corta las ejecuciones largas. Esta versión procesa como máximo un lote
+ * de XLS/XLSX sin cachear y, si quedan pendientes, programa automáticamente otra
+ * ejecución un minuto después. Así continúa por tandas hasta terminar sin depender
+ * de una ejecución manual de más de 6 minutos.
+ *
  * Requiere el servicio avanzado Drive API v3 (Servicios > + > Drive API).
  */
 
 const ALBARAN_SYNC_MASTER_ID = "1ZS-L0eJmfukNr0rmc8ZvC3UxdVKw7Rnggx5TlRydZ2Q";
 const ALBARAN_SYNC_FOLDER_ID = "1eUAupqLzfBhkiEexWqpI3JtYReT8c9A_";
 const ALBARAN_SYNC_SYSTEM_FOLDER_ID = "1QqDpXxdVab_qdHQ5hB3iqi8ML_gm7jGb";
+const ALBARAN_SYNC_BATCH_SIZE = 10;
+const ALBARAN_SYNC_MAX_MS = 4.5 * 60 * 1000;
+const ALBARAN_SYNC_CONTINUATION = "continuarSyncAlbaranes2026";
+
 const ALBARAN_SYNC_HEADERS = Object.freeze({
   id: "Pedido",
   invoice: "Archivo factura / albarán (XLSX)",
@@ -28,6 +37,7 @@ const ALBARAN_SYNC_HEADERS = Object.freeze({
 });
 
 function syncAlbaranes2026() {
+  const startedAt = Date.now();
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(5000)) return { skipped: true, reason: "otra sincronización en curso" };
 
@@ -54,9 +64,23 @@ function syncAlbaranes2026() {
       return builder.build();
     };
 
+    const invoiceCol = columns[ALBARAN_SYNC_HEADERS.invoice] + 1;
+    const draftCol = columns[ALBARAN_SYNC_HEADERS.draft] + 1;
+    const totalCol = columns[ALBARAN_SYNC_HEADERS.total] + 1;
+    const firstBodyRow = headerIndex + 2;
+    const bodyRows = Math.max(0, values.length - headerIndex - 1);
+
+    // Preservamos enlaces de filas no pertenecientes a la carpeta operativa 2026
+    // y actualizamos en memoria solo los IDs localizados en esa carpeta.
+    const invoiceRich = bodyRows ? sheet.getRange(firstBodyRow, invoiceCol, bodyRows, 1).getRichTextValues() : [];
+    const draftRich = bodyRows ? sheet.getRange(firstBodyRow, draftCol, bodyRows, 1).getRichTextValues() : [];
+
     let matched = 0;
+    let cachedTotals = 0;
+    let convertedThisRun = 0;
     let totalsUpdated = 0;
     let totalsUnavailable = 0;
+    let pending = 0;
     const errors = [];
 
     for (let rowIndex = headerIndex + 1; rowIndex < values.length; rowIndex += 1) {
@@ -65,22 +89,36 @@ function syncAlbaranes2026() {
 
       const entry = index.get(id);
       const rowNumber = rowIndex + 1;
+      const bodyIndex = rowIndex - headerIndex - 1;
       matched += 1;
 
       const invoiceUrl = entry.invoice ? entry.invoice.file.getUrl() : "";
       const draftUrl = entry.draft ? entry.draft.file.getUrl() : "";
-
-      sheet.getRange(rowNumber, columns[ALBARAN_SYNC_HEADERS.invoice] + 1)
-        .setRichTextValue(makeLink(invoiceUrl, "Abrir"));
-      sheet.getRange(rowNumber, columns[ALBARAN_SYNC_HEADERS.draft] + 1)
-        .setRichTextValue(makeLink(draftUrl, "Abrir borrador"));
+      invoiceRich[bodyIndex][0] = makeLink(invoiceUrl, "Abrir");
+      draftRich[bodyIndex][0] = makeLink(draftUrl, "Abrir borrador");
 
       const active = entry.invoice || entry.draft;
       if (!active) continue;
 
       try {
-        const total = readAlbaranTotalCached_(active.file);
-        const cell = sheet.getRange(rowNumber, columns[ALBARAN_SYNC_HEADERS.total] + 1);
+        const cached = readAlbaranTotalCacheOnly_(active.file);
+        let total;
+
+        if (cached.hit) {
+          total = cached.total;
+          cachedTotals += 1;
+        } else if (
+          convertedThisRun < ALBARAN_SYNC_BATCH_SIZE &&
+          Date.now() - startedAt < ALBARAN_SYNC_MAX_MS
+        ) {
+          total = readAlbaranTotalCached_(active.file);
+          convertedThisRun += 1;
+        } else {
+          pending += 1;
+          continue;
+        }
+
+        const cell = sheet.getRange(rowNumber, totalCol);
         if (total === null) {
           cell.clearContent();
           totalsUnavailable += 1;
@@ -91,6 +129,12 @@ function syncAlbaranes2026() {
       } catch (error) {
         errors.push({ id, file: active.file.getName(), error: String(error && error.message || error) });
       }
+    }
+
+    // Dos escrituras masivas en vez de dos escrituras por pedido.
+    if (bodyRows) {
+      sheet.getRange(firstBodyRow, invoiceCol, bodyRows, 1).setRichTextValues(invoiceRich);
+      sheet.getRange(firstBodyRow, draftCol, bodyRows, 1).setRichTextValues(draftRich);
     }
 
     SpreadsheetApp.flush();
@@ -104,16 +148,46 @@ function syncAlbaranes2026() {
       // La caché no es crítica.
     }
 
+    if (pending > 0) {
+      scheduleAlbaranContinuation_();
+    } else {
+      removeAlbaranContinuationTriggers_();
+    }
+
     return {
       filesIndexed: index.size,
       rowsMatched: matched,
+      cachedTotals,
+      convertedThisRun,
       totalsUpdated,
       totalsUnavailable,
+      pending,
+      continuationScheduled: pending > 0,
       errors
     };
   } finally {
     lock.releaseLock();
   }
+}
+
+function continuarSyncAlbaranes2026() {
+  return syncAlbaranes2026();
+}
+
+function scheduleAlbaranContinuation_() {
+  removeAlbaranContinuationTriggers_();
+  ScriptApp.newTrigger(ALBARAN_SYNC_CONTINUATION)
+    .timeBased()
+    .after(60 * 1000)
+    .create();
+}
+
+function removeAlbaranContinuationTriggers_() {
+  ScriptApp.getProjectTriggers().forEach(trigger => {
+    if (trigger.getHandlerFunction() === ALBARAN_SYNC_CONTINUATION) {
+      ScriptApp.deleteTrigger(trigger);
+    }
+  });
 }
 
 function installAlbaranSyncTrigger() {
@@ -129,7 +203,7 @@ function removeAlbaranSyncTrigger() {
   const functionName = "syncAlbaranes2026";
   let removed = 0;
   ScriptApp.getProjectTriggers().forEach(trigger => {
-    if (trigger.getHandlerFunction() === functionName) {
+    if (trigger.getHandlerFunction() === functionName || trigger.getHandlerFunction() === ALBARAN_SYNC_CONTINUATION) {
       ScriptApp.deleteTrigger(trigger);
       removed += 1;
     }
@@ -179,21 +253,29 @@ function scanAlbaranes2026_() {
   return index;
 }
 
-function readAlbaranTotalCached_(file) {
+function readAlbaranTotalCacheOnly_(file) {
   const props = PropertiesService.getScriptProperties();
   const key = `litos_albaran_total_${file.getId()}`;
   const stamp = String(file.getLastUpdated().getTime());
   const cached = props.getProperty(key);
+  if (!cached) return { hit: false, total: null };
 
-  if (cached) {
-    try {
-      const parsed = JSON.parse(cached);
-      if (parsed.stamp === stamp) return parsed.total === null ? null : Number(parsed.total);
-    } catch (error) {
-      // Recalcular si la caché está dañada.
-    }
+  try {
+    const parsed = JSON.parse(cached);
+    if (parsed.stamp !== stamp) return { hit: false, total: null };
+    return { hit: true, total: parsed.total === null ? null : Number(parsed.total) };
+  } catch (error) {
+    return { hit: false, total: null };
   }
+}
 
+function readAlbaranTotalCached_(file) {
+  const cached = readAlbaranTotalCacheOnly_(file);
+  if (cached.hit) return cached.total;
+
+  const props = PropertiesService.getScriptProperties();
+  const key = `litos_albaran_total_${file.getId()}`;
+  const stamp = String(file.getLastUpdated().getTime());
   const total = readAlbaranTotalFromXlsx_(file);
   props.setProperty(key, JSON.stringify({ stamp, total }));
   return total;
