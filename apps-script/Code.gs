@@ -20,6 +20,7 @@ const FIELDS = Object.freeze({
   status: "Estado pedido",
   model: "Modelo",
   material: "Material",
+  materialNormalized: "Material normalizado",
   width: "Ancho total (cm)",
   height: "Alto total (cm)",
   thickness: "Grosor (cm)",
@@ -71,7 +72,7 @@ function cachedPayload_() {
   // limit. Serving this deliberately small, whitelisted feed directly keeps
   // the dashboard live and avoids stale or failed cache reads.
   return JSON.stringify({
-    version: 3,
+    version: 4,
     generatedAt: new Date().toISOString(),
     records: readOperationalRows_(),
     // The private ledger has invoice references and other audit columns. The
@@ -111,6 +112,7 @@ function readOperationalRows_() {
     const receiptDate = read(row, FIELDS.receiptDate);
     const deliveredDate = read(row, FIELDS.deliveredDate);
     const dashboardDate = read(row, FIELDS.date) || deliveredDate || receiptDate || orderDate;
+    const rawMaterial = read(row, FIELDS.material);
     return {
       id,
       // Only this approved operational subset is public. In particular, the
@@ -123,7 +125,8 @@ function readOperationalRows_() {
       amount: numberOrNull_(read(row, FIELDS.amount)),
       status: read(row, FIELDS.status),
       model: read(row, FIELDS.model),
-      material: read(row, FIELDS.material),
+      material: rawMaterial,
+      materialNormalized: read(row, FIELDS.materialNormalized) || rawMaterial,
       width: numberOrNull_(read(row, FIELDS.width)),
       height: numberOrNull_(read(row, FIELDS.height)),
       thickness: numberOrNull_(read(row, FIELDS.thickness)),
