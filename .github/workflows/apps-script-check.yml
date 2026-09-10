@@ -1,0 +1,40 @@
+name: Validate LITOS Apps Script
+
+on:
+  push:
+    paths:
+      - 'apps-script/**'
+      - '.github/workflows/apps-script-check.yml'
+  pull_request:
+    paths:
+      - 'apps-script/**'
+      - '.github/workflows/apps-script-check.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Apps Script JavaScript syntax
+        shell: bash
+        run: |
+          cp apps-script/Code.gs /tmp/Code.js
+          cp apps-script/DraftInvoices.gs /tmp/DraftInvoices.js
+          node --check /tmp/Code.js
+          node --check /tmp/DraftInvoices.js
+
+      - name: Validate manifest JSON
+        run: python -m json.tool apps-script/appsscript.json > /dev/null
+
+      - name: Check draft workflow invariants
+        shell: bash
+        run: |
+          grep -q 'invoiceDraft: "Factura borrador (XLSX)"' apps-script/Code.gs
+          grep -q 'borrador' apps-script/Code.gs
+          grep -q 'ensureCurrentQuarterDraftInvoices' apps-script/DraftInvoices.gs
+          grep -q 'MASTER_SPREADSHEET_ID' apps-script/DraftInvoices.gs
+          grep -q 'script.scriptapp' apps-script/appsscript.json
