@@ -700,6 +700,7 @@ function parseDate(value) {
 // the date on which its work was delivered. Historical reporting is based on
 // the latter; a live order without a ledger record falls back to its fiche.
 function dashboardDate(row) {
+  if (!row) return null;
   return parseDate(row["Fecha para dashboard"] || row["Fecha entrega (estadillo)"] || row["Fecha recepción (email)"] || row["Fecha ficha"]);
 }
 
