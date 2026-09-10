@@ -40,7 +40,8 @@ const EXPENSE_FIELDS = Object.freeze({
 const DOCUMENT_FIELDS = Object.freeze({
   invoice: "Archivo factura / albarán (XLSX)",
   corel: "Archivo Corel (CDR)",
-  note: "Nota manuscrita"
+  note: "Notas",
+  attachments: "Imágenes anejas"
 });
 
 // Shared historical archive supplied for the reconciliation. Files remain
@@ -70,7 +71,7 @@ function cachedPayload_() {
   // limit. Serving this deliberately small, whitelisted feed directly keeps
   // the dashboard live and avoids stale or failed cache reads.
   return JSON.stringify({
-    version: 2,
+    version: 3,
     generatedAt: new Date().toISOString(),
     records: readOperationalRows_(),
     // The private ledger has invoice references and other audit columns. The
@@ -133,14 +134,15 @@ function readOperationalRows_() {
       voleo: numberOrNull_(read(row, FIELDS.voleo)),
       invoiceFile: readLink(rowIndex, DOCUMENT_FIELDS.invoice),
       corelFile: readLink(rowIndex, DOCUMENT_FIELDS.corel),
-      noteFile: readLink(rowIndex, DOCUMENT_FIELDS.note)
+      noteFile: readLink(rowIndex, DOCUMENT_FIELDS.note),
+      attachmentFile: readLink(rowIndex, DOCUMENT_FIELDS.attachments)
     };
   }).filter(Boolean);
 }
 
 /**
  * One-off/private maintenance command. Run it from the bound Apps Script
- * editor when historical documents are added to Drive. It creates the three
+ * editor when historical documents are added to Drive. It creates the four
  * traceability columns when absent and writes only Drive links or the exact
  * fallback text “No disponible”.
  */
@@ -171,9 +173,14 @@ function populateDocumentLinks_() {
   const results = body.map((row) => {
     const id = clean_(row[columns[FIELDS.id]]);
     const links = documents.get(id) || {};
-    return [makeLink(links.invoice), makeLink(links.corel), makeLink(links.note)];
+    return [makeLink(links.invoice), makeLink(links.corel), makeLink(links.note), makeLink(links.attachments)];
   });
-  const targetColumns = [DOCUMENT_FIELDS.invoice, DOCUMENT_FIELDS.corel, DOCUMENT_FIELDS.note].map((field) => columns[field] + 1);
+  const targetColumns = [
+    DOCUMENT_FIELDS.invoice,
+    DOCUMENT_FIELDS.corel,
+    DOCUMENT_FIELDS.note,
+    DOCUMENT_FIELDS.attachments
+  ].map((field) => columns[field] + 1);
   targetColumns.forEach((column, index) => {
     sheet.getRange(headerIndex + 2, column, results.length, 1).setRichTextValues(results.map((row) => [row[index]]));
   });
@@ -220,11 +227,21 @@ function collectFiles_(folder, files, visited) {
 
 function classifyDocument_(name, id) {
   const lower = clean_(name).toLowerCase();
-  const extension = lower.match(/\.([a-z0-9]+)$/);
+  const normalized = lower.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const extension = normalized.match(/\.([a-z0-9]+)$/);
   const ext = extension ? extension[1] : "";
   if (["xlsx", "xls"].includes(ext)) return "invoice";
   if (ext === "cdr") return "corel";
-  if (["jpg", "jpeg", "png", "pdf"].includes(ext) && new RegExp(`^${id}[-_ ]0(?:[-_. ]|$)`).test(lower)) return "note";
+  if (!["jpg", "jpeg", "png", "pdf"].includes(ext)) return "";
+
+  const escapedId = String(id).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const prefix = `^${escapedId}(?:\\s*[-_ ]\\s*|\\s+)`;
+  if (new RegExp(`${prefix}notas?(?:[-_. ]|$)`).test(normalized)) return "note";
+  if (new RegExp(`${prefix}imagenes?\\s+anejas?(?:[-_. ]|$)`).test(normalized)) return "attachments";
+
+  // Backwards compatibility with the first batch of downloaded mail images,
+  // whose handwritten specification was named ID-0....
+  if (new RegExp(`^${escapedId}[-_ ]0(?:[-_. ]|$)`).test(normalized)) return "note";
   return "";
 }
 
