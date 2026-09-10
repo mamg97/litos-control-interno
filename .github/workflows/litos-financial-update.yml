@@ -15,6 +15,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Patch dashboard sources
         shell: bash
         run: |
@@ -28,50 +29,58 @@ jobs:
                   raise SystemExit(f"{label}: expected 1 occurrence, found {n}")
               return text.replace(old, new, 1)
 
-          def regex_once(text, pattern, new, label):
-              text2, n = re.subn(pattern, new, text, count=1, flags=re.S)
+          def regex_once(text, pattern, replacement, label, flags=re.S):
+              new_text, n = re.subn(pattern, replacement, text, count=1, flags=flags)
               if n != 1:
                   raise SystemExit(f"{label}: expected 1 regex match, found {n}")
-              return text2
+              return new_text
 
-          # ---- Apps Script feed ----
+          # ---- Apps Script public feed ----
           p = Path("apps-script/Code.gs")
           s = p.read_text(encoding="utf-8")
-          s = once(s,
-              '  amount: "Importe trabajo / Debe (€)",\n',
-              '  amount: "Importe trabajo / Debe (€)",\n  pvp: "P.V.P. (€)",\n  materialCost: "Coste material est. (€)",\n',
-              "feed fields")
-          s = once(s, "    version: 4,", "    version: 5,", "feed version")
-          s = once(s,
-              '      amount: numberOrNull_(read(row, FIELDS.amount)),\n',
-              '      amount: numberOrNull_(read(row, FIELDS.amount)),\n      pvp: numberOrNull_(read(row, FIELDS.pvp)),\n      materialCost: numberOrNull_(read(row, FIELDS.materialCost)),\n',
-              "feed row economics")
+          if 'pvp: "P.V.P. (€)"' not in s:
+              s = once(
+                  s,
+                  '  amount: "Importe trabajo / Debe (€)",\n',
+                  '  amount: "Importe trabajo / Debe (€)",\n  pvp: "P.V.P. (€)",\n  materialCost: "Coste material est. (€)",\n',
+                  "feed fields",
+              )
+          s = s.replace("    version: 4,", "    version: 5,", 1)
+          if 'pvp: numberOrNull_(read(row, FIELDS.pvp))' not in s:
+              s = once(
+                  s,
+                  '      amount: numberOrNull_(read(row, FIELDS.amount)),\n',
+                  '      amount: numberOrNull_(read(row, FIELDS.amount)),\n      pvp: numberOrNull_(read(row, FIELDS.pvp)),\n      materialCost: numberOrNull_(read(row, FIELDS.materialCost)),\n',
+                  "feed row economics",
+              )
           p.write_text(s, encoding="utf-8")
 
           # ---- Browser application ----
           p = Path("dist/app.js")
           s = p.read_text(encoding="utf-8")
 
-          s = regex_once(s,
+          s = regex_once(
+              s,
               r'function recordedRevenue\(row\) \{.*?\n\}',
               '''function recordedRevenue(row) {
             const pvp = optionalNumberAt(row, "P.V.P. (€)");
             if (pvp !== null) return pvp;
             return optionalNumberAt(row, "Importe trabajo / Debe (€)");
           }''',
-              "recordedRevenue")
+              "recordedRevenue",
+          )
 
-          s = once(s,
-              '  if (value.includes("gris")) return 55;\n',
-              '',
-              "remove unconfirmed generic grey price")
+          # Do not retain the old generic-grey fallback: it was never a confirmed tariff.
+          s = s.replace('  if (value.includes("gris")) return 55;\n', '')
 
-          s = once(s,
-              '''function numberAt(row, key) {
+          if "function optionalNumberAt(row, key)" not in s:
+              s = once(
+                  s,
+                  '''function numberAt(row, key) {
             const value = row[key];
             return parseNumber(value);
           }''',
-              '''function numberAt(row, key) {
+                  '''function numberAt(row, key) {
             const value = row[key];
             return parseNumber(value);
           }
@@ -81,22 +90,33 @@ jobs:
             if (value === null || value === undefined || text(value) === "") return null;
             return parseNumber(value);
           }''',
-              "optionalNumberAt")
+                  "optionalNumberAt",
+              )
 
-          s = once(s,
-              '    "Importe trabajo / Debe (€)": record.amount ?? "",\n',
-              '    "Importe trabajo / Debe (€)": record.amount ?? "",\n    "P.V.P. (€)": record.pvp ?? record.amount ?? "",\n    "Coste material est. (€)": record.materialCost ?? "",\n',
-              "public economics mapping")
-          s = once(s,
-              '    Material: text(record.material),\n',
-              '    Material: text(record.material),\n    "Material normalizado": text(record.materialNormalized),\n',
-              "public normalized material mapping")
-          s = once(s,
-              '    "Nota manuscrita": text(record.noteFile)\n',
-              '    Notas: text(record.noteFile),\n    "Nota manuscrita": text(record.noteFile),\n    "Imágenes anejas": text(record.attachmentFile)\n',
-              "public document mapping")
+          if '"P.V.P. (€)": record.pvp' not in s:
+              s = once(
+                  s,
+                  '    "Importe trabajo / Debe (€)": record.amount ?? "",\n',
+                  '    "Importe trabajo / Debe (€)": record.amount ?? "",\n    "P.V.P. (€)": record.pvp ?? record.amount ?? "",\n    "Coste material est. (€)": record.materialCost ?? "",\n',
+                  "public economics mapping",
+              )
+          if '"Material normalizado": text(record.materialNormalized)' not in s:
+              s = once(
+                  s,
+                  '    Material: text(record.material),\n',
+                  '    Material: text(record.material),\n    "Material normalizado": text(record.materialNormalized),\n',
+                  "public normalized material mapping",
+              )
+          if '"Imágenes anejas": text(record.attachmentFile)' not in s:
+              s = once(
+                  s,
+                  '    "Nota manuscrita": text(record.noteFile)\n',
+                  '    Notas: text(record.noteFile),\n    "Nota manuscrita": text(record.noteFile),\n    "Imágenes anejas": text(record.attachmentFile)\n',
+                  "public document mapping",
+              )
 
-          helpers = '''function currentQuarterBounds(now = new Date()) {
+          if "function currentQuarterBounds" not in s:
+              helpers = '''function currentQuarterBounds(now = new Date()) {
             const startMonth = Math.floor(now.getMonth() / 3) * 3;
             return {
               start: new Date(now.getFullYear(), startMonth, 1),
@@ -121,10 +141,11 @@ jobs:
           }
 
           '''
-          s = once(s, "function traceRows() {", helpers + "function traceRows() {", "production helpers")
+              s = once(s, "function traceRows() {", helpers + "function traceRows() {", "production helpers")
 
-          summary_line = '  $("#summaryCostsFoot").textContent = connected && year ? `Material, consumibles y gastos · ${year}` : "Pendiente de facturas";\n'
-          summary_block = summary_line + '''  const productionOrders = new Set(state.rows.filter((row) => isInProduction(row)).map((row) => text(row.Pedido))).size;
+          if "const productionOrders = new Set" not in s:
+              summary_line = '  $("#summaryCostsFoot").textContent = connected && year ? `Material, consumibles y gastos · ${year}` : "Pendiente de facturas";\n'
+              summary_block = summary_line + '''  const productionOrders = new Set(state.rows.filter((row) => isInProduction(row)).map((row) => text(row.Pedido))).size;
             const productionKpi = $("#ordersInProduction");
             productionKpi.textContent = connected ? formatInt.format(productionOrders) : "—";
             productionKpi.closest(".kpi-card")?.classList.toggle("pending-kpi", !connected);
@@ -134,11 +155,13 @@ jobs:
                 : "Pendiente de actualización";
             }
           '''
-          s = once(s, summary_line, summary_block, "production KPI")
+              s = once(s, summary_line, summary_block, "production KPI")
 
-          s = regex_once(s,
-              r'function estimateMaterial\(rows\) \{.*?return \{ amount, covered, withMeasure \};\n\}',
-              '''function estimatedMaterialCostFor(row) {
+          if "function estimatedMaterialCostFor(row)" not in s:
+              s = regex_once(
+                  s,
+                  r'function estimateMaterial\(rows\) \{.*?return \{ amount, covered, withMeasure \};\n\}',
+                  '''function estimatedMaterialCostFor(row) {
             const stored = optionalNumberAt(row, "Coste material est. (€)");
             if (stored !== null) return stored;
             const rate = materialRateFor(row);
@@ -162,19 +185,14 @@ jobs:
             });
             return { amount, covered, withMeasure };
           }''',
-              "material estimate")
+                  "material estimate",
+              )
 
-          old_span = s.count("cell.colSpan = 9;")
-          if old_span != 2:
-              raise SystemExit(f"trace colspan: expected 2, found {old_span}")
           s = s.replace("cell.colSpan = 9;", "cell.colSpan = 12;")
 
-          old_files = '''    [
-              order["Archivo factura / albarán (XLSX)"],
-              order["Archivo Corel (CDR)"],
-              order["Nota manuscrita"]
-            ].forEach((url) => {'''
-          new_files = '''    [
+          if "estimatedMaterialCostFor(order)" not in s:
+              pattern = r'''\[\s*order\["Archivo factura / albarán \(XLSX\)"\],\s*order\["Archivo Corel \(CDR\)"\],\s*order\["Nota manuscrita"\]\s*\]\.forEach\(\(url\) => \{'''
+              replacement = '''[
               recordedRevenue(order),
               estimatedMaterialCostFor(order)
             ].forEach((amount) => {
@@ -188,33 +206,36 @@ jobs:
               order.Notas || order["Nota manuscrita"],
               order["Imágenes anejas"]
             ].forEach((url) => {'''
-          # Normalize indentation in the literal to the file's 4/6-space shape.
-          old_files = old_files.replace("            ", "    ")
-          new_files = new_files.replace("            ", "    ")
-          s = once(s, old_files, new_files, "trace economics/documents")
+              s = regex_once(s, pattern, replacement, "trace economics/documents")
+
           p.write_text(s, encoding="utf-8")
 
-          # ---- Static HTML and one-source JS cleanup ----
+          # ---- Static HTML ----
           p = Path("index.html")
           s = p.read_text(encoding="utf-8")
-          s = once(s, "min-width: 1120px;", "min-width: 1500px;", "trace width")
+          s = s.replace("min-width: 1120px;", "min-width: 1500px;", 1)
+
           old_header = '<thead><tr><th>ID trabajo</th><th>Recepción (email)</th><th>Documento</th><th>Modelo</th><th>Material</th><th>Medida terminada</th><th>Factura / albarán</th><th>Corel</th><th>Nota</th></tr></thead>'
           new_header = '<thead><tr><th>ID trabajo</th><th>Recepción (email)</th><th>Documento</th><th>Modelo</th><th>Material</th><th>Medida terminada</th><th>P.V.P.</th><th>Coste</th><th>Factura / albarán</th><th>Corel</th><th>Notas</th><th>Imágenes anejas</th></tr></thead>'
-          header_count = s.count(old_header)
-          if header_count != 2:
-              raise SystemExit(f"HTML headers: expected 2, found {header_count}")
-          s = s.replace(old_header, new_header)
-          colspan_count = s.count('colspan="9"')
-          if colspan_count != 2:
-              raise SystemExit(f"HTML colspan: expected 2, found {colspan_count}")
+          if old_header in s:
+              if s.count(old_header) != 2:
+                  raise SystemExit(f"HTML headers: expected 2, found {s.count(old_header)}")
+              s = s.replace(old_header, new_header)
+
           s = s.replace('colspan="9"', 'colspan="12"')
-          s = once(s,
+          s = s.replace(
               '<div class="kpi-foot">Pendiente de registrar estado</div>',
               '<div class="kpi-foot">Trimestre actual · sin factura/albarán</div>',
-              "production foot")
-          start = s.index('    <script type="module">')
-          end = s.index('</script>', start) + len('</script>')
-          s = s[:start] + '    <script type="module" src="./dist/app.js"></script>' + s[end:]
+              1,
+          )
+
+          if 'src="./dist/app.js"' not in s:
+              s = regex_once(
+                  s,
+                  r'    <script type="module">.*?</script>',
+                  '    <script type="module" src="./dist/app.js"></script>',
+                  "externalize app.js",
+              )
           p.write_text(s, encoding="utf-8")
           PY
 
@@ -225,6 +246,7 @@ jobs:
           grep -q 'src="./dist/app.js"' index.html
           grep -q 'pvp: "P.V.P. (€)"' apps-script/Code.gs
           grep -q 'function isInProduction' dist/app.js
+          grep -q '<th>P.V.P.</th><th>Coste</th>' index.html
 
       - name: Commit dashboard update
         run: |
