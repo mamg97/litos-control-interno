@@ -17,6 +17,8 @@ const FIELDS = Object.freeze({
   receiptDate: "Fecha recepción (email)",
   deliveredDate: "Fecha entrega (estadillo)",
   amount: "Importe trabajo / Debe (€)",
+  pvp: "P.V.P. (€)",
+  materialCost: "Coste material est. (€)",
   status: "Estado pedido",
   model: "Modelo",
   material: "Material",
@@ -72,7 +74,7 @@ function cachedPayload_() {
   // limit. Serving this deliberately small, whitelisted feed directly keeps
   // the dashboard live and avoids stale or failed cache reads.
   return JSON.stringify({
-    version: 4,
+    version: 5,
     generatedAt: new Date().toISOString(),
     records: readOperationalRows_(),
     // The private ledger has invoice references and other audit columns. The
@@ -123,6 +125,8 @@ function readOperationalRows_() {
       receiptDate: normalizeDate_(receiptDate),
       deliveredDate: normalizeDate_(deliveredDate),
       amount: numberOrNull_(read(row, FIELDS.amount)),
+      pvp: numberOrNull_(read(row, FIELDS.pvp)),
+      materialCost: numberOrNull_(read(row, FIELDS.materialCost)),
       status: read(row, FIELDS.status),
       model: read(row, FIELDS.model),
       material: rawMaterial,

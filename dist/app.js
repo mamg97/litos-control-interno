@@ -112,9 +112,9 @@ function dashboardDate(row) {
 }
 
 function recordedRevenue(row) {
-  const raw = row["Importe trabajo / Debe (€)"];
-  if (raw === null || raw === undefined || text(raw) === "") return null;
-  return numberAt(row, "Importe trabajo / Debe (€)");
+  const pvp = optionalNumberAt(row, "P.V.P. (€)");
+  if (pvp !== null) return pvp;
+  return optionalNumberAt(row, "Importe trabajo / Debe (€)");
 }
 
 function revenueFor(row, fallbackPrice) {
@@ -177,7 +177,6 @@ function materialRateFor(row) {
   if (value.includes("blanco italiano") || value.includes("italia")) return 62;
   if (value.includes("gris quintana")) return 45;
   if (value.includes("champan") || value.includes("gris perla") || value.includes("pardino")) return 30;
-  if (value.includes("gris")) return 55;
   return null;
 }
 
@@ -257,6 +256,12 @@ function numberAt(row, key) {
   return parseNumber(value);
 }
 
+function optionalNumberAt(row, key) {
+  const value = row[key];
+  if (value === null || value === undefined || text(value) === "") return null;
+  return parseNumber(value);
+}
+
 function mapRows(values) {
   const headerIndex = values.findIndex((row) => row.some((cell) => text(cell) === "Pedido"));
   if (headerIndex < 0) throw new Error("No se localizó la fila de cabeceras 'Pedido' en la pestaña indicada.");
@@ -282,9 +287,12 @@ function mapPublicRows(records) {
     "Fecha entrega (estadillo)": text(record.deliveredDate),
     "Fecha para dashboard": text(record.date),
     "Importe trabajo / Debe (€)": record.amount ?? "",
+    "P.V.P. (€)": record.pvp ?? record.amount ?? "",
+    "Coste material est. (€)": record.materialCost ?? "",
     "Estado pedido": text(record.status),
     Modelo: text(record.model),
     Material: text(record.material),
+    "Material normalizado": text(record.materialNormalized),
     "Ancho total (cm)": record.width ?? "",
     "Alto total (cm)": record.height ?? "",
     "Grosor (cm)": record.thickness ?? "",
@@ -295,7 +303,9 @@ function mapPublicRows(records) {
     "Voleo (cm)": record.voleo ?? "",
     "Archivo factura / albarán (XLSX)": text(record.invoiceFile),
     "Archivo Corel (CDR)": text(record.corelFile),
-    "Nota manuscrita": text(record.noteFile)
+    Notas: text(record.noteFile),
+    "Nota manuscrita": text(record.noteFile),
+    "Imágenes anejas": text(record.attachmentFile)
   })).filter((row) => row.Pedido);
 }
 
@@ -774,6 +784,15 @@ function renderSummary() {
       : `Estimación operativa · ${year}`
     : "Estimación operativa";
   $("#summaryCostsFoot").textContent = connected && year ? `Material, consumibles y gastos · ${year}` : "Pendiente de facturas";
+  const productionOrders = new Set(state.rows.filter((row) => isInProduction(row)).map((row) => text(row.Pedido))).size;
+  const productionKpi = $("#ordersInProduction");
+  productionKpi.textContent = connected ? formatInt.format(productionOrders) : "—";
+  productionKpi.closest(".kpi-card")?.classList.toggle("pending-kpi", !connected);
+  if (productionKpi.nextElementSibling) {
+    productionKpi.nextElementSibling.textContent = connected
+      ? `${currentQuarterLabel()} · sin factura/albarán`
+      : "Pendiente de actualización";
+  }
   $("#measuredOrders").textContent = connected ? formatInt.format(s.measured) : "—";
   $("#distinctSizes").textContent = connected ? formatInt.format(s.distinctSizes) : "—";
   const topSize = s.sizes[0];
@@ -819,6 +838,30 @@ function traceDate(order) {
   return parseDate(order["Fecha recepción (email)"] || order["Fecha ficha"] || order["Fecha para dashboard"]);
 }
 
+function currentQuarterBounds(now = new Date()) {
+  const startMonth = Math.floor(now.getMonth() / 3) * 3;
+  return {
+    start: new Date(now.getFullYear(), startMonth, 1),
+    end: new Date(now.getFullYear(), startMonth + 3, 1)
+  };
+}
+
+function currentQuarterLabel(now = new Date()) {
+  return `T${Math.floor(now.getMonth() / 3) + 1} ${now.getFullYear()}`;
+}
+
+function productionReceiptDate(row) {
+  return parseDate(row["Fecha recepción (email)"] || row["Fecha ficha"] || row["Fecha para dashboard"]);
+}
+
+function isInProduction(row, now = new Date()) {
+  const receipt = productionReceiptDate(row);
+  if (!receipt) return false;
+  const { start, end } = currentQuarterBounds(now);
+  const hasInvoice = Boolean(text(row["Archivo factura / albarán (XLSX)"]));
+  return receipt >= start && receipt < end && !hasInvoice;
+}
+
 function traceRows() {
   return [...state.rows].sort((a, b) => {
     const left = traceDate(a)?.valueOf() || 0;
@@ -847,7 +890,7 @@ function renderTraceTable({ bodySelector, countSelector, searchSelector }) {
   if (!state.connected) {
     const row = document.createElement("tr");
     const cell = document.createElement("td");
-    cell.colSpan = 9;
+    cell.colSpan = 12;
     cell.className = "empty-state";
     cell.textContent = "Actualizando datos operativos…";
     row.append(cell);
@@ -864,7 +907,7 @@ function renderTraceTable({ bodySelector, countSelector, searchSelector }) {
   if (!rows.length) {
     const row = document.createElement("tr");
     const cell = document.createElement("td");
-    cell.colSpan = 9;
+    cell.colSpan = 12;
     cell.className = "empty-state";
     cell.textContent = "No hay trabajos que coincidan con la búsqueda.";
     row.append(cell);
@@ -886,10 +929,19 @@ function renderTraceTable({ bodySelector, countSelector, searchSelector }) {
       row.append(cell);
     });
     [
-      order["Archivo factura / albarán (XLSX)"],
-      order["Archivo Corel (CDR)"],
-      order["Nota manuscrita"]
-    ].forEach((url) => {
+    recordedRevenue(order),
+    estimatedMaterialCostFor(order)
+  ].forEach((amount) => {
+    const cell = document.createElement("td");
+    cell.textContent = amount === null ? "—" : formatMoney(amount);
+    row.append(cell);
+  });
+  [
+    order["Archivo factura / albarán (XLSX)"],
+    order["Archivo Corel (CDR)"],
+    order.Notas || order["Nota manuscrita"],
+    order["Imágenes anejas"]
+  ].forEach((url) => {
       const cell = document.createElement("td");
       if (url) {
         const link = document.createElement("a");
@@ -1015,21 +1067,27 @@ function monthlyLedgerAmount(year, months, category) {
     .reduce((total, expense) => total + expense.amount, 0);
 }
 
+function estimatedMaterialCostFor(row) {
+  const stored = optionalNumberAt(row, "Coste material est. (€)");
+  if (stored !== null) return stored;
+  const rate = materialRateFor(row);
+  if (rate === null) return null;
+  const width = numberFromFields(row, ["Ancho total (cm)"], (header) => isSlabMeasureHeader(header, "ancho"));
+  const height = writtenHeightFor(row);
+  if (width === null || height === null || width <= 0 || height <= 0) return null;
+  return (width * height / 10000) * 1.1 * rate;
+}
+
 function estimateMaterial(rows) {
   let amount = 0;
   let covered = 0;
   let withMeasure = 0;
   rows.forEach((row) => {
-    const size = sizeDetailsFor(row);
-    const rate = materialRateFor(row);
-    if (!size) return;
-    withMeasure += 1;
-    if (rate === null) return;
+    if (sizeDetailsFor(row)) withMeasure += 1;
+    const cost = estimatedMaterialCostFor(row);
+    if (cost === null) return;
     covered += 1;
-    const width = numberFromFields(row, ["Ancho total (cm)"], (header) => isSlabMeasureHeader(header, "ancho"));
-    const height = writtenHeightFor(row);
-    if (width === null || height === null) return;
-    amount += (width * height / 10000) * 1.1 * rate;
+    amount += cost;
   });
   return { amount, covered, withMeasure };
 }
