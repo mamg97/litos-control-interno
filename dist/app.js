@@ -958,7 +958,7 @@ function renderTraceTable({ bodySelector, countSelector, searchSelector }) {
       link.textContent = documentInfo.label;
       if (documentInfo.draft) {
         link.dataset.documentStatus = "draft";
-        link.title = "Borrador: al quitar _borrador del nombre del archivo pasará a definitiva";
+        link.title = "Borrador: al quitar _borrador del nombre, se reclasifica automáticamente como definitivo (máximo 5 min).";
       }
       cell.append(link);
     } else {

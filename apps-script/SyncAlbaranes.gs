@@ -2,8 +2,8 @@
  * LITOS — sincronización de albaranes 2026.
  *
  * Fuente de verdad:
- *   <ID>_borrador.xlsx -> borrador
- *   <ID>.xlsx (o cualquier XLS/XLSX sin _borrador) -> definitivo
+ *   <ID>_borrador.xlsx/.xlsm -> borrador
+ *   <ID>.xlsx/.xlsm (o cualquier XLS/XLS/XLSM sin _borrador) -> definitivo
  *
  * El sincronizador hace tres cosas fuera del doGet para mantener la web rápida:
  * 1) reclasifica los enlaces de Albarán / Albarán borrador según el nombre real;
@@ -15,7 +15,7 @@
  * que no han cambiado.
  *
  * Apps Script corta las ejecuciones largas. Esta versión procesa como máximo un lote
- * de XLS/XLSX sin cachear y, si quedan pendientes, programa automáticamente otra
+ * de XLS/XLSX/XLSM sin cachear y, si quedan pendientes, programa automáticamente otra
  * ejecución un minuto después. Así continúa por tandas hasta terminar sin depender
  * de una ejecución manual de más de 6 minutos.
  *
@@ -226,7 +226,7 @@ function scanAlbaranes2026_() {
       const file = files.next();
       const name = albaranClean_(file.getName());
       const lower = name.toLowerCase();
-      if (!/\.(xlsx|xls)$/.test(lower)) continue;
+      if (!/\.(xlsx|xls|xlsm)$/.test(lower)) continue;
 
       const match = name.match(/(?:^|[^0-9])(\d{4})(?:[^0-9]|$)/);
       if (!match) continue;

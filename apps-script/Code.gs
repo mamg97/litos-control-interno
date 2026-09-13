@@ -274,7 +274,7 @@ function classifyDocument_(name, id) {
   const normalized = lower.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const extension = normalized.match(/\.([a-z0-9]+)$/);
   const ext = extension ? extension[1] : "";
-  if (["xlsx", "xls"].includes(ext)) {
+  if (["xlsx", "xls", "xlsm"].includes(ext)) {
     if (/(?:^|[-_ ])borrador(?:[-_ .]|$)/.test(normalized)) return "invoiceDraft";
     return "invoice";
   }
