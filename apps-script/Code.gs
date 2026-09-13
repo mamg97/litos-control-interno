@@ -93,7 +93,6 @@ function readOperationalRows_() {
 
   const values = sheet.getDataRange().getDisplayValues();
   const richValues = sheet.getDataRange().getRichTextValues();
-  const currentDocuments = currentDocumentIndex_();
   const headerIndex = values.findIndex((row) => row.some((cell) => clean_(cell) === FIELDS.id));
   if (headerIndex < 0) throw new Error("No se encontró la cabecera Pedido.");
 
@@ -118,8 +117,6 @@ function readOperationalRows_() {
     const deliveredDate = read(row, FIELDS.deliveredDate);
     const dashboardDate = read(row, FIELDS.date) || deliveredDate || receiptDate || orderDate;
     const rawMaterial = read(row, FIELDS.material);
-    const liveDocuments = currentDocuments.get(id);
-    const liveDocument = (type, field) => liveDocuments ? clean_(liveDocuments[type]) : readLink(rowIndex, field);
     return {
       id,
       // Only this approved operational subset is public. In particular, the
@@ -144,8 +141,11 @@ function readOperationalRows_() {
       topWidth: numberOrNull_(read(row, FIELDS.topWidth)),
       stepMeasures: read(row, FIELDS.stepMeasures),
       voleo: numberOrNull_(read(row, FIELDS.voleo)),
-      invoiceFile: liveDocument("invoice", DOCUMENT_FIELDS.invoice),
-      invoiceDraftFile: liveDocument("invoiceDraft", DOCUMENT_FIELDS.invoiceDraft),
+      // Document links are maintained by the scoped background synchronizer.
+      // The public feed must never traverse Drive: it is a read-only view of
+      // the prepared Sheet columns and remains fast on every dashboard load.
+      invoiceFile: readLink(rowIndex, DOCUMENT_FIELDS.invoice),
+      invoiceDraftFile: readLink(rowIndex, DOCUMENT_FIELDS.invoiceDraft),
       corelFile: readLink(rowIndex, DOCUMENT_FIELDS.corel),
       noteFile: readLink(rowIndex, DOCUMENT_FIELDS.note),
       attachmentFile: readLink(rowIndex, DOCUMENT_FIELDS.attachments)
