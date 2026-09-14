@@ -1,6 +1,9 @@
 const ASSUMPTIONS_KEY = "litos-control-assumptions-v1";
 const FINANCE_KEY = "litos-control-finance-v1";
-const AUTO_REFRESH_MS = 60 * 1000;
+// The Drive synchronizer runs approximately every five minutes. Polling the
+// public feed more often only repeats the same payload and makes the status
+// look as if the whole dashboard were constantly reloading.
+const AUTO_REFRESH_MS = 5 * 60 * 1000;
 // Apps Script can need a cold start. Keep the JSONP callback alive long
 // enough for that response instead of treating a valid late answer as failed.
 const FEED_TIMEOUT_MS = 45 * 1000;
@@ -897,10 +900,10 @@ function renderTraceTable({ bodySelector, countSelector, searchSelector }) {
     const cell = document.createElement("td");
     cell.colSpan = 12;
     cell.className = "empty-state";
-    cell.textContent = "Actualizando datos operativos…";
+    cell.textContent = "Cargando datos operativos…";
     row.append(cell);
     table.append(row);
-    if (count) count.textContent = "Actualizando registros";
+    if (count) count.textContent = "Cargando registros";
     return;
   }
   const query = normalize($(searchSelector)?.value);
@@ -1395,12 +1398,12 @@ function updateConnectionUI() {
   const status = $("#connectionStatus");
   const dataStatus = $("#dataStatus");
   status.classList.toggle("connected", state.connected);
-  status.querySelector("b").textContent = state.connected ? "Datos operativos actualizados" : "Actualizando datos";
+  status.querySelector("b").textContent = state.connected ? "Datos operativos actualizados" : "Cargando datos";
   status.querySelector("small").textContent = state.connected
-    ? "Consulta sin inicio de sesión. Actualización automática cada minuto."
+    ? "Consulta sin inicio de sesión. Actualización automática cada cinco minutos."
     : "El panel consultará los datos en unos segundos.";
   dataStatus.textContent = state.connected
-    ? "Datos operativos reales actualizados desde el libro maestro. El panel se sincroniza cada minuto, sin inicio de sesión para consultar."
+    ? "Datos operativos reales actualizados desde el libro maestro. El panel se sincroniza cada cinco minutos, sin inicio de sesión para consultar."
     : "Cargando el panel con datos operativos reales…";
 }
 
@@ -1439,14 +1442,21 @@ function refreshPublicFeed() {
     if (settled) return;
     settled = true;
     cleanUp();
-    state.connected = false;
+    const hasPreviousData = state.rows.length > 0;
+    // A temporary Apps Script delay must not replace a working dashboard with
+    // an empty “updating” table. Keep the last valid data visible instead.
+    state.connected = hasPreviousData;
     updateConnectionUI();
-    renderSummary();
-    renderProduction();
-    renderRecentOrders();
-    renderFinance();
-    if (state.activeView === "strategy") renderRevenueForecast();
-    showToast("No se pudieron actualizar los datos. Vuelve a intentarlo en unos segundos.");
+    if (!hasPreviousData) {
+      renderSummary();
+      renderProduction();
+      renderRecentOrders();
+      renderFinance();
+      if (state.activeView === "strategy") renderRevenueForecast();
+    }
+    showToast(hasPreviousData
+      ? "No se pudo consultar la actualización; se muestran los últimos datos cargados."
+      : "No se pudieron cargar los datos. Vuelve a intentarlo en unos segundos.");
   };
   window[callbackName] = (payload) => {
     if (settled) return;
@@ -1467,14 +1477,19 @@ function refreshPublicFeed() {
       updateConnectionUI();
       showToast(`${formatInt.format(state.rows.length)} trabajos actualizados.`);
     } catch {
-      state.connected = false;
+      const hasPreviousData = state.rows.length > 0;
+      state.connected = hasPreviousData;
       updateConnectionUI();
-      renderSummary();
-      renderProduction();
-      renderRecentOrders();
-      renderFinance();
-      if (state.activeView === "strategy") renderRevenueForecast();
-      showToast("El servicio devolvió datos no válidos.");
+      if (!hasPreviousData) {
+        renderSummary();
+        renderProduction();
+        renderRecentOrders();
+        renderFinance();
+        if (state.activeView === "strategy") renderRevenueForecast();
+      }
+      showToast(hasPreviousData
+        ? "La actualización no fue válida; se muestran los últimos datos cargados."
+        : "El servicio devolvió datos no válidos.");
     } finally {
       cleanUp();
     }
