@@ -10,7 +10,7 @@
  * - crear/actualizar el pedido en el maestro sin pisar datos manuales;
  * - enlazar nota e imágenes anejas;
  * - registrar la fecha real de recepción del correo;
- * - dejar el pedido preparado para la fase Gemini y para el borrador de albarán.
+ * - dejar el pedido preparado para una lectura propuesta y su validación.
  *
  * La marca de mensaje procesado usa el ID interno de Gmail, de modo que ejecutar
  * esta función repetidamente no duplica trabajos ni adjuntos.
@@ -20,7 +20,8 @@ const SABAN_MASTER_ID = "1ZS-L0eJmfukNr0rmc8ZvC3UxdVKw7Rnggx5TlRydZ2Q";
 const SABAN_FOLDER_ID = "1eUAupqLzfBhkiEexWqpI3JtYReT8c9A_";
 const SABAN_LABEL = "saban";
 const SABAN_YEAR = 2026;
-const SABAN_LOOKBACK_DAYS = 14;
+const SABAN_LOOKBACK_DAYS = 30;
+const SABAN_ALLOWED_SENDER_PROPERTY = "SABAN_ALLOWED_SENDER";
 
 const SABAN_HEADERS = Object.freeze({
   id: "Pedido",
@@ -63,7 +64,8 @@ function importarCorreosSaban() {
 
     const folder = DriveApp.getFolderById(SABAN_FOLDER_ID);
     const props = PropertiesService.getScriptProperties();
-    const query = `label:${SABAN_LABEL} newer_than:${SABAN_LOOKBACK_DAYS}d`;
+    const allowedSender = sabanAuthorizedSender_(props);
+    const query = `label:${SABAN_LABEL} from:${allowedSender} newer_than:${SABAN_LOOKBACK_DAYS}d`;
     const threads = GmailApp.search(query, 0, 100);
     const messages = [];
     threads.forEach(thread => thread.getMessages().forEach(message => messages.push(message)));
@@ -78,6 +80,7 @@ function importarCorreosSaban() {
       skippedProcessed: 0,
       skippedNoId: [],
       skippedWrongYear: [],
+      skippedWrongSender: [],
       errors: []
     };
 
@@ -92,6 +95,10 @@ function importarCorreosSaban() {
       const date = message.getDate();
       if (!(date instanceof Date) || Number.isNaN(date.valueOf()) || date.getFullYear() !== SABAN_YEAR) {
         result.skippedWrongYear.push(messageId);
+        continue;
+      }
+      if (!sabanIsAuthorizedSender_(message.getFrom(), allowedSender)) {
+        result.skippedWrongSender.push({ messageId, from: message.getFrom() });
         continue;
       }
 
@@ -116,7 +123,7 @@ function importarCorreosSaban() {
 
         sabanSetIfBlank_(sheet, rowNumber, columns[SABAN_HEADERS.receiptDate] + 1, date, "dd/MM/yyyy");
         sabanSetIfBlank_(sheet, rowNumber, columns[SABAN_HEADERS.receiptOrigin] + 1, "Gmail · saban");
-        sabanSetIfBlank_(sheet, rowNumber, columns[SABAN_HEADERS.readStatus] + 1, "Importado automáticamente · pendiente IA");
+        sabanSetIfBlank_(sheet, rowNumber, columns[SABAN_HEADERS.readStatus] + 1, "Adjuntos recibidos · pendiente de lectura y validación");
 
         if (classified.note) {
           sabanSetIfBlank_(sheet, rowNumber, columns[SABAN_HEADERS.sourceFile] + 1, classified.note.getName());
@@ -125,6 +132,18 @@ function importarCorreosSaban() {
 
         if (classified.images.length) {
           sabanSetMultiLinks_(sheet, rowNumber, columns[SABAN_HEADERS.attachments] + 1, classified.images);
+        }
+
+        // La ficha nunca se transcribe directamente al maestro. Se crea una
+        // fila de revisión separada, para que una lectura automática sea solo
+        // una propuesta hasta que alguien la valide explícitamente.
+        if (classified.note && typeof sabanEnsureHandwritingReview_ === "function") {
+          sabanEnsureHandwritingReview_(book, {
+            id,
+            receiptDate: date,
+            note: classified.note,
+            source: "Gmail · saban"
+          });
         }
 
         props.setProperty(processedKey, JSON.stringify({ id, date: new Date().toISOString() }));
@@ -141,13 +160,6 @@ function importarCorreosSaban() {
 
     SpreadsheetApp.flush();
 
-    // Si más adelante incorporamos DraftInvoices.gs al proyecto, una importación
-    // nueva puede disparar la creación de borradores sin cambiar este código.
-    if (result.importedMessages > 0 && typeof ensureCurrentQuarterDraftInvoices === "function") {
-      try { result.drafts = ensureCurrentQuarterDraftInvoices(); }
-      catch (error) { result.errors.push({ stage: "drafts", error: String(error && error.message || error) }); }
-    }
-
     return result;
   } finally {
     lock.releaseLock();
@@ -155,9 +167,10 @@ function importarCorreosSaban() {
 }
 
 /**
- * Instala cuatro consultas diarias: aproximadamente 07:00, 11:00, 15:00 y 19:00
- * hora Europe/Madrid. Apps Script no garantiza el minuto exacto; nearMinute(0)
- * suele ejecutar dentro de una ventana aproximada de +/- 15 minutos.
+ * Instala una consulta periódica aproximada cada cinco minutos. Apps Script no
+ * garantiza el minuto exacto, por lo que no sustituye una cola en tiempo real.
+ * La consulta solo acepta la etiqueta y remitente configurados en las
+ * propiedades privadas del proyecto.
  */
 function installSabanMailTriggers() {
   const functionName = "importarCorreosSaban";
@@ -167,18 +180,12 @@ function installSabanMailTriggers() {
     if (trigger.getHandlerFunction() === functionName) ScriptApp.deleteTrigger(trigger);
   });
 
-  const hours = [7, 11, 15, 19];
-  hours.forEach(hour => {
-    ScriptApp.newTrigger(functionName)
-      .timeBased()
-      .atHour(hour)
-      .nearMinute(0)
-      .everyDays(1)
-      .inTimezone("Europe/Madrid")
-      .create();
-  });
+  ScriptApp.newTrigger(functionName)
+    .timeBased()
+    .everyMinutes(5)
+    .create();
 
-  return { installed: true, hours, timezone: "Europe/Madrid", minute: "~00 (±15 min aprox.)" };
+  return { installed: true, cadence: "cada 5 minutos aprox.", timezone: "Europe/Madrid" };
 }
 
 function removeSabanMailTriggers() {
@@ -197,10 +204,26 @@ function sabanExtractId_(subject, attachments) {
   const candidates = [String(subject || "")];
   (attachments || []).forEach(attachment => candidates.push(String(attachment.getName() || "")));
   for (const value of candidates) {
-    const match = value.match(/(?:^|\D)([789]\d{3})(?:\D|$)/);
+    const match = value.match(/(?:^|\D)(\d{4})(?:\D|$)/);
     if (match) return match[1];
   }
   return "";
+}
+
+function sabanAuthorizedSender_(properties) {
+  const sender = sabanClean_(properties.getProperty(SABAN_ALLOWED_SENDER_PROPERTY)).toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sender)) {
+    throw new Error(
+      `Configura la propiedad privada ${SABAN_ALLOWED_SENDER_PROPERTY} con el correo autorizado antes de activar la importación.`
+    );
+  }
+  return sender;
+}
+
+function sabanIsAuthorizedSender_(from, allowedSender) {
+  const shown = String(from || "").toLowerCase();
+  const match = shown.match(/<([^>]+)>/) || shown.match(/([^\s<>]+@[^\s<>]+)/);
+  return Boolean(match && String(match[1]).trim() === allowedSender);
 }
 
 function sabanSaveAttachments_(folder, attachments, id, savedLog) {

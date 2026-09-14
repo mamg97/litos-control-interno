@@ -61,6 +61,7 @@ function ensureCurrentQuarterDraftInvoices() {
     const created = [];
     const existing = [];
     const definitive = [];
+    const pendingValidation = [];
 
     for (let rowIndex = headerIndex + 1; rowIndex < display.length; rowIndex += 1) {
       const shown = display[rowIndex];
@@ -72,6 +73,14 @@ function ensureCurrentQuarterDraftInvoices() {
         || draftDateValue_(raw[columns[FIELDS.orderDate]])
         || draftDateValue_(raw[columns[FIELDS.date]]);
       if (!receipt || receipt < quarter.start || receipt >= quarter.end) continue;
+
+      // Un borrador solo nace cuando las especificaciones de la ficha han
+      // pasado una revisión humana. Así una lectura manuscrita dudosa no
+      // genera un documento de taller incompleto ni aparentemente definitivo.
+      if (!draftIsTechnicallyValidated_(shown, columns)) {
+        pendingValidation.push(id);
+        continue;
+      }
 
       const entry = documents.get(id) || {};
       if (entry.invoice) {
@@ -109,11 +118,19 @@ function ensureCurrentQuarterDraftInvoices() {
       quarter: `${quarter.start.getFullYear()}-T${Math.floor(quarter.start.getMonth() / 3) + 1}`,
       created,
       existing,
-      definitive
+      definitive,
+      pendingValidation
     };
   } finally {
     lock.releaseLock();
   }
+}
+
+function draftIsTechnicallyValidated_(shown, columns) {
+  const statusColumn = columns["Estado de lectura"];
+  if (statusColumn === undefined) return false;
+  const status = clean_(shown[statusColumn]).toLowerCase();
+  return status.includes("validado manualmente") || status.includes("manuscrito revisado");
 }
 
 /**

@@ -6,7 +6,26 @@ Este directorio contiene el backend que alimenta el dashboard y el generador de 
 
 - `Code.gs`
 - `DraftInvoices.gs`
+- `ImportarSaban.gs`
+- `HandwrittenReadings.gs`
 - `appsscript.json`
+
+## Flujo seguro de nuevos pedidos por correo
+
+1. En **Propiedades del script**, crear `SABAN_ALLOWED_SENDER` con el único
+   remitente autorizado. No se guarda esa dirección en el repositorio.
+2. Ejecutar `importarCorreosSaban` una vez para conceder los permisos y
+   comprobar el resultado con pedidos de prueba.
+3. Ejecutar `installSabanMailTriggers` una sola vez. Comprueba la etiqueta
+   Gmail cada cinco minutos aproximadamente y solo guarda adjuntos del
+   remitente autorizado.
+4. Cada nota crea una fila independiente en `Lecturas manuscritas`. Una IA,
+   cuando se configure, solo puede completar una **propuesta** ahí.
+5. Revisar visualmente la propuesta y marcar la fila como `Validado`.
+   Ejecutar `aplicarLecturasValidadas` para copiar únicamente las celdas
+   vacías al maestro. No sobrescribe datos ya escritos.
+6. Solo después de ese paso, `ensureCurrentQuarterDraftInvoices` podrá crear
+   un borrador. Nunca se crea un borrador desde un manuscrito no validado.
 
 ## Primera activación del generador de borradores
 
