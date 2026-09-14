@@ -110,7 +110,11 @@ function importarCorreosSaban() {
           continue;
         }
 
-        const files = sabanSaveAttachments_(folder, attachments, id, result.savedFiles);
+        // Desde este punto cada pedido tiene su propia subcarpeta dentro del
+        // año. Los enlaces de Drive se conservan al mover un archivo, por lo
+        // que esta organización no rompe la trazabilidad existente.
+        const orderFolder = litosOrderFolder_(folder, id);
+        const files = sabanSaveAttachments_(orderFolder, attachments, id, result.savedFiles);
         const classified = sabanClassifyFiles_(files, id);
         let rowNumber = rowById.get(id) || null;
         const isNew = !rowNumber;

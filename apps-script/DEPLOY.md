@@ -27,6 +27,19 @@ Este directorio contiene el backend que alimenta el dashboard y el generador de 
 6. Solo después de ese paso, `ensureCurrentQuarterDraftInvoices` podrá crear
    un borrador. Nunca se crea un borrador desde un manuscrito no validado.
 
+## Organización de archivos de cada año
+
+`organizarArchivosPorPedido` crea, dentro de cada año, una carpeta por ID de
+trabajo y mueve ahí únicamente archivos cuyo nombre tenga un único ID de cuatro
+cifras. Los archivos sin ID o con más de un ID no se mueven. Es repetible,
+trabaja por lotes y conserva los mismos enlaces de Drive.
+
+- Ejecutarla varias veces hasta que devuelva `pending: 0` para ordenar el
+  histórico inicial.
+- Ejecutar `installOrganizeJobFoldersTrigger` una sola vez para una pasada
+  nocturna. Los nuevos adjuntos de correo ya se guardan directamente en la
+  subcarpeta del pedido.
+
 ## Primera activación del generador de borradores
 
 1. Abrir `PEDIDOS M.S.` en Google Sheets.
