@@ -4,7 +4,8 @@
  * Flujo:
  * Gmail (saban) -> Drive operativo 2026 -> PEDIDOS M.S.
  *
- * Esta primera capa NO interpreta todavía la nota con IA. Se encarga de:
+ * La importación se integra con la lectura visual y el borrador mediante
+ * procesarCorreosSabanCompleto(). Esta capa base se encarga de:
  * - detectar el ID del trabajo;
  * - guardar los adjuntos sin duplicarlos;
  * - crear/actualizar el pedido en el maestro sin pisar datos manuales;
@@ -87,9 +88,24 @@ function importarCorreosSaban() {
     for (const message of messages) {
       const messageId = message.getId();
       const processedKey = `litos_saban_msg_${messageId}`;
-      if (props.getProperty(processedKey)) {
-        result.skippedProcessed += 1;
-        continue;
+      const processedValue = props.getProperty(processedKey);
+      if (processedValue) {
+        let processedId = "";
+        try {
+          processedId = sabanClean_(JSON.parse(processedValue).id);
+        } catch (_error) {
+          // Una marca antigua o incompleta nunca debe ocultar un pedido.
+        }
+
+        if (processedId && rowById.has(processedId)) {
+          result.skippedProcessed += 1;
+          continue;
+        }
+
+        // Recuperación automática tras una ejecución interrumpida: si el
+        // mensaje figura como procesado pero el pedido no existe en el
+        // maestro, elimina la marca huérfana y vuelve a importarlo.
+        props.deleteProperty(processedKey);
       }
 
       const date = message.getDate();
@@ -120,7 +136,12 @@ function importarCorreosSaban() {
         const isNew = !rowNumber;
 
         if (!rowNumber) {
-          rowNumber = Math.max(sheet.getLastRow() + 1, headerIndex + 2);
+          // Las fórmulas matriciales pueden extender getLastRow() más allá
+          // del último pedido; la posición se calcula sobre los ID reales.
+          rowNumber = Math.max(headerIndex + 1, ...Array.from(rowById.values())) + 1;
+          if (rowNumber > sheet.getMaxRows()) {
+            sheet.insertRowsAfter(sheet.getMaxRows(), rowNumber - sheet.getMaxRows());
+          }
           rowById.set(id, rowNumber);
           sheet.getRange(rowNumber, columns[SABAN_HEADERS.id] + 1).setValue(Number(id));
         }
@@ -135,7 +156,9 @@ function importarCorreosSaban() {
         }
 
         if (classified.images.length) {
-          sabanSetMultiLinks_(sheet, rowNumber, columns[SABAN_HEADERS.attachments] + 1, classified.images);
+          // El feed admite un enlace por celda: la carpeta permite acceder
+          // a todos los adjuntos sin perder enlaces de texto enriquecido.
+          sabanSetSingleLink_(sheet, rowNumber, columns[SABAN_HEADERS.attachments] + 1, orderFolder, "Ver adjuntos");
         }
 
         // La ficha nunca se transcribe directamente al maestro. Se crea una
@@ -163,11 +186,45 @@ function importarCorreosSaban() {
     }
 
     SpreadsheetApp.flush();
+    console.log(JSON.stringify(result));
+
+    // No ocultar fallos parciales: un activador debe quedar marcado como error
+    // si algún correo candidato no pudo incorporarse al maestro.
+    if (result.errors.length) {
+      throw new Error(`Fallos al importar correos saban: ${JSON.stringify(result)}`);
+    }
 
     return result;
   } finally {
     lock.releaseLock();
   }
+}
+
+/**
+ * Flujo completo del activador:
+ * correo -> Drive -> maestro -> lectura visual -> XLSX borrador.
+ */
+function procesarCorreosSabanCompleto() {
+  const intake = importarCorreosSaban();
+  const ids = Array.from(new Set([].concat(
+    intake && intake.createdOrders || [],
+    intake && intake.updatedOrders || []
+  ).map(String)));
+  // Si no hay correos nuevos, vuelve a intentar las lecturas pendientes o con
+  // error temporal. Esto hace que una saturación puntual de Gemini (429/503)
+  // se recupere sola en el siguiente ciclo del activador.
+  const handwriting = typeof procesarLecturasManuscritasPendientes === "function"
+    ? procesarLecturasManuscritasPendientes(ids.length ? ids : undefined)
+    : { processed: [], review: [], errors: [] };
+  const drafts = handwriting.processed.length && typeof ensureCurrentQuarterDraftInvoices === "function"
+    ? ensureCurrentQuarterDraftInvoices()
+    : { created: [], existing: [], definitive: [], pendingValidation: [] };
+  const result = { intake, handwriting, drafts };
+  console.log(JSON.stringify(result));
+  if (handwriting.errors && handwriting.errors.length) {
+    throw new Error(`Fallos en la lectura automática: ${JSON.stringify(result)}`);
+  }
+  return result;
 }
 
 /**
@@ -177,11 +234,11 @@ function importarCorreosSaban() {
  * propiedades privadas del proyecto.
  */
 function installSabanMailTriggers() {
-  const functionName = "importarCorreosSaban";
+  const functionName = "procesarCorreosSabanCompleto";
 
   // Evita duplicar disparadores si se ejecuta varias veces.
   ScriptApp.getProjectTriggers().forEach(trigger => {
-    if (trigger.getHandlerFunction() === functionName) ScriptApp.deleteTrigger(trigger);
+    if ([functionName, "importarCorreosSaban"].includes(trigger.getHandlerFunction())) ScriptApp.deleteTrigger(trigger);
   });
 
   ScriptApp.newTrigger(functionName)
@@ -193,10 +250,10 @@ function installSabanMailTriggers() {
 }
 
 function removeSabanMailTriggers() {
-  const functionName = "importarCorreosSaban";
+  const functionNames = ["procesarCorreosSabanCompleto", "importarCorreosSaban"];
   let removed = 0;
   ScriptApp.getProjectTriggers().forEach(trigger => {
-    if (trigger.getHandlerFunction() === functionName) {
+    if (functionNames.includes(trigger.getHandlerFunction())) {
       ScriptApp.deleteTrigger(trigger);
       removed += 1;
     }
@@ -269,7 +326,7 @@ function sabanClassifyFiles_(files, id) {
 
 function sabanSetIfBlank_(sheet, row, column, value, numberFormat) {
   const cell = sheet.getRange(row, column);
-  if (sabanClean_(cell.getDisplayValue())) return;
+  if (cell.getFormula() || sabanClean_(cell.getDisplayValue())) return;
   cell.setValue(value);
   if (numberFormat) cell.setNumberFormat(numberFormat);
 }

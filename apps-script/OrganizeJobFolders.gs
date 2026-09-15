@@ -17,11 +17,12 @@ const LITOS_YEAR_FOLDERS = Object.freeze({
 });
 
 const LITOS_ORGANIZE_BATCH_SIZE = 120;
+const LITOS_ORGANIZE_CONTINUATION = "continuarOrganizacionArchivos";
 
 /**
  * Organiza hasta 120 archivos por ejecución, empezando por los años recientes.
- * Ejecútala repetidamente hasta que pending sea 0. Al no tocar subcarpetas, es
- * segura de repetir y no desplaza documentos ya ordenados.
+ * Si quedan más, programa automáticamente el siguiente lote. Al no tocar
+ * subcarpetas, es segura de repetir y no desplaza documentos ya ordenados.
  */
 function organizarArchivosPorPedido() {
   const lock = LockService.getScriptLock();
@@ -62,10 +63,38 @@ function organizarArchivosPorPedido() {
 
     // Si agotamos el lote, todavía puede haber archivos directos pendientes.
     result.pending = result.pending || (remaining === 0 ? 1 : 0);
+    if (result.pending) {
+      litosScheduleOrganizationContinuation_();
+    } else {
+      litosRemoveOrganizationContinuations_();
+    }
     return result;
   } finally {
     lock.releaseLock();
   }
+}
+
+/**
+ * Ejecuta el siguiente lote. Solo existe mientras quede trabajo pendiente.
+ */
+function continuarOrganizacionArchivos() {
+  return organizarArchivosPorPedido();
+}
+
+function litosScheduleOrganizationContinuation_() {
+  litosRemoveOrganizationContinuations_();
+  ScriptApp.newTrigger(LITOS_ORGANIZE_CONTINUATION)
+    .timeBased()
+    .after(60 * 1000)
+    .create();
+}
+
+function litosRemoveOrganizationContinuations_() {
+  ScriptApp.getProjectTriggers().forEach(trigger => {
+    if (trigger.getHandlerFunction() === LITOS_ORGANIZE_CONTINUATION) {
+      ScriptApp.deleteTrigger(trigger);
+    }
+  });
 }
 
 /**
@@ -90,6 +119,7 @@ function removeOrganizeJobFoldersTrigger() {
       removed += 1;
     }
   });
+  litosRemoveOrganizationContinuations_();
   return { removed };
 }
 

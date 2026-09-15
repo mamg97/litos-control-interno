@@ -19,13 +19,15 @@ Este directorio contiene el backend que alimenta el dashboard y el generador de 
 3. Ejecutar `installSabanMailTriggers` una sola vez. Comprueba la etiqueta
    Gmail cada cinco minutos aproximadamente y solo guarda adjuntos del
    remitente autorizado.
-4. Cada nota crea una fila independiente en `Lecturas manuscritas`. Una IA,
-   cuando se configure, solo puede completar una **propuesta** ahí.
-5. Revisar visualmente la propuesta y marcar la fila como `Validado`.
-   Ejecutar `aplicarLecturasValidadas` para copiar únicamente las celdas
-   vacías al maestro. No sobrescribe datos ya escritos.
-6. Solo después de ese paso, `ensureCurrentQuarterDraftInvoices` podrá crear
-   un borrador. Nunca se crea un borrador desde un manuscrito no validado.
+4. En **Propiedades del script**, guardar una clave de autorización de Gemini
+   como `GEMINI_API_KEY`. Opcionalmente, `GEMINI_VISION_MODEL` permite cambiar
+   el modelo; por defecto se usa `gemini-3.8-flash`.
+5. Cada nota crea una fila en `Lecturas manuscritas`. El flujo obtiene una
+   propuesta estructurada, valida rangos y confianza por campo y aplica
+   únicamente lecturas técnicamente fiables al maestro.
+6. Una lectura fiable genera el borrador XLSX dentro de la carpeta del pedido.
+   Los casos dudosos quedan en revisión y pueden marcarse como `Validado` para
+   aplicar después la corrección mediante `aplicarLecturasValidadas`.
 
 ## Organización de archivos de cada año
 

@@ -28,6 +28,8 @@ const ALBARAN_SYNC_SYSTEM_FOLDER_ID = "1QqDpXxdVab_qdHQ5hB3iqi8ML_gm7jGb";
 const ALBARAN_SYNC_BATCH_SIZE = 10;
 const ALBARAN_SYNC_MAX_MS = 4.5 * 60 * 1000;
 const ALBARAN_SYNC_CONTINUATION = "continuarSyncAlbaranes2026";
+const ALBARAN_TOTAL_REFRESH_INTERVAL_MS = 60 * 60 * 1000;
+const ALBARAN_TOTAL_REFRESH_PROPERTY = "litos_albaran_last_total_refresh";
 
 const ALBARAN_SYNC_HEADERS = Object.freeze({
   id: "Pedido",
@@ -37,17 +39,27 @@ const ALBARAN_SYNC_HEADERS = Object.freeze({
 });
 
 function syncAlbaranes2026() {
+  return syncAlbaranes2026_(false);
+}
+
+function syncAlbaranes2026_(forceTotalRefresh) {
   const startedAt = Date.now();
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(5000)) return { skipped: true, reason: "otra sincronización en curso" };
 
   try {
+    const properties = PropertiesService.getScriptProperties();
+    const lastTotalRefresh = Number(properties.getProperty(ALBARAN_TOTAL_REFRESH_PROPERTY) || 0);
+    const refreshTotals = Boolean(forceTotalRefresh)
+      || !lastTotalRefresh
+      || startedAt - lastTotalRefresh >= ALBARAN_TOTAL_REFRESH_INTERVAL_MS;
     const index = scanAlbaranes2026_();
     const book = SpreadsheetApp.openById(ALBARAN_SYNC_MASTER_ID);
     const sheet = book.getSheetByName("Pedidos");
     if (!sheet) throw new Error("No se encontró la pestaña Pedidos.");
 
     const data = sheet.getDataRange();
+    const rawValues = data.getValues();
     const values = data.getDisplayValues();
     const headerIndex = values.findIndex(row => row.some(cell => albaranClean_(cell) === ALBARAN_SYNC_HEADERS.id));
     if (headerIndex < 0) throw new Error("No se encontró la cabecera Pedido.");
@@ -81,6 +93,9 @@ function syncAlbaranes2026() {
     let totalsUpdated = 0;
     let totalsUnavailable = 0;
     let pending = 0;
+    let deferredTotals = 0;
+    let invoiceLinksUpdated = 0;
+    let draftLinksUpdated = 0;
     const errors = [];
 
     for (let rowIndex = headerIndex + 1; rowIndex < values.length; rowIndex += 1) {
@@ -94,8 +109,14 @@ function syncAlbaranes2026() {
 
       const invoiceUrl = entry.invoice ? entry.invoice.file.getUrl() : "";
       const draftUrl = entry.draft ? entry.draft.file.getUrl() : "";
-      invoiceRich[bodyIndex][0] = makeLink(invoiceUrl, "Abrir");
-      draftRich[bodyIndex][0] = makeLink(draftUrl, "Abrir borrador");
+      if (!albaranRichLinkMatches_(invoiceRich[bodyIndex][0], invoiceUrl, "Abrir")) {
+        sheet.getRange(rowNumber, invoiceCol).setRichTextValue(makeLink(invoiceUrl, "Abrir"));
+        invoiceLinksUpdated += 1;
+      }
+      if (!albaranRichLinkMatches_(draftRich[bodyIndex][0], draftUrl, "Abrir borrador")) {
+        sheet.getRange(rowNumber, draftCol).setRichTextValue(makeLink(draftUrl, "Abrir borrador"));
+        draftLinksUpdated += 1;
+      }
 
       const active = entry.invoice || entry.draft;
       if (!active) continue;
@@ -107,12 +128,15 @@ function syncAlbaranes2026() {
         if (cached.hit) {
           total = cached.total;
           cachedTotals += 1;
-        } else if (
+        } else if (refreshTotals &&
           convertedThisRun < ALBARAN_SYNC_BATCH_SIZE &&
           Date.now() - startedAt < ALBARAN_SYNC_MAX_MS
         ) {
           total = readAlbaranTotalCached_(active.file);
           convertedThisRun += 1;
+        } else if (!refreshTotals) {
+          deferredTotals += 1;
+          continue;
         } else {
           pending += 1;
           continue;
@@ -120,21 +144,18 @@ function syncAlbaranes2026() {
 
         const cell = sheet.getRange(rowNumber, totalCol);
         if (total === null) {
-          cell.clearContent();
+          if (albaranClean_(values[rowIndex][totalCol - 1])) {
+            cell.clearContent();
+            totalsUpdated += 1;
+          }
           totalsUnavailable += 1;
-        } else {
+        } else if (!albaranSameNumber_(rawValues[rowIndex][totalCol - 1], total)) {
           cell.setValue(total).setNumberFormat('#,##0.00 [$€-es-ES]');
           totalsUpdated += 1;
         }
       } catch (error) {
         errors.push({ id, file: active.file.getName(), error: String(error && error.message || error) });
       }
-    }
-
-    // Dos escrituras masivas en vez de dos escrituras por pedido.
-    if (bodyRows) {
-      sheet.getRange(firstBodyRow, invoiceCol, bodyRows, 1).setRichTextValues(invoiceRich);
-      sheet.getRange(firstBodyRow, draftCol, bodyRows, 1).setRichTextValues(draftRich);
     }
 
     SpreadsheetApp.flush();
@@ -148,9 +169,13 @@ function syncAlbaranes2026() {
       // La caché no es crítica.
     }
 
-    if (pending > 0) {
+    if (refreshTotals) {
+      properties.setProperty(ALBARAN_TOTAL_REFRESH_PROPERTY, String(Date.now()));
+    }
+
+    if (refreshTotals && pending > 0) {
       scheduleAlbaranContinuation_();
-    } else {
+    } else if (refreshTotals) {
       removeAlbaranContinuationTriggers_();
     }
 
@@ -161,8 +186,12 @@ function syncAlbaranes2026() {
       convertedThisRun,
       totalsUpdated,
       totalsUnavailable,
+      invoiceLinksUpdated,
+      draftLinksUpdated,
+      refreshTotals,
+      deferredTotals,
       pending,
-      continuationScheduled: pending > 0,
+      continuationScheduled: refreshTotals && pending > 0,
       errors
     };
   } finally {
@@ -171,7 +200,7 @@ function syncAlbaranes2026() {
 }
 
 function continuarSyncAlbaranes2026() {
-  return syncAlbaranes2026();
+  return syncAlbaranes2026_(true);
 }
 
 function scheduleAlbaranContinuation_() {
@@ -195,8 +224,8 @@ function installAlbaranSyncTrigger() {
   const existing = ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === functionName);
   if (existing.length) return { installed: false, reason: "ya existe", triggers: existing.length };
 
-  ScriptApp.newTrigger(functionName).timeBased().everyMinutes(5).create();
-  return { installed: true, everyMinutes: 5 };
+  ScriptApp.newTrigger(functionName).timeBased().everyMinutes(15).create();
+  return { installed: true, everyMinutes: 15 };
 }
 
 function removeAlbaranSyncTrigger() {
@@ -339,4 +368,16 @@ function albaranNumber_(value) {
   }
   const number = Number(raw);
   return Number.isFinite(number) ? number : null;
+}
+
+function albaranRichLinkMatches_(richText, url, label) {
+  if (!richText) return false;
+  const expectedText = url ? label : "No disponible";
+  if (richText.getText() !== expectedText) return false;
+  return url ? richText.getLinkUrl() === url : !richText.getLinkUrl();
+}
+
+function albaranSameNumber_(current, expected) {
+  const number = typeof current === "number" ? current : albaranNumber_(current);
+  return number !== null && Math.abs(number - expected) < 0.005;
 }

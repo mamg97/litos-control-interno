@@ -15,6 +15,27 @@
 const MASTER_SPREADSHEET_ID = "1ZS-L0eJmfukNr0rmc8ZvC3UxdVKw7Rnggx5TlRydZ2Q";
 const INVOICE_DRAFT_TEMPLATE_ID = "1LWbOK3s2BlaEzYY7tgtlUn-6E4QoyazLt8fCYGdhHbY";
 const INVOICE_DRAFT_SYSTEM_FOLDER_ID = "1QqDpXxdVab_qdHQ5hB3iqi8ML_gm7jGb";
+const INVOICE_DRAFT_OUTPUT_FOLDER_ID = "1eUAupqLzfBhkiEexWqpI3JtYReT8c9A_";
+
+// Este módulo es deliberadamente autónomo: no depende de los nombres de
+// constantes del feed público, que puede desplegarse en otra revisión.
+const DRAFT_ORDER_FIELDS = Object.freeze({
+  id: "Pedido",
+  date: "Fecha para dashboard",
+  orderDate: "Fecha ficha",
+  receiptDate: "Fecha recepción (email)",
+  model: "Modelo",
+  material: "Material",
+  materialNormalized: "Material normalizado",
+  width: "Ancho total (cm)",
+  height: "Alto total (cm)",
+  thickness: "Grosor (cm)"
+});
+
+const DRAFT_DOCUMENT_FIELDS = Object.freeze({
+  invoice: "Archivo factura / albarán (XLSX)",
+  invoiceDraft: "Factura borrador (XLSX)"
+});
 
 const DRAFT_FIELDS = Object.freeze({
   measures: "Notas de medidas y croquis",
@@ -30,7 +51,9 @@ const DRAFT_FIELDS = Object.freeze({
  * cambios manuales y precios añadidos por el taller. Solo se crea si falta.
  */
 function ensureCurrentQuarterDraftInvoices() {
-  const lock = LockService.getScriptLock();
+  // Un bloqueo por usuario evita duplicados de este generador sin quedar
+  // secuestrado por los sincronizadores históricos instalados por otra cuenta.
+  const lock = LockService.getUserLock();
   if (!lock.tryLock(5000)) return { skipped: true, reason: "otra ejecución en curso" };
 
   try {
@@ -43,19 +66,19 @@ function ensureCurrentQuarterDraftInvoices() {
     const range = sheet.getDataRange();
     const values = range.getValues();
     const display = range.getDisplayValues();
-    const headerIndex = display.findIndex((row) => row.some((cell) => clean_(cell) === FIELDS.id));
+    const headerIndex = display.findIndex((row) => row.some((cell) => draftClean_(cell) === DRAFT_ORDER_FIELDS.id));
     if (headerIndex < 0) throw new Error("No se encontró la cabecera Pedido.");
 
-    let headers = display[headerIndex].map(clean_);
-    if (!headers.includes(DOCUMENT_FIELDS.invoiceDraft)) {
+    let headers = display[headerIndex].map(draftClean_);
+    if (!headers.includes(DRAFT_DOCUMENT_FIELDS.invoiceDraft)) {
       const last = sheet.getLastColumn();
       sheet.insertColumnAfter(last);
-      sheet.getRange(headerIndex + 1, last + 1).setValue(DOCUMENT_FIELDS.invoiceDraft);
-      headers = [...headers, DOCUMENT_FIELDS.invoiceDraft];
+      sheet.getRange(headerIndex + 1, last + 1).setValue(DRAFT_DOCUMENT_FIELDS.invoiceDraft);
+      headers = [...headers, DRAFT_DOCUMENT_FIELDS.invoiceDraft];
     }
     const columns = Object.fromEntries(headers.map((header, index) => [header, index]));
-    const documents = indexCurrentDocuments_(); // índice fresco, sin caché
-    const targetFolder = DriveApp.getFolderById(CURRENT_DOCUMENTS_FOLDER_ID);
+    const documents = draftIndexDocuments_(); // índice fresco, sin caché
+    const targetFolder = DriveApp.getFolderById(INVOICE_DRAFT_OUTPUT_FOLDER_ID);
     const systemFolder = DriveApp.getFolderById(INVOICE_DRAFT_SYSTEM_FOLDER_ID);
     const quarter = draftQuarterBounds_(new Date());
     const created = [];
@@ -66,12 +89,12 @@ function ensureCurrentQuarterDraftInvoices() {
     for (let rowIndex = headerIndex + 1; rowIndex < display.length; rowIndex += 1) {
       const shown = display[rowIndex];
       const raw = values[rowIndex];
-      const id = clean_(shown[columns[FIELDS.id]]);
+      const id = draftClean_(shown[columns[DRAFT_ORDER_FIELDS.id]]);
       if (!/^\d{4}$/.test(id)) continue;
 
-      const receipt = draftDateValue_(raw[columns[FIELDS.receiptDate]])
-        || draftDateValue_(raw[columns[FIELDS.orderDate]])
-        || draftDateValue_(raw[columns[FIELDS.date]]);
+      const receipt = draftDateValue_(raw[columns[DRAFT_ORDER_FIELDS.receiptDate]])
+        || draftDateValue_(raw[columns[DRAFT_ORDER_FIELDS.orderDate]])
+        || draftDateValue_(raw[columns[DRAFT_ORDER_FIELDS.date]]);
       if (!receipt || receipt < quarter.start || receipt >= quarter.end) continue;
 
       // Un borrador solo nace cuando las especificaciones de la ficha han
@@ -97,7 +120,12 @@ function ensureCurrentQuarterDraftInvoices() {
       }
 
       const data = draftDataFromRow_(shown, raw, columns);
-      const file = createDraftInvoiceFile_(data, targetFolder, systemFolder);
+      // Los documentos nuevos viven dentro de la carpeta del ID, igual que
+      // sus notas e imágenes. El índice recursivo los seguirá localizando.
+      const orderFolder = typeof litosOrderFolder_ === "function"
+        ? litosOrderFolder_(targetFolder, id)
+        : targetFolder;
+      const file = createDraftInvoiceFile_(data, orderFolder, systemFolder);
       const url = file.getUrl();
       documents.set(id, { ...entry, invoiceDraft: url });
       syncDraftInvoiceCells_(sheet, rowIndex + 1, columns, "", url);
@@ -114,13 +142,15 @@ function ensureCurrentQuarterDraftInvoices() {
       // La caché es solo una optimización; no debe hacer fallar el proceso.
     }
 
-    return {
+    const result = {
       quarter: `${quarter.start.getFullYear()}-T${Math.floor(quarter.start.getMonth() / 3) + 1}`,
       created,
       existing,
       definitive,
       pendingValidation
     };
+    console.log(JSON.stringify(result));
+    return result;
   } finally {
     lock.releaseLock();
   }
@@ -129,8 +159,10 @@ function ensureCurrentQuarterDraftInvoices() {
 function draftIsTechnicallyValidated_(shown, columns) {
   const statusColumn = columns["Estado de lectura"];
   if (statusColumn === undefined) return false;
-  const status = clean_(shown[statusColumn]).toLowerCase();
-  return status.includes("validado manualmente") || status.includes("manuscrito revisado");
+  const status = draftClean_(shown[statusColumn]).toLowerCase();
+  return status.includes("validado manualmente")
+    || status.includes("validado automáticamente")
+    || status.includes("manuscrito revisado");
 }
 
 /**
@@ -187,7 +219,9 @@ function fillDraftInvoice_(sheet, data) {
   // modifica programáticamente; F14 sí contiene la fecha real del pedido.
   sheet.getRange("B14").setValue(Number(data.id));
   const documentDate = data.orderDate || data.receiptDate || "";
-  sheet.getRange("F14").setValue(documentDate).setNumberFormat("d/m/yy");
+  // Guardar el texto visible evita que una zona horaria distinta desplace la
+  // fecha un día al exportar el libro a XLSX.
+  sheet.getRange("F14").setNumberFormat("@").setValue(documentDate);
   sheet.getRange("D16").setValue(data.model ? data.model.toUpperCase() : "");
 
   const material = draftMaterialCells_(data.materialNormalized || data.material);
@@ -201,7 +235,7 @@ function fillDraftInvoice_(sheet, data) {
   if (data.width && data.height) {
     sheet.getRange("A21:E21").setValues([["CORTE", 1, data.width / 100, data.height / 100, thicknessM]]);
     sheet.getRange("F21").setFormula("=B21*C21*D21");
-    sheet.getRange("G21").setFormula('=IF($G$18="","",F21*$G$18)');
+    sheet.getRange("G21").setFormula("=F21*$G$18");
   }
 
   const specs = data.specifications || "";
@@ -230,21 +264,21 @@ function fillDraftInvoice_(sheet, data) {
     sheet.getRange("A27").setValue(image.label);
     sheet.getRange("B27:D27").merge().setValue(image.detail).setWrap(true);
     sheet.getRange("E27").setValue(1);
-    sheet.getRange("G27").setFormula('=IF(F27="","",E27*F27)');
+    sheet.getRange("G27").setFormula("=E27*F27");
   }
 
   const inscription = draftInscription_(specs);
   sheet.getRange("A29").setValue("INSCRIPCION");
   sheet.getRange("B29:D29").merge().setValue(inscription || "[REVISAR TIPO]").setWrap(true);
   sheet.getRange("E29").setValue(1);
-  sheet.getRange("G29").setFormula('=IF(F29="","",E29*F29)');
+  sheet.getRange("G29").setFormula("=E29*F29");
 
   const accessory = draftAccessory_(specs);
   if (accessory) {
     sheet.getRange("A31").setValue(accessory.label);
     sheet.getRange("B31:D31").merge().setValue(accessory.detail).setWrap(true);
     sheet.getRange("E31").setValue(1);
-    sheet.getRange("G31").setFormula('=IF(F31="","",E31*F31)');
+    sheet.getRange("G31").setFormula("=E31*F31");
   }
 
   // Observaciones y texto conmemorativo deben quedar legibles al imprimir.
@@ -254,6 +288,9 @@ function fillDraftInvoice_(sheet, data) {
   sheet.getRange("A33").setValue("OBS.");
   sheet.setRowHeights(33, 3, 24);
 
+  // La plantilla histórica puede contener más de una línea de inscripción.
+  // Se limpia todo el bloque antes de escribir para no heredar otro nombre.
+  sheet.getRange("B43:G48").breakApart().clearContent();
   const memorialRange = sheet.getRange("B43:F43");
   memorialRange.breakApart();
   memorialRange.merge().setValue(draftMemorialText_(data.memorial)).setWrap(true).setVerticalAlignment("top");
@@ -270,19 +307,19 @@ function fillDraftInvoice_(sheet, data) {
 }
 
 function draftDataFromRow_(shown, raw, columns) {
-  const getShown = (field) => columns[field] === undefined ? "" : clean_(shown[columns[field]]);
+  const getShown = (field) => columns[field] === undefined ? "" : draftClean_(shown[columns[field]]);
   const getRaw = (field) => columns[field] === undefined ? "" : raw[columns[field]];
-  const n = (field) => numberOrNull_(getShown(field));
+  const n = (field) => draftNumberOrNull_(getShown(field));
   return {
-    id: getShown(FIELDS.id),
-    orderDate: draftDateValue_(getRaw(FIELDS.orderDate)),
-    receiptDate: draftDateValue_(getRaw(FIELDS.receiptDate)),
-    model: getShown(FIELDS.model),
-    material: getShown(FIELDS.material),
-    materialNormalized: getShown(FIELDS.materialNormalized),
-    width: n(FIELDS.width),
-    height: n(FIELDS.height),
-    thickness: n(FIELDS.thickness),
+    id: getShown(DRAFT_ORDER_FIELDS.id),
+    orderDate: getShown(DRAFT_ORDER_FIELDS.orderDate),
+    receiptDate: getShown(DRAFT_ORDER_FIELDS.receiptDate),
+    model: getShown(DRAFT_ORDER_FIELDS.model),
+    material: getShown(DRAFT_ORDER_FIELDS.material),
+    materialNormalized: getShown(DRAFT_ORDER_FIELDS.materialNormalized),
+    width: n(DRAFT_ORDER_FIELDS.width),
+    height: n(DRAFT_ORDER_FIELDS.height),
+    thickness: n(DRAFT_ORDER_FIELDS.thickness),
     measures: getShown(DRAFT_FIELDS.measures),
     specifications: getShown(DRAFT_FIELDS.specifications),
     memorial: getShown(DRAFT_FIELDS.memorial)
@@ -297,8 +334,32 @@ function syncDraftInvoiceCells_(sheet, rowNumber, columns, invoiceUrl, draftUrl)
     if (url) builder.setLinkUrl(url);
     sheet.getRange(rowNumber, column + 1).setRichTextValue(builder.build());
   };
-  setLink(DOCUMENT_FIELDS.invoice, invoiceUrl, "Abrir");
-  setLink(DOCUMENT_FIELDS.invoiceDraft, draftUrl, "Abrir borrador");
+  setLink(DRAFT_DOCUMENT_FIELDS.invoice, invoiceUrl, "Abrir");
+  setLink(DRAFT_DOCUMENT_FIELDS.invoiceDraft, draftUrl, "Abrir borrador");
+}
+
+function draftIndexDocuments_() {
+  const result = new Map();
+  const visit = (folder) => {
+    const files = folder.getFiles();
+    while (files.hasNext()) {
+      const file = files.next();
+      const name = draftClean_(file.getName());
+      const idMatch = name.match(/(?:^|[^0-9])(\d{4})(?:[^0-9]|$)/);
+      const extMatch = name.toLowerCase().match(/\.([a-z0-9]+)$/);
+      if (!idMatch || !extMatch || !["xlsx", "xls", "xlsm"].includes(extMatch[1])) continue;
+      const id = idMatch[1];
+      const normalized = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const kind = /(?:^|[-_ ])borrador(?:[-_ .]|$)/.test(normalized) ? "invoiceDraft" : "invoice";
+      const entry = result.get(id) || {};
+      if (!entry[kind]) entry[kind] = file.getUrl();
+      result.set(id, entry);
+    }
+    const folders = folder.getFolders();
+    while (folders.hasNext()) visit(folders.next());
+  };
+  visit(DriveApp.getFolderById(INVOICE_DRAFT_OUTPUT_FOLDER_ID));
+  return result;
 }
 
 function draftQuarterBounds_(date) {
@@ -312,7 +373,7 @@ function draftQuarterBounds_(date) {
 
 function draftDateValue_(value) {
   if (value instanceof Date && !Number.isNaN(value.valueOf())) return value;
-  const raw = clean_(value);
+  const raw = draftClean_(value);
   if (!raw) return null;
   const es = raw.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
   if (es) {
@@ -323,8 +384,26 @@ function draftDateValue_(value) {
   return iso ? new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3])) : null;
 }
 
+function draftNumberOrNull_(value) {
+  const raw = draftClean_(value);
+  if (!raw) return null;
+  let normalized = raw.replace(/[^0-9,.-]/g, "");
+  const comma = normalized.lastIndexOf(",");
+  const dot = normalized.lastIndexOf(".");
+  if (comma >= 0 && dot >= 0) {
+    const decimal = comma > dot ? "," : ".";
+    normalized = normalized
+      .replace(decimal === "," ? /\./g : /,/g, "")
+      .replace(decimal, ".");
+  } else if (comma >= 0) {
+    normalized = normalized.replace(/,/g, ".");
+  }
+  const number = Number(normalized);
+  return Number.isFinite(number) ? number : null;
+}
+
 function draftMaterialCells_(value) {
-  const original = clean_(value);
+  const original = draftClean_(value);
   const normalized = draftNormalize_(original);
   if (!normalized) return { family: "", variant: "" };
   if (normalized.includes("porcelana")) return { family: "PORCELANA", variant: "" };
@@ -348,6 +427,11 @@ function draftMaterialShortLabel_(value) {
 }
 
 function draftOwnOrMaterial_(specs, component, materialLabel) {
+  const labeled = draftLabeledValue_(specs, component);
+  if (labeled) {
+    const normalizedLabeled = draftNormalize_(labeled);
+    if (/\bsuy[oa]s?\b/.test(normalizedLabeled)) return "SUYA";
+  }
   const normalized = draftNormalize_(specs);
   const key = draftNormalize_(component);
   const index = normalized.indexOf(key);
@@ -364,41 +448,79 @@ function draftOwnOrMaterial_(specs, component, materialLabel) {
 }
 
 function draftStructural_(specs) {
-  const raw = clean_(specs);
-  let match = raw.match(/\b(columnas?|pilastras?)\s*([^.;]*)/i);
-  if (match) return { label: match[1].toUpperCase(), detail: clean_(match[2]) };
+  const raw = draftClean_(specs);
+  let match = raw.match(/\b(\d+)\s+barras?\s+de\s+z\b/i);
+  if (match) return { label: "BARRAS Z", detail: match[1] };
+  match = raw.match(/\b(columnas?|pilastras?)\s*([^.;]*)/i);
+  if (match) return { label: match[1].toUpperCase(), detail: draftClean_(match[2]) };
   match = raw.match(/\btabica(?:\/tacos)?\s*([^.;]*)/i);
-  if (match) return { label: "TABICA", detail: clean_(match[1]) };
+  if (match) return { label: "TABICA", detail: draftClean_(match[1]) };
   match = raw.match(/\bgarras?\s+de\s+([^.;]+)/i);
-  if (match) return { label: "GARRAS", detail: `DE ${clean_(match[1]).toUpperCase()}` };
+  if (match) return { label: "GARRAS", detail: `DE ${draftClean_(match[1]).toUpperCase()}` };
   return null;
 }
 
 function draftInscription_(specs) {
-  const raw = clean_(specs);
-  const sentence = raw.match(/inscripci[oó]n\s+([^.;]*)/i);
-  if (!sentence) return "";
-  let detail = clean_(sentence[1]);
+  let detail = draftLabeledValue_(specs, "inscripción");
+  if (!detail) {
+    const sentence = draftClean_(specs).match(/inscripci[oó]n\s+([^.;,]*)/i);
+    if (!sentence) return "";
+    detail = draftClean_(sentence[1]);
+  }
   detail = detail.replace(/\bs\/(foto|diseño|suya)\b/gi, "").replace(/\s+/g, " ").trim();
   return detail.toUpperCase();
 }
 
 function draftImageOrCross_(specs) {
-  const raw = clean_(specs);
+  const raw = draftClean_(specs);
   let match = raw.match(/\b(cruz|crucificado)\b\s*([^.;]*)/i);
-  if (match) return { label: "CRUZ", detail: clean_(match[2]) };
-  match = raw.match(/\bimagen\s*:\s*([^.;]*)/i);
-  if (match) return { label: "IMAGEN", detail: clean_(match[1]) };
+  if (match) return { label: "CRUZ", detail: draftClean_(match[2]) };
+  const image = draftLabeledValue_(raw, "imagen");
+  if (image) return { label: "IMAGEN", detail: image };
   return null;
 }
 
 function draftAccessory_(specs) {
-  const raw = clean_(specs);
+  const raw = draftClean_(specs);
+  const flowerVase = draftLabeledValue_(raw, "florero");
+  if (flowerVase) return { label: "FLORERO", detail: flowerVase };
   let match = raw.match(/\b(jardinera)\s*([^.;]*)/i);
-  if (match) return { label: "JARDINERA", detail: clean_(match[2]) };
+  if (match) return { label: "JARDINERA", detail: draftClean_(match[2]) };
   match = raw.match(/\b(florero(?:s)?)\s*([^.;]*)/i);
-  if (match) return { label: "FLORERO", detail: clean_(match[2]) };
+  if (match) return { label: "FLORERO", detail: draftClean_(match[2]) };
   return null;
+}
+
+function draftLabeledValue_(specs, label) {
+  const raw = draftClean_(specs);
+  const aliases = {
+    "inscripción": "inscripci[oó]n",
+    "coronación": "coronaci[oó]n"
+  };
+  const key = aliases[label] || String(label).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const next = "modelo|corte|imagen|florero|inscripci[oó]n|repisa|cornisa|coronaci[oó]n";
+  const match = raw.match(new RegExp(`(?:^|[,;])\\s*${key}\\s*:\\s*(.*?)(?=\\s*[,;]\\s*(?:${next})\\s*:|$)`, "i"));
+  return match ? draftClean_(match[1]) : "";
+}
+
+function regenerarBorradores7927y7928() {
+  const ids = new Set(["7927", "7928"]);
+  const root = DriveApp.getFolderById(INVOICE_DRAFT_OUTPUT_FOLDER_ID);
+  ids.forEach((id) => {
+    const folders = root.getFoldersByName(id);
+    while (folders.hasNext()) {
+      const files = folders.next().getFiles();
+    while (files.hasNext()) {
+      const file = files.next();
+      const name = draftClean_(file.getName());
+      const match = name.match(/(?:^|[^0-9])(\d{4})(?:[^0-9]|$)/);
+      if (match && ids.has(match[1]) && /(?:^|[-_ ])borrador(?:[-_ .]|$)/i.test(name)) {
+        file.setTrashed(true);
+      }
+    }
+    }
+  });
+  return ensureCurrentQuarterDraftInvoices();
 }
 
 function draftObservations_(data) {
@@ -409,9 +531,13 @@ function draftObservations_(data) {
 }
 
 function draftMemorialText_(value) {
-  return clean_(value).split(/\s*\|\s*/).filter(Boolean).join("\n");
+  return draftClean_(value).split(/\s*\|\s*/).filter(Boolean).join("\n");
 }
 
 function draftNormalize_(value) {
-  return clean_(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  return draftClean_(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+function draftClean_(value) {
+  return String(value === null || value === undefined ? "" : value).trim();
 }
