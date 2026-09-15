@@ -64,10 +64,12 @@ function iniciarCatalogoAlbaranesHistorico() {
     catalogRemoveContinuationTriggers_();
 
     SpreadsheetApp.flush();
-    return continuarCatalogoAlbaranesHistorico();
   } finally {
     lock.releaseLock();
   }
+
+  // La primera tanda se inicia solo después de liberar el bloqueo anterior.
+  return continuarCatalogoAlbaranesHistorico();
 }
 
 /**
