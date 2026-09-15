@@ -221,10 +221,15 @@ function catalogExtractInvoice_(fileId, sourceUrl, fallbackId, contexts) {
 
       sections.forEach(section => {
         const base = contexts.get(section.id) || contexts.get(fallbackId) || { id: section.id || fallbackId };
+
+        // El propio albarán es la fuente principal para modelo y material.
+        // Pedidos queda como respaldo y aporta la lectura de la nota.
+        const invoiceMeta = catalogSectionMetadata_(shown, values, section);
+
         const context = {
           id: section.id || base.id || fallbackId,
-          model: base.model || "",
-          material: base.material || "",
+          model: invoiceMeta.model || base.model || "",
+          material: invoiceMeta.material || base.material || "",
           measures: base.measures || "",
           specs: base.specs || "",
           memorial: base.memorial || "",
@@ -233,6 +238,7 @@ function catalogExtractInvoice_(fileId, sourceUrl, fallbackId, contexts) {
           sourceName: name,
           sourceSheet: sheet.getName()
         };
+
         out.push(...catalogExtractSectionItems_(shown, values, section, context));
       });
     });
@@ -261,6 +267,124 @@ function catalogOrderSections_(shown, fallbackId) {
     start: marker.start,
     end: index + 1 < markers.length ? markers[index + 1].start : shown.length
   }));
+}
+
+
+/**
+ * Lee la cabecera real de cada bloque del albarán.
+ *
+ * Ejemplos históricos:
+ *   CONCEPTO | LAPIDA | COLUMBARIO
+ *   MATERIAL | GRANITO NEGRO ABSOLUTO | PRECIO | 120
+ *
+ * También admite formatos modernos:
+ *   CONCEPTO | TAPA NICHO
+ *   MATERIAL | MARMOL | BLANCO MACAEL | PRECIO
+ */
+function catalogSectionMetadata_(shown, values, section) {
+  let model = "";
+  let material = "";
+  let materialRate = null;
+
+  const uniqueText = parts => {
+    const seen = new Set();
+    return parts
+      .map(catalogClean_)
+      .filter(Boolean)
+      .filter(value => {
+        const key = catalogNormalize_(value);
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .join(" ");
+  };
+
+  const ignored = new Set([
+    "modelo",
+    "precio",
+    "cantidad",
+    "largo",
+    "ancho",
+    "grueso",
+    "m/2",
+    "m2",
+    "m²"
+  ]);
+
+  for (let row = section.start; row < section.end; row += 1) {
+    const displayRow = shown[row] || [];
+    const valueRow = values[row] || [];
+    const normalized = displayRow.map(catalogNormalize_);
+
+    const conceptoCol = normalized.findIndex(value => value === "concepto");
+    if (!model && conceptoCol >= 0) {
+      const parts = [];
+
+      for (let col = conceptoCol + 1; col < displayRow.length; col += 1) {
+        const value = catalogClean_(displayRow[col]);
+        const key = catalogNormalize_(value);
+
+        if (!value || ignored.has(key)) continue;
+
+        // No incorporar números sueltos de la cabecera.
+        if (
+          catalogNumber_(valueRow[col]) !== null &&
+          !/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/.test(value)
+        ) {
+          continue;
+        }
+
+        parts.push(value);
+      }
+
+      model = uniqueText(parts);
+    }
+
+    const materialCol = normalized.findIndex(value => value === "material");
+    if (!material && materialCol >= 0) {
+      const priceCol = normalized.findIndex(
+        (value, col) => col > materialCol && value === "precio"
+      );
+
+      const stop = priceCol >= 0 ? priceCol : displayRow.length;
+      const parts = [];
+
+      for (let col = materialCol + 1; col < stop; col += 1) {
+        const value = catalogClean_(displayRow[col]);
+        const key = catalogNormalize_(value);
+
+        if (!value || ignored.has(key)) continue;
+
+        if (
+          catalogNumber_(valueRow[col]) !== null &&
+          !/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/.test(value)
+        ) {
+          continue;
+        }
+
+        parts.push(value);
+      }
+
+      material = uniqueText(parts);
+
+      if (priceCol >= 0) {
+        for (let col = priceCol + 1; col < valueRow.length; col += 1) {
+          const candidate = catalogNumber_(valueRow[col]);
+          if (candidate !== null && candidate > 0) {
+            materialRate = candidate;
+            break;
+          }
+        }
+      }
+    }
+
+    // Una vez encontrada la cabecera de material normalmente ya hemos
+    // recorrido toda la zona relevante del bloque.
+    if (model && material) break;
+  }
+
+  return { model, material, materialRate };
 }
 
 function catalogExtractSectionItems_(shown, values, section, context) {
