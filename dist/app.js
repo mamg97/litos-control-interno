@@ -114,6 +114,19 @@ function dashboardDate(row) {
   return parseDate(row["Fecha para dashboard"] || row["Fecha entrega (estadillo)"] || row["Fecha recepción (email)"] || row["Fecha ficha"]);
 }
 
+// Para medir el ritmo de entrada de pedidos usamos cuándo llegó realmente
+// el pedido al taller. Si no existe recepción por email, usamos la fecha de
+// ficha y, para históricos incompletos, la fecha disponible del dashboard.
+function orderEntryDate(row) {
+  if (!row) return null;
+  return parseDate(
+    row["Fecha recepción (email)"] ||
+    row["Fecha ficha"] ||
+    row["Fecha para dashboard"] ||
+    row["Fecha entrega (estadillo)"]
+  );
+}
+
 function recordedFinalPrice(row) {
   return optionalNumberAt(row, "Precio final (€)");
 }
@@ -546,19 +559,53 @@ function periodsFor(year, granularity) {
 
 function performanceSeries(year, granularity = "year") {
   const periods = periodsFor(year, granularity);
-  const annualRows = rowsForYear(year);
-  const finance = calculateFinance(annualRows, year);
+
+  // Los pedidos se agrupan por fecha real de entrada.
+  const annualOrderRows = state.rows.filter(
+    (row) => orderEntryDate(row)?.getFullYear() === Number(year)
+  );
+
+  // Las magnitudes económicas mantienen la fecha operativa/contable.
+  const annualFinancialRows = rowsForYear(year);
+  const finance = calculateFinance(annualFinancialRows, year);
   const ledger = expenseLedgerForYear(year);
   const localManual = finance.manual.filter((entry) => !ledger.totals.has(entry.label));
   const recurringCosts = finance.consumables + localManual.reduce((total, entry) => total + entry.value, 0);
   const share = periods.length ? 1 / periods.length : 0;
 
   return periods.map(({ label, months }) => {
-    const rows = annualRows.filter((row) => months.includes(dashboardDate(row)?.getMonth()));
-    const revenue = rows.reduce((total, row) => total + revenueFor(row, finance.averagePrice), 0) + finance.otherIncome * share;
-    const ledgerCosts = [...ledger.totals.keys()].reduce((total, category) => total + monthlyLedgerAmount(year, months, category), 0);
-    const costs = estimateMaterial(rows).amount + recurringCosts * share + ledgerCosts;
-    return { label, orders: rows.length, revenue, costs, profit: revenue - costs };
+    const orderRows = annualOrderRows.filter(
+      (row) => months.includes(orderEntryDate(row)?.getMonth())
+    );
+
+    const financialRows = annualFinancialRows.filter(
+      (row) => months.includes(dashboardDate(row)?.getMonth())
+    );
+
+    const revenue =
+      financialRows.reduce(
+        (total, row) => total + revenueFor(row, finance.averagePrice),
+        0
+      ) + finance.otherIncome * share;
+
+    const ledgerCosts = [...ledger.totals.keys()].reduce(
+      (total, category) =>
+        total + monthlyLedgerAmount(year, months, category),
+      0
+    );
+
+    const costs =
+      estimateMaterial(financialRows).amount +
+      recurringCosts * share +
+      ledgerCosts;
+
+    return {
+      label,
+      orders: orderRows.length,
+      revenue,
+      costs,
+      profit: revenue - costs
+    };
   });
 }
 
@@ -815,8 +862,13 @@ function renderSummary() {
     ? `Actualizado ${new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeStyle: "short" }).format(updateDate || new Date())}`
     : "Actualizando datos";
   $("#summaryChartHeading").textContent = `${metricLabels[metric]} por periodo`;
+
+  const chartDateBasis = metric === "orders"
+    ? "Fecha: recepción (email) · si falta: ficha · histórico: fecha disponible"
+    : "Fecha: operativa / entrega";
+
   $("#summaryChartNote").textContent = connected && year
-    ? `${metricLabels[metric]} ${granularity === "quarter" ? "por trimestre" : "por mes"} · ${year}`
+    ? `${metricLabels[metric]} ${granularity === "quarter" ? "por trimestre" : "por mes"} · ${year} · ${chartDateBasis}`
     : "Pendiente de actualización";
   const series = performanceSeries(year || new Date().getFullYear(), granularity);
   drawOrdersChart(series.map((point) => [point.label, metricValue(point, metric)]), metric);
