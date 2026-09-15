@@ -236,17 +236,29 @@ function procesarCorreosSabanCompleto() {
 function installSabanMailTriggers() {
   const functionName = "procesarCorreosSabanCompleto";
 
-  // Evita duplicar disparadores si se ejecuta varias veces.
+  // Elimina cualquier programación anterior del flujo de correo.
   ScriptApp.getProjectTriggers().forEach(trigger => {
-    if ([functionName, "importarCorreosSaban"].includes(trigger.getHandlerFunction())) ScriptApp.deleteTrigger(trigger);
+    if ([functionName, "importarCorreosSaban"].includes(trigger.getHandlerFunction())) {
+      ScriptApp.deleteTrigger(trigger);
+    }
   });
 
-  ScriptApp.newTrigger(functionName)
-    .timeBased()
-    .everyMinutes(5)
-    .create();
+  // Cuatro revisiones diarias del buzón, en horario de Madrid.
+  [7, 11, 15, 19].forEach(hour => {
+    ScriptApp.newTrigger(functionName)
+      .timeBased()
+      .atHour(hour)
+      .nearMinute(0)
+      .everyDays(1)
+      .inTimezone("Europe/Madrid")
+      .create();
+  });
 
-  return { installed: true, cadence: "cada 5 minutos aprox.", timezone: "Europe/Madrid" };
+  return {
+    installed: true,
+    schedule: ["07:00", "11:00", "15:00", "19:00"],
+    timezone: "Europe/Madrid"
+  };
 }
 
 function removeSabanMailTriggers() {

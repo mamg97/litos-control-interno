@@ -17,8 +17,8 @@ Este directorio contiene el backend que alimenta el dashboard y el generador de 
 2. Ejecutar `importarCorreosSaban` una vez para conceder los permisos y
    comprobar el resultado con pedidos de prueba.
 3. Ejecutar `installSabanMailTriggers` una sola vez. Comprueba la etiqueta
-   Gmail cada cinco minutos aproximadamente y solo guarda adjuntos del
-   remitente autorizado.
+   Gmail aproximadamente a las 07:00, 11:00, 15:00 y 19:00 (Europe/Madrid)
+   y solo guarda adjuntos del remitente autorizado.
 4. En **Propiedades del script**, guardar una clave de autorización de Gemini
    como `GEMINI_API_KEY`. Opcionalmente, `GEMINI_VISION_MODEL` permite cambiar
    el modelo; por defecto se usa `gemini-3.8-flash`.
