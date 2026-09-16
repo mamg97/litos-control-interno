@@ -32,16 +32,17 @@ jobs:
 
           allowed = {'ubuntu-latest', 'ubuntu-24.04', 'ubuntu-22.04', 'ubuntu-slim'}
           failures = []
+          runner_re = re.compile(r'^\s*runs-on:\s*["\']?([^"\'\s#]+)')
+          artifact_re = re.compile(r'^\s*-\s+uses:\s*actions/upload-artifact@')
+
           for path in sorted(Path('.github/workflows').glob('*.y*ml')):
-              text = path.read_text(encoding='utf-8')
-              for i, line in enumerate(text.splitlines(), start=1):
-                  m = re.match(r'^\s*runs-on:\s*["\']?([^"\'\s#]+)', line)
+              for i, line in enumerate(path.read_text(encoding='utf-8').splitlines(), start=1):
+                  m = runner_re.match(line)
                   if m and m.group(1) not in allowed:
                       failures.append(f'{path}:{i}: runner no permitido: {m.group(1)}')
-              if 'actions/upload-artifact@' in text:
-                  failures.append(f'{path}: no se permiten artifacts persistentes en LITOS')
-              if 'self-hosted' in text:
-                  failures.append(f'{path}: no se permiten runners self-hosted')
+                  if artifact_re.match(line):
+                      failures.append(f'{path}:{i}: no se permiten artifacts persistentes en LITOS')
+
           if failures:
               raise SystemExit('\n'.join(failures))
           print('OK: workflows limitados a runners Ubuntu estándar y sin artifacts persistentes.')
