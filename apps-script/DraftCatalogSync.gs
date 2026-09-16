@@ -5,14 +5,10 @@
  * - Catálogo operativo es el diccionario de precios activo.
  * - La columna F (Precio actual PROVISIONAL · REVISAR) se usa incluso si aún
  *   no está validada; la casilla G permite convertirla después en confirmada.
- * - Los borradores abiertos se regeneran cuando cambian las notas/datos o
- *   cualquiera de los precios que realmente usan.
+ * - Los borradores abiertos se regeneran cuando cambian notas, reglas o precios.
+ * - Una lectura no validada impide CREAR un borrador nuevo, pero no impide
+ *   sanear/regenerar un borrador que ya existe.
  * - Los albaranes definitivos NUNCA se modifican.
- * - Los textos del encabezado se convierten en celdas combinadas; se eliminan
- *   dibujos/imágenes con texto de la copia antes de exportarla a XLSX.
- *
- * Depende de DraftInvoices.gs para constantes y helpers de lectura de Pedidos.
- * Requiere el servicio avanzado Drive v3 (ya habilitado en LITOS).
  */
 
 const DRAFT_CATALOG_SHEET = "Catálogo operativo";
@@ -23,70 +19,39 @@ const DRAFT_CATALOG_SIG_PREFIX = "litos_draft_catalog_sig_";
 const DRAFT_CATALOG_MAX_MS = 4.25 * 60 * 1000;
 const DRAFT_CATALOG_MAX_REFRESH_PER_RUN = 8;
 
-/**
- * Ejecutar una sola vez tras copiar este archivo al proyecto Apps Script.
- * Sustituye el trigger horario antiguo por el sincronizador de catálogo.
- */
 function instalarSincronizacionBorradoresCatalogo() {
   const spreadsheet = SpreadsheetApp.openById(MASTER_SPREADSHEET_ID);
   let removed = 0;
-
   ScriptApp.getProjectTriggers().forEach(trigger => {
     const handler = trigger.getHandlerFunction();
-    if ([
-      "ensureCurrentQuarterDraftInvoices",
-      DRAFT_CATALOG_SYNC_HANDLER,
-      DRAFT_CATALOG_EDIT_HANDLER,
-      DRAFT_CATALOG_SOON_HANDLER
-    ].includes(handler)) {
+    if (["ensureCurrentQuarterDraftInvoices", DRAFT_CATALOG_SYNC_HANDLER, DRAFT_CATALOG_EDIT_HANDLER, DRAFT_CATALOG_SOON_HANDLER].includes(handler)) {
       ScriptApp.deleteTrigger(trigger);
       removed += 1;
     }
   });
-
-  ScriptApp.newTrigger(DRAFT_CATALOG_SYNC_HANDLER)
-    .timeBased()
-    .everyMinutes(15)
-    .create();
-
-  ScriptApp.newTrigger(DRAFT_CATALOG_EDIT_HANDLER)
-    .forSpreadsheet(spreadsheet)
-    .onEdit()
-    .create();
-
+  ScriptApp.newTrigger(DRAFT_CATALOG_SYNC_HANDLER).timeBased().everyMinutes(15).create();
+  ScriptApp.newTrigger(DRAFT_CATALOG_EDIT_HANDLER).forSpreadsheet(spreadsheet).onEdit().create();
   const firstRun = draftCatalogSync_(99);
   return { installed: true, removedOldTriggers: removed, firstRun };
 }
 
-/** Ejecución periódica: actualiza como máximo unos pocos borradores por tanda. */
 function sincronizarBorradoresConCatalogo() {
   return draftCatalogSync_(DRAFT_CATALOG_MAX_REFRESH_PER_RUN);
 }
 
-/** Ejecución manual intensiva. Puede relanzarse: solo toca los que sigan desfasados. */
 function sincronizarTodosBorradoresConCatalogo() {
   return draftCatalogSync_(99);
 }
 
-/**
- * Un cambio en Catálogo operativo programa una sincronización diferida ~1 min.
- * Se hace debounce: múltiples ediciones seguidas dejan un único trigger pendiente.
- */
 function alEditarCatalogoOperativo_(event) {
   try {
     if (!event || !event.range) return;
     const range = event.range;
     const sheet = range.getSheet();
-    if (sheet.getName() !== DRAFT_CATALOG_SHEET) return;
-    if (range.getRow() < 2) return;
-    // A:G puede cambiar la identidad, unidad, material, precio o validación.
+    if (sheet.getName() !== DRAFT_CATALOG_SHEET || range.getRow() < 2) return;
     if (range.getColumn() > 7 || range.getLastColumn() < 1) return;
-
     draftCatalogRemoveTriggersByHandler_(DRAFT_CATALOG_SOON_HANDLER);
-    ScriptApp.newTrigger(DRAFT_CATALOG_SOON_HANDLER)
-      .timeBased()
-      .after(60 * 1000)
-      .create();
+    ScriptApp.newTrigger(DRAFT_CATALOG_SOON_HANDLER).timeBased().after(60 * 1000).create();
   } catch (error) {
     console.log(`No se pudo programar sincronización inmediata: ${error}`);
   }
@@ -138,13 +103,13 @@ function draftCatalogSync_(maxRefresh) {
     const unchanged = [];
     const definitive = [];
     const pendingValidation = [];
+    const refreshedWhilePending = [];
     const deferred = [];
     const warnings = [];
     let refreshed = 0;
 
     for (let r = headerIndex + 1; r < shownValues.length; r += 1) {
       if (Date.now() - startedAt > DRAFT_CATALOG_MAX_MS) break;
-
       const shown = shownValues[r];
       const raw = rawValues[r];
       const id = draftClean_(shown[columns[DRAFT_ORDER_FIELDS.id]]);
@@ -163,10 +128,15 @@ function draftCatalogSync_(maxRefresh) {
         continue;
       }
 
-      if (!draftIsTechnicallyValidated_(shown, columns)) {
+      const technicallyValidated = draftIsTechnicallyValidated_(shown, columns);
+      // No crear un borrador nuevo a partir de una lectura dudosa. Sin embargo,
+      // si ya existe un borrador, sí hay que regenerarlo para eliminar residuos
+      // de plantilla y mantenerlo sincronizado con el catálogo.
+      if (!technicallyValidated && !entry.invoiceDraft) {
         pendingValidation.push(id);
         continue;
       }
+      if (!technicallyValidated && entry.invoiceDraft) refreshedWhilePending.push(id);
 
       const data = draftDataFromRow_(shown, raw, columns);
       const lines = draftCatalogLinesForData_(data, catalog);
@@ -179,16 +149,12 @@ function draftCatalogSync_(maxRefresh) {
         syncDraftInvoiceCells_(pedidos, r + 1, columns, "", entry.invoiceDraft.url);
         continue;
       }
-
       if (refreshed >= maxRefresh) {
         deferred.push(id);
         continue;
       }
 
-      const orderFolder = typeof litosOrderFolder_ === "function"
-        ? litosOrderFolder_(targetRoot, id)
-        : targetRoot;
-
+      const orderFolder = typeof litosOrderFolder_ === "function" ? litosOrderFolder_(targetRoot, id) : targetRoot;
       const result = draftCatalogWriteDraft_(data, lines, orderFolder, systemFolder, entry.invoiceDraft || null);
       documents.set(id, { ...entry, invoiceDraft: { fileId: result.file.getId(), url: result.file.getUrl(), name: result.file.getName() } });
       syncDraftInvoiceCells_(pedidos, r + 1, columns, "", result.file.getUrl());
@@ -209,8 +175,9 @@ function draftCatalogSync_(maxRefresh) {
       unchanged,
       definitive,
       pendingValidation,
+      refreshedWhilePending,
       deferred,
-      warnings: warnings.slice(0, 30)
+      warnings: warnings.slice(0, 40)
     };
     console.log(JSON.stringify(result));
     return result;
@@ -219,22 +186,17 @@ function draftCatalogSync_(maxRefresh) {
   }
 }
 
-/**
- * Garantiza que la columna F sea el precio operativo provisional.
- * Si aparece una fila nueva con F vacía, copia el importe de "Precio hist. reciente".
- */
 function draftCatalogPreparePriceSheet_(book) {
   const sheet = book.getSheetByName(DRAFT_CATALOG_SHEET);
   if (!sheet) throw new Error(`No existe la pestaña '${DRAFT_CATALOG_SHEET}'.`);
-
   const lastRow = sheet.getLastRow();
   if (lastRow < 1) return;
   sheet.getRange("F1").setValue("Precio actual PROVISIONAL (€) · REVISAR")
     .setNote("Este precio se usa para albaranes borrador. Revisar/editar; la casilla de validación permite marcarlo como confirmado.");
   sheet.getRange("I1").setValue("Precio histórico reciente");
   sheet.getRange("J1").setValue("Rango histórico depurado");
-
   if (lastRow < 2) return;
+
   const prices = sheet.getRange(2, 6, lastRow - 1, 1).getValues();
   const recent = sheet.getRange(2, 9, lastRow - 1, 1).getDisplayValues();
   let changed = false;
@@ -258,12 +220,10 @@ function draftCatalogLoad_(book) {
   const raw = sheet.getDataRange().getValues();
   const headers = shown[0].map(draftClean_);
   const col = Object.fromEntries(headers.map((name, index) => [name, index]));
-
   const findCol = (...names) => {
     for (const name of names) if (col[name] !== undefined) return col[name];
     return -1;
   };
-
   const idx = {
     canonical: findCol("Ítem canónico"),
     variant: findCol("Variante / detalle"),
