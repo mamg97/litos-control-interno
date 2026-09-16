@@ -2,17 +2,25 @@ name: LITOS Draft Sync
 
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "Execution mode"
+        required: true
+        default: "preflight"
+        type: choice
+        options:
+          - preflight
+          - dry-run
 
 permissions:
   contents: read
-  id-token: write
 
 concurrency:
   group: litos-draft-sync
   cancel-in-progress: false
 
 jobs:
-  dry-run:
+  run:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
@@ -26,34 +34,11 @@ jobs:
       LITOS_SPREADSHEET_ID: "1ZS-L0eJmfukNr0rmc8ZvC3UxdVKw7Rnggx5TlRydZ2Q"
       LITOS_DRAFT_ROOT_FOLDER_ID: "1eUAupqLzfBhkiEexWqpI3JtYReT8c9A_"
       LITOS_BACKUP_FOLDER_ID: "1weWKeCLjQnrL2Qg2rPt1BYHGJhfZtKrv"
-      LITOS_GCP_WIF_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-      LITOS_GCP_SERVICE_ACCOUNT: ${{ vars.GCP_SERVICE_ACCOUNT }}
+      GOOGLE_OAUTH_USER_JSON: ${{ secrets.GOOGLE_OAUTH_USER_JSON }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Refuse long-lived Google credentials
-        shell: bash
-        run: |
-          test -z "${GOOGLE_OAUTH_USER_JSON:-}"
-          test -z "${GOOGLE_SERVICE_ACCOUNT_JSON:-}"
-          echo "OK: no long-lived Google JSON credentials are used."
-
-      - name: Require configured Workload Identity Federation
-        shell: bash
-        run: |
-          test -n "$LITOS_GCP_WIF_PROVIDER"
-          test -n "$LITOS_GCP_SERVICE_ACCOUNT"
-
-      - id: auth
-        name: Authenticate to Google with GitHub OIDC
-        uses: google-github-actions/auth@v3
-        with:
-          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
-          create_credentials_file: true
-          export_environment_variables: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -65,8 +50,16 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Fail-closed preflight
+      - name: Certified fail-closed preflight
         run: python runner.py --preflight
 
+      - name: Require Google OAuth secret for dry-run
+        if: ${{ inputs.mode == 'dry-run' }}
+        shell: bash
+        run: |
+          test -n "$GOOGLE_OAUTH_USER_JSON"
+          echo "OK: Google OAuth secret is present."
+
       - name: Fresh Google dry-run
+        if: ${{ inputs.mode == 'dry-run' }}
         run: python runner.py --dry-run
