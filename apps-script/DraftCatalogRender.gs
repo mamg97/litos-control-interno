@@ -59,9 +59,15 @@ function draftCatalogStandardizeSheet_(sheet) {
   try { sheet.getImages().forEach(image => image.remove()); } catch (error) { /* no images */ }
   try { sheet.getDrawings().forEach(drawing => drawing.remove()); } catch (error) { /* no drawings */ }
 
+  // La plantilla histórica contiene intervalos combinados de tamaños distintos.
+  // breakApart() sobre un intervalo que corta solo parte de una combinación lanza
+  // "Debes seleccionar todas las celdas...". Separamos primero cada combinación
+  // real completa y después reconstruimos únicamente las que queremos conservar.
+  const wholeSheet = sheet.getRange(1, 1, sheet.getMaxRows(), sheet.getMaxColumns());
+  wholeSheet.getMergedRanges().forEach(merged => merged.breakApart());
+
   const mergeText = (a1, text, options = {}) => {
     const range = sheet.getRange(a1);
-    range.breakApart();
     range.merge();
     range.setValue(text).setWrap(true);
     if (options.bold) range.setFontWeight("bold");
