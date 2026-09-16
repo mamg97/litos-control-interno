@@ -1,0 +1,55 @@
+name: Enforce LITOS zero-cost policy
+
+on:
+  push:
+    paths:
+      - '.github/workflows/**'
+      - 'ZERO_COST_POLICY.md'
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+      - 'ZERO_COST_POLICY.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  zero-cost-guard:
+    if: ${{ github.event.repository.private == false }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enforce standard free runner policy
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          allowed = {'ubuntu-latest', 'ubuntu-24.04', 'ubuntu-22.04', 'ubuntu-slim'}
+          failures = []
+          for path in sorted(Path('.github/workflows').glob('*.y*ml')):
+              text = path.read_text(encoding='utf-8')
+              for i, line in enumerate(text.splitlines(), start=1):
+                  m = re.match(r'^\s*runs-on:\s*["\']?([^"\'\s#]+)', line)
+                  if m and m.group(1) not in allowed:
+                      failures.append(f'{path}:{i}: runner no permitido: {m.group(1)}')
+              if 'actions/upload-artifact@' in text:
+                  failures.append(f'{path}: no se permiten artifacts persistentes en LITOS')
+              if 'self-hosted' in text:
+                  failures.append(f'{path}: no se permiten runners self-hosted')
+          if failures:
+              raise SystemExit('\n'.join(failures))
+          print('OK: workflows limitados a runners Ubuntu estándar y sin artifacts persistentes.')
+          PY
+
+      - name: Confirm repository is public
+        env:
+          REPO_PRIVATE: ${{ github.event.repository.private }}
+        run: |
+          test "$REPO_PRIVATE" = "false"
+          echo "OK: repositorio público; runner estándar de Actions permanece en modalidad gratuita."
