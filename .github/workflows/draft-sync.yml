@@ -9,6 +9,9 @@ on:
     paths:
       - 'python_drafts/**'
       - '.github/workflows/draft-sync.yml'
+  schedule:
+    # Roughly every 15 minutes, deliberately offset from :00 to reduce queue delays.
+    - cron: '7,22,37,52 * * * *'
   workflow_dispatch:
     inputs:
       mode:
@@ -68,7 +71,7 @@ jobs:
         run: python runner.py --preflight
 
       - name: Require Google OAuth secret
-        if: ${{ github.event_name == 'workflow_dispatch' && (inputs.mode == 'dry-run' || inputs.mode == 'sync') }}
+        if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && (inputs.mode == 'dry-run' || inputs.mode == 'sync')) }}
         shell: bash
         run: |
           test -n "$GOOGLE_OAUTH_USER_JSON"
@@ -104,6 +107,17 @@ jobs:
 
       - name: Execute guarded cutover sync
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
+        env:
+          LITOS_KILL_SWITCH: "false"
+          LITOS_WRITE_ENABLED: "true"
+        run: python runner.py --sync
+
+      - name: Scheduled sync disabled by kill switch
+        if: ${{ github.event_name == 'schedule' && vars.LITOS_DRAFT_SYNC_KILL == 'true' }}
+        run: echo "Scheduled Python draft sync is disabled by repository variable LITOS_DRAFT_SYNC_KILL=true."
+
+      - name: Execute scheduled production sync
+        if: ${{ github.event_name == 'schedule' && vars.LITOS_DRAFT_SYNC_KILL != 'true' }}
         env:
           LITOS_KILL_SWITCH: "false"
           LITOS_WRITE_ENABLED: "true"
