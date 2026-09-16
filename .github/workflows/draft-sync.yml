@@ -5,13 +5,14 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 concurrency:
   group: litos-draft-sync
   cancel-in-progress: false
 
 jobs:
-  preflight:
+  dry-run:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
@@ -19,16 +20,40 @@ jobs:
         working-directory: python_drafts
     env:
       PYTHONUNBUFFERED: "1"
+      LITOS_FREE_ONLY: "true"
       LITOS_KILL_SWITCH: "true"
       LITOS_WRITE_ENABLED: "false"
       LITOS_SPREADSHEET_ID: "1ZS-L0eJmfukNr0rmc8ZvC3UxdVKw7Rnggx5TlRydZ2Q"
       LITOS_DRAFT_ROOT_FOLDER_ID: "1eUAupqLzfBhkiEexWqpI3JtYReT8c9A_"
       LITOS_BACKUP_FOLDER_ID: "1weWKeCLjQnrL2Qg2rPt1BYHGJhfZtKrv"
-      GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+      LITOS_GCP_WIF_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      LITOS_GCP_SERVICE_ACCOUNT: ${{ vars.GCP_SERVICE_ACCOUNT }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Refuse long-lived Google credentials
+        shell: bash
+        run: |
+          test -z "${GOOGLE_OAUTH_USER_JSON:-}"
+          test -z "${GOOGLE_SERVICE_ACCOUNT_JSON:-}"
+          echo "OK: no long-lived Google JSON credentials are used."
+
+      - name: Require configured Workload Identity Federation
+        shell: bash
+        run: |
+          test -n "$LITOS_GCP_WIF_PROVIDER"
+          test -n "$LITOS_GCP_SERVICE_ACCOUNT"
+
+      - id: auth
+        name: Authenticate to Google with GitHub OIDC
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+          export_environment_variables: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -42,3 +67,6 @@ jobs:
 
       - name: Fail-closed preflight
         run: python runner.py --preflight
+
+      - name: Fresh Google dry-run
+        run: python runner.py --dry-run
