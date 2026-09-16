@@ -1,6 +1,14 @@
 name: LITOS Draft Sync
 
 on:
+  push:
+    paths:
+      - 'python_drafts/**'
+      - '.github/workflows/draft-sync.yml'
+  pull_request:
+    paths:
+      - 'python_drafts/**'
+      - '.github/workflows/draft-sync.yml'
   workflow_dispatch:
     inputs:
       mode:
@@ -54,12 +62,12 @@ jobs:
         run: python runner.py --preflight
 
       - name: Require Google OAuth secret for dry-run
-        if: ${{ inputs.mode == 'dry-run' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run' }}
         shell: bash
         run: |
           test -n "$GOOGLE_OAUTH_USER_JSON"
           echo "OK: Google OAuth secret is present."
 
       - name: Fresh Google dry-run
-        if: ${{ inputs.mode == 'dry-run' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run' }}
         run: python runner.py --dry-run
