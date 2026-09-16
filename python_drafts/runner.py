@@ -29,9 +29,7 @@ class CutoverConfig:
     spreadsheet_id: str
     draft_root_folder_id: str
     backup_folder_id: str
-    google_adc_present: bool
-    workload_identity_provider_present: bool
-    service_account_present: bool
+    google_oauth_user_json_present: bool
 
     @classmethod
     def from_env(cls) -> "CutoverConfig":
@@ -42,9 +40,7 @@ class CutoverConfig:
             spreadsheet_id=os.getenv("LITOS_SPREADSHEET_ID", EXPECTED_SPREADSHEET_ID),
             draft_root_folder_id=os.getenv("LITOS_DRAFT_ROOT_FOLDER_ID", EXPECTED_DRAFT_ROOT_FOLDER_ID),
             backup_folder_id=os.getenv("LITOS_BACKUP_FOLDER_ID", EXPECTED_BACKUP_FOLDER_ID),
-            google_adc_present=bool(os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "").strip()),
-            workload_identity_provider_present=bool(os.getenv("LITOS_GCP_WIF_PROVIDER", "").strip()),
-            service_account_present=bool(os.getenv("LITOS_GCP_SERVICE_ACCOUNT", "").strip()),
+            google_oauth_user_json_present=bool(os.getenv("GOOGLE_OAUTH_USER_JSON", "").strip()),
         )
 
 
@@ -59,9 +55,7 @@ def preflight(cfg: CutoverConfig) -> dict:
         "free_only_policy_enabled": cfg.free_only is True,
         "kill_switch_present": isinstance(cfg.kill_switch, bool),
         "write_guard_consistent": not (cfg.kill_switch and cfg.write_enabled),
-        "google_adc_present": cfg.google_adc_present,
-        "wif_provider_declared": cfg.workload_identity_provider_present,
-        "service_account_declared": cfg.service_account_present,
+        "google_user_identity_present": cfg.google_oauth_user_json_present,
     }
     ready_for_write = (
         all(checks.values())
@@ -80,9 +74,7 @@ def preflight(cfg: CutoverConfig) -> dict:
             "spreadsheet_id": cfg.spreadsheet_id,
             "draft_root_folder_id": cfg.draft_root_folder_id,
             "backup_folder_id": cfg.backup_folder_id,
-            "google_adc_present": cfg.google_adc_present,
-            "workload_identity_provider_present": cfg.workload_identity_provider_present,
-            "service_account_present": cfg.service_account_present,
+            "google_oauth_user_json_present": cfg.google_oauth_user_json_present,
         },
         "checks": checks,
         "ready_for_write": ready_for_write,
@@ -120,8 +112,8 @@ def main() -> int:
         return 0 if immutable_ok else 2
 
     if mode == "--dry-run":
-        if not (cfg.google_adc_present and cfg.workload_identity_provider_present and cfg.service_account_present):
-            print("DRY RUN BLOCKED: keyless Google Workload Identity Federation is not ready.", file=sys.stderr)
+        if not cfg.google_oauth_user_json_present:
+            print("DRY RUN BLOCKED: GOOGLE_OAUTH_USER_JSON is missing.", file=sys.stderr)
             return 3
         try:
             build_plan, summarize_plan, _ = _planner_api()
@@ -148,7 +140,7 @@ def main() -> int:
 
     print(json.dumps(result, ensure_ascii=False, indent=2))
     if not result["ready_for_write"]:
-        print("CUTOVER BLOCKED: kill switch / write flag / Google WIF identity / pins not ready.", file=sys.stderr)
+        print("CUTOVER BLOCKED: kill switch / write flag / Google user identity / pins not ready.", file=sys.stderr)
         return 3
 
     try:
