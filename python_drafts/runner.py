@@ -7,7 +7,10 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-from .runtime import runtime_contract
+try:
+    from .runtime import runtime_contract
+except ImportError:
+    from runtime import runtime_contract
 
 EXPECTED_CERTIFIED_RUNTIME_SHA = "5fd37023b10b61a1b26bc8573bf809c26bfce4001e98e8673d1de7328d8c0088"
 EXPECTED_SPREADSHEET_ID = "1ZS-L0eJmfukNr0rmc8ZvC3UxdVKw7Rnggx5TlRydZ2Q"
@@ -71,20 +74,16 @@ def main() -> int:
 
     mode = (sys.argv[1] if len(sys.argv) > 1 else "--preflight").strip()
     if mode == "--preflight":
-        # A disabled deployment is healthy even before server credentials are installed.
         return 0 if result["checks"]["certified_runtime_sha_pinned"] else 2
 
     if mode != "--sync":
         print(f"Unknown mode: {mode}", file=sys.stderr)
         return 64
 
-    # Fail closed: production sync may only start once all cutover guards are green.
     if not result["ready_for_write"]:
         print("CUTOVER BLOCKED: kill switch / write flag / Google server identity not ready.", file=sys.stderr)
         return 3
 
-    # Intentionally blocked until the exact certified M2B11 runtime blob is committed and
-    # its end-to-end write/rollback executor is reviewed in this branch.
     print("CUTOVER BLOCKED: operational sync implementation not armed yet.", file=sys.stderr)
     return 4
 
