@@ -192,23 +192,17 @@ function draftCatalogPreparePriceSheet_(book) {
   const lastRow = sheet.getLastRow();
   if (lastRow < 1) return;
   sheet.getRange("F1").setValue("Precio actual PROVISIONAL (€) · REVISAR")
-    .setNote("Este precio se usa para albaranes borrador. Revisar/editar; la casilla de validación permite marcarlo como confirmado.");
+    .setNote("Este precio se usa para albaranes borrador. Revisar/editar; una celda vacía se respeta como 'sin precio automático'.");
   sheet.getRange("I1").setValue("Precio histórico reciente");
   sheet.getRange("J1").setValue("Rango histórico depurado");
   if (lastRow < 2) return;
 
-  const prices = sheet.getRange(2, 6, lastRow - 1, 1).getValues();
-  const recent = sheet.getRange(2, 9, lastRow - 1, 1).getDisplayValues();
-  let changed = false;
-  for (let i = 0; i < prices.length; i += 1) {
-    if (draftCatalogNumber_(prices[i][0]) !== null) continue;
-    const match = draftClean_(recent[i][0]).match(/^([0-9]+(?:[.,][0-9]+)?)/);
-    if (!match) continue;
-    prices[i][0] = Number(match[1].replace(",", "."));
-    changed = true;
-  }
-  if (changed) sheet.getRange(2, 6, prices.length, 1).setValues(prices);
-  sheet.getRange(2, 6, Math.max(1, lastRow - 1), 1)
+  // IMPORTANTE: nunca rellenar automáticamente F desde el histórico.
+  // La columna F es el precio operativo controlado por el taller. Si el padre
+  // borra un precio o dejamos una tarifa vacía por prudencia, el sincronizador
+  // debe respetarlo y convertir el concepto en REVISAR PRECIO, no restaurar
+  // silenciosamente una referencia histórica.
+  sheet.getRange(2, 6, lastRow - 1, 1)
     .setNumberFormat('#,##0.00 [$€-es-ES]')
     .setBackground("#fff2cc");
 }
