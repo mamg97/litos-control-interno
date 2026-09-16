@@ -19,6 +19,12 @@ on:
         options:
           - preflight
           - dry-run
+          - sync
+      confirm:
+        description: "For sync only: type CUTOVER"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: read
@@ -61,8 +67,8 @@ jobs:
       - name: Certified fail-closed preflight
         run: python runner.py --preflight
 
-      - name: Require Google OAuth secret for dry-run
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run' }}
+      - name: Require Google OAuth secret
+        if: ${{ github.event_name == 'workflow_dispatch' && (inputs.mode == 'dry-run' || inputs.mode == 'sync') }}
         shell: bash
         run: |
           test -n "$GOOGLE_OAUTH_USER_JSON"
@@ -71,3 +77,34 @@ jobs:
       - name: Fresh Google dry-run
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run' }}
         run: python runner.py --dry-run
+
+      - name: Require explicit cutover confirmation
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
+        env:
+          LITOS_SYNC_CONFIRM: ${{ inputs.confirm }}
+        shell: bash
+        run: |
+          test "$LITOS_SYNC_CONFIRM" = "CUTOVER"
+          echo "OK: explicit cutover confirmation received."
+
+      - name: Fresh zero-mutation cutover gate
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          from google_user_auth import build_user_services
+          from executor import build_plan, summarize_plan
+          services = build_user_services()
+          summary = summarize_plan(build_plan(services))
+          print(summary)
+          if summary.get("mutable") != 0:
+              raise SystemExit(f"CUTOVER BLOCKED: expected 0 mutable actions, got {summary}")
+          print("OK: fresh plan has 0 mutable actions; first live cutover run is a no-op.")
+          PY
+
+      - name: Execute guarded cutover sync
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
+        env:
+          LITOS_KILL_SWITCH: "false"
+          LITOS_WRITE_ENABLED: "true"
+        run: python runner.py --sync
