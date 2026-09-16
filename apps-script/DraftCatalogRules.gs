@@ -16,7 +16,7 @@ function draftCatalogLinesForData_(data, catalog) {
     const entry = draftCatalogLookup_(catalog, canonical, variant, options.units || ["ud", "trabajo", "m", "m²"], wantedMaterial);
     const unit = entry ? entry.unit : (options.units && options.units[0]) || "ud";
     let quantity = options.quantity === undefined ? 1 : options.quantity;
-    if (options.quantity === undefined && entry && [draftNormalize_("m"), draftNormalize_("m²")].includes(entry.unitN)) quantity = null;
+    if (options.quantity === undefined && [draftNormalize_("m"), draftNormalize_("m²")].includes(draftNormalize_(unit))) quantity = null;
     const line = {
       canonical,
       variant,
@@ -71,13 +71,14 @@ function draftCatalogLinesForData_(data, catalog) {
     });
   }
 
-  // Elementos estructurales que suelen venir en la misma frase que repisa/cornisa.
+  // Elementos estructurales que suelen venir agrupados con repisa/cornisa.
   if (/\btabica\b|\btacos?\b/.test(specsN)) {
-    const componentMaterial = draftCatalogComponentMaterial_(specs, "tabica", material);
+    const componentKey = /\btabica\b/.test(specsN) ? "tabica" : "tacos";
+    const componentMaterial = draftCatalogComponentMaterial_(specs, componentKey, material);
     add("TABICA / TACOS", {
-      units: ["ud", "trabajo"],
+      units: ["m²", "trabajo", "ud"],
       material: componentMaterial,
-      detail: draftCatalogComponentText_(specs, "tabica") || draftCatalogMaterialLabel_(componentMaterial)
+      detail: draftCatalogComponentText_(specs, componentKey) || draftCatalogMaterialLabel_(componentMaterial)
     });
   }
 
@@ -182,6 +183,7 @@ function draftCatalogComponentText_(specs, component) {
     cornisa: "cornisa",
     coronacion: "coronaci[oó]n",
     tabica: "tabica(?:\\/tacos)?",
+    tacos: "tacos?",
     imagen: "imagen",
     jardinera: "jardinera",
     florero: "florero"
@@ -189,14 +191,29 @@ function draftCatalogComponentText_(specs, component) {
   const key = names[component] || component;
   const match = raw.match(new RegExp(`\\b${key}\\b\\s*:?\\s*([^.;]*)`, "i"));
   if (!match) return "";
-  const head = component === "imagen" ? "" : "";
-  return draftClean_(`${head}${match[1]}`).replace(/^[-,:\s]+/, "");
+
+  let detail = draftClean_(match[1]).replace(/^[-,:\s]+/, "");
+  const stoneComponents = new Set(["corte", "repisa", "cornisa", "coronacion", "tabica", "tacos"]);
+  if (stoneComponents.has(component)) {
+    // En frases como "Repisa, tabica/tacos y cornisa AB" el texto posterior
+    // pertenece a componentes distintos. No debe derramarse de una línea a otra.
+    if (/^(?:y\s+)?(?:repisa|tabica(?:\/tacos)?|tacos?|cornisa|coronaci[oó]n|garras?|imagen|jardinera|florero|inscripci[oó]n)\b/i.test(detail)) return "";
+    const boundary = detail.search(/(?:,|\by\b)\s*(?:repisa|tabica(?:\/tacos)?|tacos?|cornisa|coronaci[oó]n|garras?|imagen|jardinera|florero|inscripci[oó]n)\b/i);
+    if (boundary >= 0) detail = detail.slice(0, boundary);
+    detail = draftClean_(detail).replace(/[,:\s]+$/, "");
+  }
+  return detail;
 }
 
 function draftCatalogComponentMaterial_(specs, component, fallback) {
   const raw = draftClean_(specs);
   const normalized = draftNormalize_(raw);
-  const key = draftNormalize_(component);
+  const aliases = {
+    coronacion: "coronacion",
+    tabica: "tabica",
+    tacos: "tacos"
+  };
+  const key = draftNormalize_(aliases[component] || component);
   const index = normalized.indexOf(key);
   const block = index >= 0 ? normalized.slice(index, index + 110) : normalized;
 
