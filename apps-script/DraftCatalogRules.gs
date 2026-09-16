@@ -16,9 +16,7 @@ function draftCatalogLinesForData_(data, catalog) {
     const entry = draftCatalogLookup_(catalog, canonical, variant, options.units || ["ud", "trabajo", "m", "m²"], wantedMaterial);
     const unit = entry ? entry.unit : (options.units && options.units[0]) || "ud";
     let quantity = options.quantity === undefined ? 1 : options.quantity;
-    if (options.quantity === undefined && entry && [draftNormalize_("m"), draftNormalize_("m²")].includes(entry.unitN)) {
-      quantity = null;
-    }
+    if (options.quantity === undefined && entry && [draftNormalize_("m"), draftNormalize_("m²")].includes(entry.unitN)) quantity = null;
     const line = {
       canonical,
       variant,
@@ -30,7 +28,7 @@ function draftCatalogLinesForData_(data, catalog) {
       quantity,
       kind: options.kind || "unit"
     };
-    const key = [canonical, variant, unit, wantedMaterial].map(draftNormalize_).join("|");
+    const key = [canonical, variant, unit, wantedMaterial, line.detail].map(draftNormalize_).join("|");
     if (seen.has(key)) return;
     seen.add(key);
     lines.push(line);
@@ -44,23 +42,52 @@ function draftCatalogLinesForData_(data, catalog) {
       add("CORTE", { units: ["ud", "trabajo"], material, quantity: 1, detail: material });
     }
   } else if (/\bcorte\b|\bcortar\b/.test(specsN)) {
-    add("CORTE", { units: ["ud", "trabajo", "m²"], material });
+    const cutMaterial = draftCatalogComponentMaterial_(specs, "corte", material);
+    add("CORTE", { units: ["ud", "trabajo", "m²"], material: cutMaterial, detail: draftCatalogComponentText_(specs, "corte") || cutMaterial });
   }
 
   if (/\brepisa\b/.test(specsN)) {
-    add("REPISA", { units: ["ud", "m", "m²"], material, detail: draftOwnOrMaterial_(specs, "repisa", material) });
+    const componentMaterial = draftCatalogComponentMaterial_(specs, "repisa", material);
+    add("REPISA", {
+      units: ["m²", "m", "ud"],
+      material: componentMaterial,
+      detail: draftCatalogComponentText_(specs, "repisa") || draftCatalogMaterialLabel_(componentMaterial)
+    });
   }
   if (/\bcornisa\b/.test(specsN)) {
-    add("CORNISA", { units: ["ud", "m", "m²"], material, detail: draftOwnOrMaterial_(specs, "cornisa", material) });
+    const componentMaterial = draftCatalogComponentMaterial_(specs, "cornisa", material);
+    add("CORNISA", {
+      units: ["m²", "m", "ud"],
+      material: componentMaterial,
+      detail: draftCatalogComponentText_(specs, "cornisa") || draftCatalogMaterialLabel_(componentMaterial)
+    });
   }
   if (/\bcoronacion\b/.test(specsN)) {
-    add("CORONACIÓN", { units: ["ud", "m²"], material, detail: draftOwnOrMaterial_(specs, "coronación", material) });
+    const componentMaterial = draftCatalogComponentMaterial_(specs, "coronacion", material);
+    add("CORONACIÓN", {
+      units: ["m²", "ud"],
+      material: componentMaterial,
+      detail: draftCatalogComponentText_(specs, "coronacion") || draftCatalogMaterialLabel_(componentMaterial)
+    });
+  }
+
+  // Elementos estructurales que suelen venir en la misma frase que repisa/cornisa.
+  if (/\btabica\b|\btacos?\b/.test(specsN)) {
+    const componentMaterial = draftCatalogComponentMaterial_(specs, "tabica", material);
+    add("TABICA / TACOS", {
+      units: ["ud", "trabajo"],
+      material: componentMaterial,
+      detail: draftCatalogComponentText_(specs, "tabica") || draftCatalogMaterialLabel_(componentMaterial)
+    });
   }
 
   const structural = draftStructural_(specs);
   if (structural && /columna|pilastra/i.test(structural.label)) {
     add("COLUMNA / PILASTRA", { units: ["ud", "trabajo"], material, detail: structural.detail });
   }
+
+  const garras = specsN.match(/\bgarras?\s+de\s+([0-9]+)/);
+  if (garras) add("GARRAS", { units: ["ud"], material: "", quantity: Number(garras[1]), detail: `DE ${garras[1]}` });
 
   const cross = specsN.match(/\b(cruz|crucificado)\b[^.;]*/);
   if (cross) {
@@ -70,18 +97,21 @@ function draftCatalogLinesForData_(data, catalog) {
   }
 
   if (/\bimagen\b|\bfoto\b|\bfotografia\b/.test(specsN)) {
-    const variant = /grab/.test(specsN) ? "GRABADO" : "";
-    add("IMAGEN / FOTO", { variant, units: ["ud"], material: "", detail: variant || "IMAGEN / FOTO" });
+    const detail = draftCatalogComponentText_(specs, "imagen") || "IMAGEN / FOTO";
+    const variant = /grab/.test(draftNormalize_(detail)) ? "GRABADO" : "";
+    add("IMAGEN / FOTO", { variant, units: ["ud"], material: "", detail });
   }
 
-  const inscriptionDetail = draftInscription_(specs);
+  const inscriptionDetail = draftCatalogInscriptionDetail_(specs);
   if (inscriptionDetail || data.memorial || /inscripci/.test(specsN)) {
     const variant = draftCatalogInscriptionVariant_(`${inscriptionDetail} ${specs}`);
     add("INSCRIPCIÓN", { variant, units: ["ud"], material: "", detail: inscriptionDetail || variant || "REVISAR TIPO" });
   }
 
-  if (/\bjardinera\b/.test(specsN)) add("JARDINERA", { units: ["ud"], material: "" });
-  if (/\bflorero\b|\bjarron\b/.test(specsN)) add("FLORERO", { units: ["ud"], material: "" });
+  if (/\bjardinera\b/.test(specsN)) {
+    add("JARDINERA", { units: ["ud"], material: "", detail: draftCatalogComponentText_(specs, "jardinera") || "JARDINERA" });
+  }
+  if (/\bflorero\b|\bjarron\b/.test(specsN)) add("FLORERO", { units: ["ud"], material: "", detail: draftCatalogComponentText_(specs, "florero") || "FLORERO" });
   if (/\bfloreo\b/.test(specsN)) add("FLOREO", { units: ["ud"], material: "" });
   if (/\bcenefa\b/.test(specsN)) add("CENEFA", { units: ["ud"], material: "" });
   if (/borrar\s+cartela/.test(specsN)) add("BORRAR CARTELA", { units: ["ud"], material: "" });
@@ -134,7 +164,6 @@ function draftCatalogLookup_(catalog, canonical, variant, units, material) {
     const unitIndex = unitOrder.indexOf(entry.unitN);
     if (unitIndex >= 0) score += 20 - unitIndex * 3;
     else score -= 10;
-
     if (entry.validated) score += 2;
     if (score > bestScore) {
       best = entry;
@@ -142,6 +171,54 @@ function draftCatalogLookup_(catalog, canonical, variant, units, material) {
     }
   });
   return best;
+}
+
+function draftCatalogComponentText_(specs, component) {
+  const raw = draftClean_(specs);
+  if (!raw) return "";
+  const names = {
+    corte: "corte",
+    repisa: "repisa",
+    cornisa: "cornisa",
+    coronacion: "coronaci[oó]n",
+    tabica: "tabica(?:\\/tacos)?",
+    imagen: "imagen",
+    jardinera: "jardinera",
+    florero: "florero"
+  };
+  const key = names[component] || component;
+  const match = raw.match(new RegExp(`\\b${key}\\b\\s*:?\\s*([^.;]*)`, "i"));
+  if (!match) return "";
+  const head = component === "imagen" ? "" : "";
+  return draftClean_(`${head}${match[1]}`).replace(/^[-,:\s]+/, "");
+}
+
+function draftCatalogComponentMaterial_(specs, component, fallback) {
+  const raw = draftClean_(specs);
+  const normalized = draftNormalize_(raw);
+  const key = draftNormalize_(component);
+  const index = normalized.indexOf(key);
+  const block = index >= 0 ? normalized.slice(index, index + 110) : normalized;
+
+  if (/\bsuy[oa]s?\b/.test(block)) return "MATERIAL SUYO";
+  if (/\b(ab|absoluto|negro absoluto)\b/.test(block)) return "NEGRO ABSOLUTO";
+  if (/\b(sudafrica|sud africa)\b/.test(block)) return "NEGRO SUDÁFRICA";
+  if (/\b(italia|italiano)\b/.test(block)) return "MÁRMOL ITALIANO";
+  if (/\b(champan|champagne)\b/.test(block)) return "BLANCO CHAMPÁN";
+  if (/\b(tezal)\b/.test(block)) return "NEGRO TEZAL";
+  if (/\b(blanco|bl|macael)\b/.test(block)) return "BLANCO MACAEL";
+  return fallback;
+}
+
+function draftCatalogMaterialLabel_(material) {
+  return material === "MATERIAL SUYO" ? "MATERIAL SUYO" : material;
+}
+
+function draftCatalogInscriptionDetail_(specs) {
+  const raw = draftClean_(specs);
+  let match = raw.match(/inscripci[oó]n\s*:\s*([^.;]*)/i);
+  if (!match) match = raw.match(/inscripci[oó]n\s+([^.;]*)/i);
+  return match ? draftClean_(match[1]).toUpperCase() : "";
 }
 
 function draftCatalogMaterial_(value) {
@@ -160,7 +237,7 @@ function draftCatalogMaterial_(value) {
   if (text.includes("verde oliva")) return "VERDE OLIVA";
   if (text.includes("labrador")) return "LABRADOR";
   if (text.includes("crema marfil")) return "CREMA MARFIL";
-  if (text.includes("suyo")) return "MATERIAL SUYO";
+  if (text.includes("suyo") || text.includes("piedra existente")) return "MATERIAL SUYO";
   return raw.toUpperCase();
 }
 
@@ -175,6 +252,7 @@ function draftCatalogInscriptionVariant_(value) {
   if (/cataneo/.test(text)) variants.push("CATANEO");
   if (/redonda/.test(text)) variants.push("REDONDA");
   if (/gotica/.test(text)) variants.push("GÓTICA");
+  if (/laser|láser/.test(text)) variants.push("LÁSER");
   if (variants.includes("RELIEVE") && variants.includes("SEGÚN SUYA")) return "RELIEVE + SEGÚN SUYA";
   return variants[0] || "";
 }
