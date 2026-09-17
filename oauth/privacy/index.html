@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Política de Privacidad · LITOS Control Interno</title>
+  <meta name="description" content="Política de privacidad de LITOS Control Interno para el uso de datos de Google.">
+  <style>
+    :root { color-scheme: light dark; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { margin: 0; background: Canvas; color: CanvasText; }
+    main { max-width: 820px; margin: 0 auto; padding: 56px 24px 80px; line-height: 1.65; }
+    h1 { font-size: clamp(2rem, 5vw, 3rem); }
+    h2 { margin-top: 2rem; }
+    .muted { opacity: .72; }
+    a { color: LinkText; }
+  </style>
+</head>
+<body>
+  <main>
+    <p><a href="../">← LITOS Control Interno</a></p>
+    <h1>Política de Privacidad</h1>
+    <p class="muted">Última actualización: 17 de septiembre de 2026.</p>
+
+    <p>LITOS Control Interno es una herramienta privada destinada a automatizar tareas operativas de un pequeño taller. No es un servicio destinado al público general.</p>
+
+    <h2>Datos de Google a los que puede acceder</h2>
+    <p>Cuando un usuario autoriza LITOS mediante Google OAuth, la aplicación puede acceder, según los permisos concedidos, a Gmail, Google Drive y Google Sheets. El acceso se utiliza únicamente para los procesos internos expresamente configurados: localizar correos concretos relacionados con pedidos, organizar sus archivos en Drive, mantener registros operativos en Sheets y procesar fichas de trabajo.</p>
+
+    <h2>Cómo se utilizan los datos</h2>
+    <p>Los datos obtenidos de Google se utilizan exclusivamente para ejecutar esas funciones operativas. Determinadas imágenes o documentos de fichas pueden enviarse a la API de Google Gemini para extraer información estructurada. Cuando la confianza de la lectura automática no es suficiente, el resultado se deja para revisión humana.</p>
+
+    <h2>Almacenamiento y conservación</h2>
+    <p>Los documentos y registros operativos permanecen principalmente en las cuentas de Google autorizadas, en Google Drive y Google Sheets. Las automatizaciones se ejecutan mediante GitHub Actions en entornos temporales. El diseño evita almacenar el contenido bruto de correos o documentos en el repositorio público y evita imprimir ese contenido en los registros de ejecución.</p>
+    <p>Los datos operativos creados o actualizados en Drive o Sheets se conservan hasta que el responsable del sistema los elimina conforme a sus necesidades internas. Las credenciales OAuth se almacenan como secretos privados de GitHub y pueden revocarse o eliminarse cuando dejen de ser necesarias.</p>
+
+    <h2>Compartición de datos</h2>
+    <p>LITOS no vende datos de usuarios, no los utiliza para publicidad y no los comparte con terceros para fines comerciales. Los datos solo se transmiten a los servicios técnicos necesarios para ejecutar la funcionalidad descrita, principalmente servicios de Google y la infraestructura temporal de GitHub Actions.</p>
+
+    <h2>Uso limitado de datos de Google</h2>
+    <p>El uso de información recibida de las APIs de Google se limita a proporcionar y mantener las funciones de LITOS descritas en esta política y se realiza conforme a los requisitos aplicables de uso limitado de los datos de usuario de Google.</p>
+
+    <h2>Control del usuario</h2>
+    <p>El usuario puede revocar en cualquier momento el acceso concedido a LITOS desde la configuración de seguridad de su Cuenta de Google. La revocación impide que las automatizaciones obtengan nuevos datos mediante esa autorización, aunque no elimina automáticamente documentos o registros previamente creados en Drive o Sheets.</p>
+
+    <h2>Contacto</h2>
+    <p>Para cuestiones relacionadas con privacidad o consentimiento puede utilizarse la dirección de asistencia indicada en la pantalla de consentimiento OAuth de LITOS Control Interno.</p>
+  </main>
+</body>
+</html>
