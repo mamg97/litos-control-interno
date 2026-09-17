@@ -7,6 +7,7 @@ import re
 from typing import Callable
 
 import executor
+from client_header import CUSTOMER_PROFILE_VERSION, apply_client_header
 from corporate_style import LOGO_SHA256, STYLE_VERSION, apply_corporate_a4
 from google_user_auth import build_user_services
 
@@ -34,10 +35,12 @@ def _activate_corporate_style(order_id: str) -> None:
         if not isinstance(raw_bytes, (bytes, bytearray)) or not raw_bytes:
             raise RuntimeError("Semantic draft builder returned no XLSX bytes")
         styled = apply_corporate_a4(bytes(raw_bytes))
+        styled = apply_client_header(styled)
         out = dict(target)
         out["xlsx_bytes"] = styled
         out["style_version"] = STYLE_VERSION
         out["logo_sha256"] = LOGO_SHA256
+        out["customer_profile_version"] = CUSTOMER_PROFILE_VERSION
         return out
 
     executor._scope_rows = scoped_rows
@@ -65,6 +68,7 @@ def dry_run(order_id: str) -> dict:
         "order": order_id,
         "style_version": STYLE_VERSION,
         "logo_sha256": LOGO_SHA256,
+        "customer_profile_version": CUSTOMER_PROFILE_VERSION,
         "action": item.get("action"),
         "mutable": summary.get("mutable"),
         "write_operations": 0,
@@ -94,6 +98,7 @@ def sync(order_id: str) -> dict:
         "order": order_id,
         "style_version": STYLE_VERSION,
         "logo_sha256": LOGO_SHA256,
+        "customer_profile_version": CUSTOMER_PROFILE_VERSION,
         "sync": outcome,
     }
 
