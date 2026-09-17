@@ -126,7 +126,13 @@ jobs:
         env:
           LITOS_ORGANIZE_KILL_SWITCH: "false"
           LITOS_ORGANIZE_WRITE_ENABLED: "true"
-        run: python python_organize/organize.py --sync --max-moves 120
+        shell: bash
+        run: |
+          set -euo pipefail
+          for batch in 1 2 3 4 5; do
+            echo "M5 manual batch ${batch}/5"
+            python python_organize/organize.py --sync --max-moves 120
+          done
 
       - name: Scheduled sync blocked unless explicitly enabled
         if: ${{ github.event_name == 'schedule' && vars.LITOS_ORGANIZE_KILL_SWITCH != 'false' }}
@@ -136,7 +142,13 @@ jobs:
         if: ${{ github.event_name == 'schedule' && vars.LITOS_ORGANIZE_KILL_SWITCH == 'false' }}
         env:
           LITOS_ORGANIZE_WRITE_ENABLED: "true"
-        run: python python_organize/organize.py --sync --max-moves 120
+        shell: bash
+        run: |
+          set -euo pipefail
+          for batch in 1 2 3 4 5; do
+            echo "M5 scheduled batch ${batch}/5"
+            python python_organize/organize.py --sync --max-moves 120
+          done
 
       - name: Post-sync read-only verification
         if: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'sync') || (github.event_name == 'schedule' && vars.LITOS_ORGANIZE_KILL_SWITCH == 'false') }}
