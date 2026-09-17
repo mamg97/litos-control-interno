@@ -10,7 +10,13 @@ import sync as base
 
 TRANSIENT_CODES = {429, 500, 502, 503, 504}
 PER_MODEL_ATTEMPTS = 2
-FALLBACK_MODELS = ("gemini-3.7-flash", "gemini-3.6-flash")
+# Final fallback uses Flash-Lite: stable, multimodal, structured-output capable,
+# and currently available on the Gemini API Free Tier.
+FALLBACK_MODELS = (
+    "gemini-3.7-flash",
+    "gemini-3.6-flash",
+    "gemini-3.5-flash-lite",
+)
 
 
 def _sanitize_error(exc: Exception) -> str:
@@ -43,15 +49,16 @@ def _model_chain() -> list[str]:
 def _gemini_read_json_schema(file_bytes: bytes, mime: str) -> tuple[dict, dict]:
     """Read one handwriting file with bounded transient retry and free fallbacks.
 
-    The primary model is followed by stable Flash fallbacks that support the
-    same multimodal/structured-output contract. Permanent failures stop
-    immediately; only 429/5xx failures trigger retry/fallback.
+    The primary model is followed by stable Flash/Flash-Lite fallbacks that
+    support the same multimodal/structured-output contract. Permanent failures
+    stop immediately; only 429/5xx failures trigger retry/fallback.
     """
     client = base.genai.Client()
     total_attempt = 0
     last_exc: Exception | None = None
+    chain = _model_chain()
 
-    for model_index, model in enumerate(_model_chain()):
+    for model_index, model in enumerate(chain):
         for model_attempt in range(1, PER_MODEL_ATTEMPTS + 1):
             total_attempt += 1
             try:
@@ -103,8 +110,8 @@ def _gemini_read_json_schema(file_bytes: bytes, mime: str) -> tuple[dict, dict]:
                     time.sleep(2)
                     continue
 
-                if model_index < len(_model_chain()) - 1:
-                    diagnostic["next_model"] = _model_chain()[model_index + 1]
+                if model_index < len(chain) - 1:
+                    diagnostic["next_model"] = chain[model_index + 1]
                     print("HANDWRITING_GEMINI_MODEL_FALLBACK")
                     print(json.dumps(diagnostic, ensure_ascii=False, sort_keys=True))
                     time.sleep(1)
