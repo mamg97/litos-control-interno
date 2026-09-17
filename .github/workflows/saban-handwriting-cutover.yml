@@ -11,6 +11,9 @@ on:
       - 'python_saban/**'
       - 'python_handwriting/**'
       - '.github/workflows/saban-handwriting-cutover.yml'
+  schedule:
+    - cron: '7 7,11,15,19 * * *'
+      timezone: 'Europe/Madrid'
   workflow_dispatch:
     inputs:
       mode:
@@ -38,7 +41,7 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     env:
       PYTHONUNBUFFERED: "1"
       LITOS_FREE_ONLY: "true"
@@ -80,7 +83,7 @@ jobs:
           (cd python_handwriting && python runner.py --preflight)
 
       - name: Require private credentials
-        if: ${{ github.event_name == 'workflow_dispatch' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
         shell: bash
         run: |
           test -n "$GOOGLE_OAUTH_SABAN_JSON"
@@ -134,15 +137,21 @@ jobs:
           echo "OK: M3+M4 full sync explicitly confirmed."
 
       - name: M3 hardened production sync
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
+        if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'sync') }}
         working-directory: python_saban
         env:
           LITOS_SABAN_WRITE_ENABLED: "true"
         run: python intake_sync_safe.py
 
       - name: M4 hardened production sync
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
+        if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'sync') }}
         working-directory: python_handwriting
         env:
           LITOS_HANDWRITING_WRITE_ENABLED: "true"
         run: python sync_safe.py --max-items 4
+
+      - name: Post-sync read-only verification
+        if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'sync') }}
+        run: |
+          (cd python_saban && python runner.py --dry-run)
+          (cd python_handwriting && python runner.py --dry-run)
