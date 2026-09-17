@@ -112,15 +112,6 @@
     line-height: 1.28;
   }
 
-  .kpi-grid .balance-kpi {
-    grid-column: 1 / -1;
-    min-height: 88px;
-  }
-
-  .kpi-grid .balance-kpi .kpi-value {
-    font-size: 1.25rem;
-  }
-
   .panel {
     border-radius: 12px;
   }
