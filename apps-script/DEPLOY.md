@@ -1,8 +1,14 @@
-# Despliegue seguro de LITOS Apps Script
+# LITOS Apps Script — LEGACY / NO REINSTALAR TRIGGERS
 
-Este directorio contiene el backend que alimenta el dashboard y el generador de albaranes/facturas borrador.
+> **Estado de migración (2026-09-17):** este documento se conserva únicamente como referencia de recuperación histórica. La producción se está retirando de Apps Script y las funciones principales ya tienen reemplazo Python + GitHub Actions. **No ejecutar instaladores de triggers de este documento** (`installSabanMailTriggers`, `installOrganizeJobFoldersTrigger`, `installDraftInvoiceTrigger`, `installAlbaranSyncTrigger` o `instalarSincronizacionBorradoresCatalogo`) salvo una recuperación deliberada y controlada.
+>
+> El dashboard GitHub Pages ya se despliega con un feed estático generado por Python y no necesita el Web App de `Code.gs` en tiempo de ejecución. Consultar `MIGRATION_STATUS.md` antes de cualquier acción sobre Apps Script.
 
-## Archivos que deben existir en el proyecto Apps Script vinculado a `PEDIDOS M.S.`
+## Referencia histórica de despliegue
+
+Este directorio contiene el backend Apps Script legado que alimentaba el dashboard y varios automatismos del taller.
+
+## Archivos que existían en el proyecto Apps Script vinculado a `PEDIDOS M.S.`
 
 - `Code.gs`
 - `DraftInvoices.gs`
@@ -10,7 +16,7 @@ Este directorio contiene el backend que alimenta el dashboard y el generador de 
 - `HandwrittenReadings.gs`
 - `appsscript.json`
 
-## Flujo seguro de nuevos pedidos por correo
+## Flujo histórico de nuevos pedidos por correo
 
 1. En **Propiedades del script**, crear `SABAN_ALLOWED_SENDER` con el único
    remitente autorizado. No se guarda esa dirección en el repositorio.
@@ -29,7 +35,7 @@ Este directorio contiene el backend que alimenta el dashboard y el generador de 
    Los casos dudosos quedan en revisión y pueden marcarse como `Validado` para
    aplicar después la corrección mediante `aplicarLecturasValidadas`.
 
-## Organización de archivos de cada año
+## Organización histórica de archivos de cada año
 
 `organizarArchivosPorPedido` crea, dentro de cada año, una carpeta por ID de
 trabajo y mueve ahí únicamente archivos cuyo nombre tenga un único ID de cuatro
@@ -38,23 +44,23 @@ trabaja por lotes y conserva los mismos enlaces de Drive.
 
 - Ejecutarla varias veces hasta que devuelva `pending: 0` para ordenar el
   histórico inicial.
-- Ejecutar `installOrganizeJobFoldersTrigger` una sola vez para una pasada
-  nocturna. Los nuevos adjuntos de correo ya se guardan directamente en la
-  subcarpeta del pedido.
+- El antiguo `installOrganizeJobFoldersTrigger` instalaba una pasada nocturna.
+  **No reinstalarlo durante la migración.**
 
-## Primera activación del generador de borradores
+## Activación histórica del generador de borradores
 
 1. Abrir `PEDIDOS M.S.` en Google Sheets.
 2. Abrir **Extensiones > Apps Script**.
-3. Sincronizar el contenido de los tres archivos anteriores con este directorio del repositorio.
+3. Sincronizar el contenido de los archivos Apps Script con este directorio del repositorio.
 4. En Configuración del proyecto, activar **Mostrar el archivo de manifiesto appsscript.json** si no aparece.
 5. Ejecutar manualmente `ensureCurrentQuarterDraftInvoices` una vez y aceptar los permisos solicitados.
    - La función solo considera pedidos cuya recepción cae en el trimestre actual.
    - Si ya existe una factura/albarán XLS/XLSX definitivo, no crea borrador.
    - Si ya existe `<ID>_borrador.xlsx`, no lo sobrescribe.
-   - Si falta ambos, crea `<ID>_borrador.xlsx` desde la plantilla técnica.
-6. Ejecutar `installDraftInvoiceTrigger` una sola vez. Instala una comprobación horaria y no duplica el trigger si ya existe.
-7. Ir a **Implementar > Gestionar implementaciones**, editar la Web App, seleccionar **Nueva versión** y desplegar.
+   - Si faltan ambos, crea `<ID>_borrador.xlsx` desde la plantilla técnica.
+6. El antiguo `installDraftInvoiceTrigger` instalaba una comprobación horaria.
+   **No reinstalarlo durante la migración.**
+7. La Web App de `Code.gs` era el feed público anterior. GitHub Pages ya usa el feed estático de M7 y ese Web App queda solo como legado hasta su retirada final.
 
 ## Flujo del taller
 
@@ -66,7 +72,7 @@ trabaja por lotes y conserva los mismos enlaces de Drive.
 
 ## Importante
 
-**No ejecutar `populateDocumentLinks()` para activar este flujo.** Esa función es de mantenimiento histórico y recorre el maestro de forma amplia. El generador de borradores usa `ensureCurrentQuarterDraftInvoices()` y está deliberadamente acotado al trimestre actual.
+**No ejecutar `populateDocumentLinks()` para activar este flujo.** Esa función es de mantenimiento histórico y recorre el maestro de forma amplia.
 
 ## Plantilla
 
