@@ -10,8 +10,10 @@ on:
       - 'python_albaranes/sync.py'
       - '.github/workflows/albaranes-cutover.yml'
   schedule:
-    - cron: '7,22,37,52 * * * *'
-    - cron: '12 * * * *'
+    - cron: '9,24,39,54 * * * *'
+      timezone: 'Europe/Madrid'
+    - cron: '14 * * * *'
+      timezone: 'Europe/Madrid'
   workflow_dispatch:
     inputs:
       mode:
@@ -118,13 +120,13 @@ jobs:
         run: echo 'M6 scheduled production is disabled by fail-closed kill switch.'
 
       - name: Scheduled 15-minute link sync
-        if: ${{ github.event_name == 'schedule' && github.event.schedule == '7,22,37,52 * * * *' && vars.LITOS_ALBARAN_KILL_SWITCH == 'false' }}
+        if: ${{ github.event_name == 'schedule' && github.event.schedule == '9,24,39,54 * * * *' && vars.LITOS_ALBARAN_KILL_SWITCH == 'false' }}
         env:
           LITOS_ALBARAN_WRITE_ENABLED: 'true'
         run: python python_albaranes/sync.py --sync --links-only --max-rows 0
 
       - name: Scheduled hourly full sync
-        if: ${{ github.event_name == 'schedule' && github.event.schedule == '12 * * * *' && vars.LITOS_ALBARAN_KILL_SWITCH == 'false' }}
+        if: ${{ github.event_name == 'schedule' && github.event.schedule == '14 * * * *' && vars.LITOS_ALBARAN_KILL_SWITCH == 'false' }}
         env:
           LITOS_ALBARAN_WRITE_ENABLED: 'true'
         run: python python_albaranes/sync.py --sync --max-rows 0
