@@ -3,8 +3,13 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import time
 
 import sync as base
+
+
+TRANSIENT_CODES = {429, 500, 502, 503, 504}
+RETRY_DELAYS_SECONDS = (2, 5, 10)
 
 
 def _sanitize_error(exc: Exception) -> str:
@@ -16,34 +21,68 @@ def _sanitize_error(exc: Exception) -> str:
     return text[:800]
 
 
-def _gemini_read_json_schema(file_bytes: bytes, mime: str) -> tuple[dict, dict]:
-    """Use the SDK JSON-Schema field rather than the OpenAPI-style field.
+def _status_code(exc: Exception) -> int | None:
+    for attr in ("code", "status_code"):
+        value = getattr(exc, attr, None)
+        try:
+            if value is not None:
+                return int(value)
+        except (TypeError, ValueError):
+            pass
+    match = re.search(r"\b(429|500|502|503|504)\b", str(exc))
+    return int(match.group(1)) if match else None
 
-    The LITOS schema intentionally uses nullable JSON Schema types such as
-    ["number", "null"]. `response_json_schema` accepts that representation
-    without the Pydantic/OpenAPI coercion that caused the first cutover canary's
-    pre-request ValidationError.
+
+def _gemini_read_json_schema(file_bytes: bytes, mime: str) -> tuple[dict, dict]:
+    """Read one handwriting file with bounded retry for transient API failures.
+
+    Uses the SDK JSON-Schema field because the LITOS schema contains nullable
+    JSON Schema types. Only rate-limit/server failures are retried; validation,
+    authentication and other permanent errors fail immediately.
     """
     client = base.genai.Client()
-    try:
-        response = client.models.generate_content(
-            model=base.MODEL,
-            contents=[base.types.Part.from_bytes(data=file_bytes, mime_type=mime), base.prompt()],
-            config=base.types.GenerateContentConfig(
-                temperature=0,
-                response_mime_type="application/json",
-                response_json_schema=base.response_schema(),
-            ),
-        )
-    except Exception as exc:
-        print("HANDWRITING_GEMINI_CALL_FAILED")
-        print(json.dumps({"exception_type": type(exc).__name__, "message": _sanitize_error(exc)}, ensure_ascii=False, sort_keys=True))
-        raise
+    max_attempts = 1 + len(RETRY_DELAYS_SECONDS)
 
-    print("HANDWRITING_GEMINI_CALL_RETURNED")
-    proposal = json.loads(response.text or "{}")
-    technical = {"model": getattr(response, "model_version", None) or base.MODEL}
-    return proposal, technical
+    for attempt in range(1, max_attempts + 1):
+        try:
+            response = client.models.generate_content(
+                model=base.MODEL,
+                contents=[base.types.Part.from_bytes(data=file_bytes, mime_type=mime), base.prompt()],
+                config=base.types.GenerateContentConfig(
+                    temperature=0,
+                    response_mime_type="application/json",
+                    response_json_schema=base.response_schema(),
+                ),
+            )
+            print("HANDWRITING_GEMINI_CALL_RETURNED")
+            print(json.dumps({"attempt": attempt}, sort_keys=True))
+            proposal = json.loads(response.text or "{}")
+            technical = {
+                "model": getattr(response, "model_version", None) or base.MODEL,
+                "attempts": attempt,
+            }
+            return proposal, technical
+        except Exception as exc:
+            code = _status_code(exc)
+            diagnostic = {
+                "attempt": attempt,
+                "exception_type": type(exc).__name__,
+                "status_code": code,
+                "message": _sanitize_error(exc),
+            }
+            if code in TRANSIENT_CODES and attempt < max_attempts:
+                delay = RETRY_DELAYS_SECONDS[attempt - 1]
+                diagnostic["retry_in_seconds"] = delay
+                print("HANDWRITING_GEMINI_TRANSIENT_RETRY")
+                print(json.dumps(diagnostic, ensure_ascii=False, sort_keys=True))
+                time.sleep(delay)
+                continue
+
+            print("HANDWRITING_GEMINI_CALL_FAILED")
+            print(json.dumps(diagnostic, ensure_ascii=False, sort_keys=True))
+            raise
+
+    raise RuntimeError("Unreachable Gemini retry state")
 
 
 def main() -> int:
