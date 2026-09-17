@@ -1,6 +1,6 @@
-# LITOS · Python draft synchronizer (cutover preparation)
+# LITOS · Python draft synchronizer
 
-This branch contains the Python draft synchronizer preparation work. The production Apps Script remains active.
+The Python draft synchronizer is the production implementation for current-quarter draft invoices. It runs through GitHub Actions (`LITOS Draft Sync`) with fail-closed write guards, private Google OAuth credentials and a repository kill switch.
 
 Certified contract:
 - ruleset SHA: c4dfcceb5e062c3ab6f151d536756580975823a2
@@ -9,7 +9,7 @@ Certified contract:
 - renderer version: dynamic-a4-v1.2
 - template ID: 1LWbOK3s2BlaEzYY7tgtlUn-6E4QoyazLt8fCYGdhHbY
 
-Evidence already passed:
+Evidence passed:
 - current-quarter semantic parity
 - 19/19 targets recomputed from fresh Pedidos + Catálogo operativo
 - zero cell/formula differences
@@ -17,5 +17,14 @@ Evidence already passed:
 - zero unexplained layout differences
 - known historical drift isolated to pedido 7927 width E
 - production canary 7916 updated in place while preserving Drive file ID and rollback
+- scheduled production execution certified
 
-Safety: this branch is preparation only. Production writes remain disabled until a separate explicitly authorized cutover executor exists with fresh preflight, SHA pins, backup-before-write, rollback, kill switch and Apps Script recovery instructions.
+Production safety:
+- fresh plan is built from private Drive/Sheets data on every run;
+- writes require both the production workflow path and write enablement;
+- existing drafts are backed up before replacement and verified after write;
+- mutation and runtime caps fail closed;
+- the repository kill switch can disable scheduled writes;
+- `Catálogo operativo` remains the manually curated pricing dictionary and is read, not rebuilt, by this component.
+
+M6 and M7 are currently bridged from successful scheduled `LITOS Draft Sync` executions through restricted `workflow_run` triggers. See `MIGRATION_STATUS.md` for current cutover state.
