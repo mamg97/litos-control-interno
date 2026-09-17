@@ -1,12 +1,11 @@
-name: LITOS M8 Catalog Parity
+name: LITOS M8 Curated Catalog Audit
 
 on:
   pull_request:
     paths:
       - 'python_catalog/**'
       - '.github/workflows/catalog-parity.yml'
-      - 'apps-script/OperationalCatalog.gs'
-      - 'apps-script/AlbaranCatalog.gs'
+      - 'python_drafts/**'
   workflow_dispatch:
 
 permissions:
@@ -34,22 +33,19 @@ jobs:
       - name: Install dependencies
         run: pip install -r python_catalog/requirements.txt
 
-      - name: Compile M8 parity code
-        run: |
-          python -m py_compile python_catalog/parity.py
-          python -m py_compile python_catalog/live_contract.py
-          python -m py_compile python_catalog/run_live.py
+      - name: Compile M8 audit code
+        run: python -m py_compile python_catalog/curated_audit.py
 
-      - name: Read-only preflight
-        run: python python_catalog/run_live.py parity --preflight
+      - name: Read-only curated catalog preflight
+        run: python python_catalog/curated_audit.py --preflight
 
-      - name: Require private OAuth for manual parity
+      - name: Require private OAuth for manual audit
         if: ${{ github.event_name == 'workflow_dispatch' }}
         shell: bash
         run: |
           test -n "$GOOGLE_OAUTH_SABAN_JSON"
           echo 'OK: private Google OAuth credential present.'
 
-      - name: Full read-only operational catalog parity
+      - name: Full read-only curated catalog audit
         if: ${{ github.event_name == 'workflow_dispatch' }}
-        run: python python_catalog/run_live.py parity --parity
+        run: python python_catalog/curated_audit.py --audit
