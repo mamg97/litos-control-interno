@@ -72,7 +72,7 @@ jobs:
 
       - name: Compile production adapters
         run: |
-          python -m py_compile python_saban/intake_sync.py python_saban/canary_gate.py python_handwriting/sync.py
+          python -m py_compile python_saban/intake_sync.py python_saban/intake_sync_safe.py python_saban/canary_gate.py python_handwriting/sync.py python_handwriting/sync_safe.py
 
       - name: Read-only preflights
         run: |
@@ -106,19 +106,19 @@ jobs:
         working-directory: python_saban
         run: python canary_gate.py
 
-      - name: M3 production canary
+      - name: M3 hardened production canary
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'cutover-canary' }}
         working-directory: python_saban
         env:
           LITOS_SABAN_WRITE_ENABLED: "true"
-        run: python intake_sync.py --max-mutations 1
+        run: python intake_sync_safe.py --max-mutations 1
 
-      - name: M4 one-item production canary
+      - name: M4 hardened one-item production canary
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'cutover-canary' }}
         working-directory: python_handwriting
         env:
           LITOS_HANDWRITING_WRITE_ENABLED: "true"
-        run: python sync.py --max-items 1
+        run: python sync_safe.py --max-items 1
 
       - name: Post-canary read-only verification
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'cutover-canary' }}
@@ -133,16 +133,16 @@ jobs:
           test "${{ inputs.confirm }}" = "SYNC_M3_M4"
           echo "OK: M3+M4 full sync explicitly confirmed."
 
-      - name: M3 production sync
+      - name: M3 hardened production sync
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
         working-directory: python_saban
         env:
           LITOS_SABAN_WRITE_ENABLED: "true"
-        run: python intake_sync.py
+        run: python intake_sync_safe.py
 
-      - name: M4 production sync
+      - name: M4 hardened production sync
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
         working-directory: python_handwriting
         env:
           LITOS_HANDWRITING_WRITE_ENABLED: "true"
-        run: python sync.py --max-items 4
+        run: python sync_safe.py --max-items 4
