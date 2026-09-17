@@ -1,0 +1,52 @@
+name: LITOS M8 Catalog Parity
+
+on:
+  pull_request:
+    paths:
+      - 'python_catalog/**'
+      - '.github/workflows/catalog-parity.yml'
+      - 'apps-script/OperationalCatalog.gs'
+      - 'apps-script/AlbaranCatalog.gs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONUNBUFFERED: '1'
+      GOOGLE_OAUTH_SABAN_JSON: ${{ secrets.GOOGLE_OAUTH_SABAN_JSON }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: python_catalog/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r python_catalog/requirements.txt
+
+      - name: Compile M8 parity code
+        run: python -m py_compile python_catalog/parity.py
+
+      - name: Read-only preflight
+        run: python python_catalog/parity.py --preflight
+
+      - name: Require private OAuth for manual parity
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        shell: bash
+        run: |
+          test -n "$GOOGLE_OAUTH_SABAN_JSON"
+          echo 'OK: private Google OAuth credential present.'
+
+      - name: Full read-only operational catalog parity
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: python python_catalog/parity.py --parity
