@@ -9,6 +9,13 @@ on:
       - 'privacy.html'
       - 'dist/**'
       - 'oauth/**'
+  workflow_run:
+    workflows:
+      - 'LITOS Draft Sync'
+    types:
+      - completed
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       mode:
@@ -23,9 +30,6 @@ on:
         description: 'For deploy type CUTOVER_M7'
         required: false
         type: string
-  schedule:
-    - cron: '6,16,26,36,46,56 * * * *'
-      timezone: 'Europe/Madrid'
 
 permissions:
   contents: read
@@ -55,7 +59,7 @@ jobs:
           python -m py_compile python_feed/build_pages.py
 
   build:
-    if: ${{ github.event_name != 'pull_request' && (github.event_name == 'workflow_dispatch' || vars.LITOS_PUBLIC_FEED_KILL_SWITCH == 'false') }}
+    if: ${{ github.event_name != 'pull_request' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'schedule' && github.event.workflow_run.head_branch == 'main' && vars.LITOS_PUBLIC_FEED_KILL_SWITCH == 'false')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -141,7 +145,7 @@ jobs:
           PY
 
       - name: Upload GitHub Pages artifact
-        if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'deploy') }}
+        if: ${{ github.event_name == 'workflow_run' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'deploy') }}
         uses: actions/upload-pages-artifact@v3
         with:
           path: _site
@@ -149,7 +153,7 @@ jobs:
 
   deploy:
     needs: build
-    if: ${{ needs.build.result == 'success' && (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'deploy')) }}
+    if: ${{ needs.build.result == 'success' && (github.event_name == 'workflow_run' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'deploy')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
