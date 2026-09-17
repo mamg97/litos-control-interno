@@ -4,10 +4,12 @@ on:
   push:
     paths:
       - 'python_albaranes/sync.py'
+      - 'python_albaranes/history_backfill.py'
       - '.github/workflows/albaranes-cutover.yml'
   pull_request:
     paths:
       - 'python_albaranes/sync.py'
+      - 'python_albaranes/history_backfill.py'
       - '.github/workflows/albaranes-cutover.yml'
   workflow_run:
     workflows:
@@ -65,7 +67,7 @@ jobs:
         run: pip install -r python_albaranes/requirements.txt
 
       - name: Compile M6 synchronizer
-        run: python -m py_compile python_albaranes/parity.py python_albaranes/total_parser.py python_albaranes/parity_v2.py python_albaranes/sync.py
+        run: python -m py_compile python_albaranes/parity.py python_albaranes/total_parser.py python_albaranes/parity_v2.py python_albaranes/sync.py python_albaranes/history_backfill.py
 
       - name: Fail-closed preflight
         run: python python_albaranes/sync.py --preflight
@@ -75,6 +77,12 @@ jobs:
         run: |
           test -n "$GOOGLE_OAUTH_SABAN_JSON"
           echo 'OK: private Google OAuth credential present.'
+
+      - name: One-time historical master backfill
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[LITOS-HISTORY-BACKFILL]') }}
+        env:
+          LITOS_HISTORY_WRITE_ENABLED: 'true'
+        run: python python_albaranes/history_backfill.py --sync --confirm HISTORY_BACKFILL_V1
 
       - name: Manual read-only dry-run
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run' }}
