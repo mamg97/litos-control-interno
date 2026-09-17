@@ -173,7 +173,7 @@ function rawMaterialFor(row) {
 function materialFor(row) {
   const raw = rawMaterialFor(row);
   const normalized = text(row["Material normalizado"]);
-  if (normalized) return normalized === "Material aportado" ? "Material aportado · M.S." : normalized;
+  if (normalized) return normalized === "Material aportado" ? "Material aportado · cliente" : normalized;
   const value = normalize(raw);
   // In the workshop's terminology, “Absoluto” is shorthand for the same
   // material as “Negro absoluto”; keep both spellings in one demand group.
@@ -181,7 +181,7 @@ function materialFor(row) {
   if (value.includes("italia") || value.includes("italiano")) return "Mármol blanco italiano";
   if (value.includes("blanco") || value.includes("macael")) return "Mármol blanco Macael · M.S.";
   if (value === "suyo" || value === "suya") {
-    return isReform(row) ? "Piedra existente" : "Material aportado · M.S.";
+    return isReform(row) ? "Piedra existente" : "Material aportado · cliente";
   }
   return raw || "Sin material";
 }
@@ -363,22 +363,22 @@ function mapPublicMovements(records) {
   })).filter((record) => record.date && record.type && record.balance !== null);
 }
 
-function latestMateoMovement() {
+function latestEstadilloMovement() {
   for (let index = state.movements.length - 1; index >= 0; index -= 1) {
     if (state.movements[index].balance !== null) return state.movements[index];
   }
   return null;
 }
 
-function mateoBalanceExplanation(balance) {
+function estadilloBalanceExplanation(balance) {
   if (balance === null || balance === undefined) return "Pendiente de cargar el estadillo";
-  if (balance > 0) return "Mateo debe " + formatMoney(balance) + " al taller";
-  if (balance < 0) return "Mateo tiene " + formatMoney(Math.abs(balance)) + " a su favor";
-  return "Cuenta cuadrada con Mateo";
+  if (balance > 0) return "Pendiente de cobro: " + formatMoney(balance);
+  if (balance < 0) return "Saldo a favor del cliente: " + formatMoney(Math.abs(balance));
+  return "Cuenta cuadrada";
 }
 
-function renderMateoLedger(year) {
-  const body = $("#mateoLedgerBody");
+function renderEstadilloLedger(year) {
+  const body = $("#estadilloLedgerBody");
   if (!body) return;
   const selectedYear = Number(year);
   const rows = state.movements
@@ -416,11 +416,11 @@ function renderMateoLedger(year) {
     });
   }
 
-  const balanceNode = $("#mateoLedgerBalance");
+  const balanceNode = $("#estadilloLedgerBalance");
   if (balanceNode) {
     const latestForYear = rows.length ? rows[0] : null;
     balanceNode.textContent = latestForYear
-      ? formatMoney(latestForYear.balance) + " · " + mateoBalanceExplanation(latestForYear.balance)
+      ? formatMoney(latestForYear.balance) + " · " + estadilloBalanceExplanation(latestForYear.balance)
       : "Sin movimientos";
   }
 }
@@ -929,16 +929,16 @@ function renderSummary() {
       ? `${currentQuarterLabel()} · sin factura/albarán`
       : "Pendiente de actualización";
   }
-  const mateoMovement = latestMateoMovement();
-  const mateoBalance = $("#mateoBalance");
-  const mateoBalanceFoot = $("#mateoBalanceFoot");
-  if (mateoBalance) {
-    mateoBalance.textContent = connected && mateoMovement ? formatMoney(mateoMovement.balance) : "—";
-    mateoBalance.closest(".kpi-card")?.classList.toggle("pending-kpi", !(connected && mateoMovement));
+  const estadilloMovement = latestEstadilloMovement();
+  const estadilloBalance = $("#estadilloBalance");
+  const estadilloBalanceFoot = $("#estadilloBalanceFoot");
+  if (estadilloBalance) {
+    estadilloBalance.textContent = connected && estadilloMovement ? formatMoney(estadilloMovement.balance) : "—";
+    estadilloBalance.closest(".kpi-card")?.classList.toggle("pending-kpi", !(connected && estadilloMovement));
   }
-  if (mateoBalanceFoot) {
-    mateoBalanceFoot.textContent = connected && mateoMovement
-      ? mateoBalanceExplanation(mateoMovement.balance)
+  if (estadilloBalanceFoot) {
+    estadilloBalanceFoot.textContent = connected && estadilloMovement
+      ? estadilloBalanceExplanation(estadilloMovement.balance)
       : "Pendiente de cargar el estadillo";
   }
   $("#measuredOrders").textContent = connected ? formatInt.format(s.measured) : "—";
@@ -1460,7 +1460,7 @@ function renderFinance() {
   $("#financeFlowStatus").textContent = state.connected
     ? `${rows.length} trabajos · ${finance.recordedIncomeRows} importes de estadillo · ${finance.ledger.rows.length ? "gastos maestro" : "gastos pendientes"} · año ${$("#financeYear").value}`
     : "Actualizando pedidos";
-  renderMateoLedger(year);
+  renderEstadilloLedger(year);
   drawFinancialSummaryChart(performanceSeries(year, granularity));
   $("#financeChartScope").textContent = `Resultado ${granularity === "quarter" ? "por trimestre" : "por mes"}: ingresos del estadillo cuando constan, materia prima estimada y gastos del libro maestro. El beneficio es ingresos menos gastos.`;
   renderFinanceSankey(finance, sankeyIncomeByModel(rows, finance));
