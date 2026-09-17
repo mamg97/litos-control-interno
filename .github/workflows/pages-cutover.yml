@@ -52,11 +52,36 @@ jobs:
         with:
           python-version: '3.13'
 
+      - name: Install validation dependencies
+        run: pip install -r python_feed/requirements.txt
+
       - name: Compile M7 artifact code
         run: |
           python -m py_compile python_feed/feed.py
           python -m py_compile python_feed/export.py
           python -m py_compile python_feed/build_pages.py
+
+      - name: Validate static-only artifact with synthetic feed
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/m7-synthetic-feed.json" <<'JSON'
+          {"records":[{"Pedido":"TEST"}],"expenses":[],"generatedAt":"2026-09-17T00:00:00Z"}
+          JSON
+          python python_feed/build_pages.py --output "$RUNNER_TEMP/m7-site" --feed "$RUNNER_TEMP/m7-synthetic-feed.json"
+          test -s "$RUNNER_TEMP/m7-site/index.html"
+          test -s "$RUNNER_TEMP/m7-site/dist/app.js"
+          test -s "$RUNNER_TEMP/m7-site/data/feed.json"
+          grep -Fq 'const STATIC_DATA_FEED_URL = "./data/feed.json";' "$RUNNER_TEMP/m7-site/dist/app.js"
+          grep -Fq 'static feed only; no Apps Script runtime dependency' "$RUNNER_TEMP/m7-site/dist/app.js"
+          if grep -Fq 'script.google.com' "$RUNNER_TEMP/m7-site/dist/app.js"; then
+            echo 'Unexpected Apps Script URL in staged runtime.' >&2
+            exit 1
+          fi
+          if grep -Fq 'LEGACY_DATA_FEED_URL' "$RUNNER_TEMP/m7-site/dist/app.js"; then
+            echo 'Unexpected legacy fallback constant in staged runtime.' >&2
+            exit 1
+          fi
 
   build:
     if: ${{ github.event_name != 'pull_request' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'schedule' && github.event.workflow_run.head_branch == 'main' && vars.LITOS_PUBLIC_FEED_KILL_SWITCH == 'false')) }}
@@ -103,23 +128,6 @@ jobs:
           test -n "$GOOGLE_OAUTH_SABAN_JSON"
           echo 'OK: private Google OAuth credential present.'
 
-      - name: Manual legacy parity gate
-        if: ${{ github.event_name == 'workflow_dispatch' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          for attempt in 1 2 3; do
-            echo "M7 parity attempt ${attempt}/3"
-            if python python_feed/feed.py --parity; then
-              exit 0
-            fi
-            if [ "$attempt" -lt 3 ]; then
-              sleep $((attempt * 10))
-            fi
-          done
-          echo 'M7 parity failed after 3 attempts.' >&2
-          exit 1
-
       - name: Generate ephemeral public feed
         run: python python_feed/export.py --output "$RUNNER_TEMP/litos-feed.json"
 
@@ -134,7 +142,15 @@ jobs:
           test -s _site/dist/app.js
           test -s _site/data/feed.json
           grep -Fq 'const STATIC_DATA_FEED_URL = "./data/feed.json";' _site/dist/app.js
-          grep -Fq 'static feed first, Apps Script rollback fallback' _site/dist/app.js
+          grep -Fq 'static feed only; no Apps Script runtime dependency' _site/dist/app.js
+          if grep -Fq 'script.google.com' _site/dist/app.js; then
+            echo 'Unexpected Apps Script URL in staged runtime.' >&2
+            exit 1
+          fi
+          if grep -Fq 'LEGACY_DATA_FEED_URL' _site/dist/app.js; then
+            echo 'Unexpected legacy fallback constant in staged runtime.' >&2
+            exit 1
+          fi
           python - <<'PY'
           import json
           from pathlib import Path
