@@ -1,6 +1,14 @@
 name: LITOS M7 Pages Cutover
 
 on:
+  pull_request:
+    paths:
+      - 'python_feed/**'
+      - '.github/workflows/pages-cutover.yml'
+      - 'index.html'
+      - 'privacy.html'
+      - 'dist/**'
+      - 'oauth/**'
   workflow_dispatch:
     inputs:
       mode:
@@ -22,12 +30,31 @@ permissions:
   contents: read
 
 concurrency:
-  group: litos-pages
+  group: litos-pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  validate:
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Compile M7 artifact code
+        run: |
+          python -m py_compile python_feed/feed.py
+          python -m py_compile python_feed/export.py
+          python -m py_compile python_feed/build_pages.py
+
   build:
-    if: ${{ github.event_name == 'workflow_dispatch' || vars.LITOS_PUBLIC_FEED_KILL_SWITCH == 'false' }}
+    if: ${{ github.event_name != 'pull_request' && (github.event_name == 'workflow_dispatch' || vars.LITOS_PUBLIC_FEED_KILL_SWITCH == 'false') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
