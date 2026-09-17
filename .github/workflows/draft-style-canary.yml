@@ -57,7 +57,7 @@ jobs:
           echo "OK: explicit single-order corporate style canary confirmed for $LITOS_CANARY_ORDER."
 
       - name: Validate immutable logo and A4 style contract
-        run: python corporate_style.py
+        run: python validate_corporate_style.py
 
       - name: Require private Google OAuth
         shell: bash
