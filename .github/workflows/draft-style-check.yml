@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'python_drafts/corporate_style.py'
+      - 'python_drafts/client_header.py'
       - 'python_drafts/corporate_canary.py'
       - 'python_drafts/validate_corporate_style.py'
       - 'python_drafts/assets/**'
@@ -15,6 +16,7 @@ on:
       - main
     paths:
       - 'python_drafts/corporate_style.py'
+      - 'python_drafts/client_header.py'
       - 'python_drafts/corporate_canary.py'
       - 'python_drafts/validate_corporate_style.py'
       - 'python_drafts/assets/**'
@@ -49,8 +51,12 @@ jobs:
       - name: Compile corporate draft modules
         run: |
           python -m py_compile corporate_style.py
+          python -m py_compile client_header.py
           python -m py_compile corporate_canary.py
           python -m py_compile validate_corporate_style.py
 
       - name: Validate immutable logo and A4 style contract
         run: python validate_corporate_style.py
+
+      - name: Validate fixed customer header contract
+        run: python client_header.py
