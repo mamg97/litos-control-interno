@@ -1,0 +1,76 @@
+name: LITOS Draft Corporate Style Canary
+
+on:
+  workflow_dispatch:
+    inputs:
+      pedido:
+        description: 'Single four-digit draft order to restyle'
+        required: true
+        default: '7928'
+        type: string
+      confirm:
+        description: 'Type STYLE_CANARY to update this one draft in place'
+        required: true
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: litos-draft-style-canary
+  cancel-in-progress: false
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: python_drafts
+    env:
+      PYTHONUNBUFFERED: '1'
+      GOOGLE_OAUTH_USER_JSON: ${{ secrets.GOOGLE_OAUTH_USER_JSON }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: python_drafts/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Validate order and explicit confirmation
+        env:
+          LITOS_CANARY_ORDER: ${{ inputs.pedido }}
+          LITOS_CANARY_CONFIRM: ${{ inputs.confirm }}
+        shell: bash
+        run: |
+          [[ "$LITOS_CANARY_ORDER" =~ ^[0-9]{4}$ ]]
+          test "$LITOS_CANARY_CONFIRM" = 'STYLE_CANARY'
+          echo "OK: explicit single-order corporate style canary confirmed for $LITOS_CANARY_ORDER."
+
+      - name: Validate immutable logo and A4 style contract
+        run: python corporate_style.py
+
+      - name: Require private Google OAuth
+        shell: bash
+        run: |
+          test -n "$GOOGLE_OAUTH_USER_JSON"
+          echo 'OK: private Google OAuth credential present.'
+
+      - name: Fresh single-order dry-run
+        run: python corporate_canary.py --order '${{ inputs.pedido }}' --dry-run
+
+      - name: Execute guarded single-order style canary
+        env:
+          LITOS_STYLE_CONFIRM: STYLE_CANARY
+          LITOS_DRAFT_STYLE_KILL_SWITCH: 'false'
+          LITOS_DRAFT_STYLE_WRITE_ENABLED: 'true'
+        run: python corporate_canary.py --order '${{ inputs.pedido }}' --sync
