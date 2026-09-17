@@ -10,8 +10,9 @@ on:
       - 'python_drafts/**'
       - '.github/workflows/draft-sync.yml'
   schedule:
-    # Roughly every 15 minutes, deliberately offset from :00 to reduce queue delays.
-    - cron: '7,22,37,52 * * * *'
+    # Central production clock for M2 and the M6/M7 workflow_run bridge.
+    # Offset from :00 to reduce GitHub Actions scheduler congestion.
+    - cron: '5,20,35,50 * * * *'
   workflow_dispatch:
     inputs:
       mode:
