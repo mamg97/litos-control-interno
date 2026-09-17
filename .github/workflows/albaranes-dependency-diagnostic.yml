@@ -1,0 +1,44 @@
+name: LITOS M6 Dependency Diagnostic
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'python_albaranes/dependency_diagnostic.py'
+      - '.github/workflows/albaranes-dependency-diagnostic.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose-dependencies:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONUNBUFFERED: "1"
+      LITOS_FREE_ONLY: "true"
+      GOOGLE_OAUTH_SABAN_JSON: ${{ secrets.GOOGLE_OAUTH_SABAN_JSON }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: python_albaranes/requirements.txt
+      - name: Install dependencies
+        run: pip install -r python_albaranes/requirements.txt
+      - name: Compile dependency diagnostic
+        run: python -m py_compile python_albaranes/parity.py python_albaranes/total_parser.py python_albaranes/dependency_diagnostic.py
+      - name: Require private OAuth
+        shell: bash
+        run: |
+          test -n "$GOOGLE_OAUTH_SABAN_JSON"
+          echo "OK: private Google OAuth credential present."
+      - name: Inspect remaining formula dependency tree read-only
+        working-directory: python_albaranes
+        run: python dependency_diagnostic.py
