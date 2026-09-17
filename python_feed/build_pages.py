@@ -13,7 +13,10 @@ NETWORK_BLOCK_RE = re.compile(
     r"function feedConfigured\(\) \{.*?\n\}\n\nfunction switchView\(view\) \{",
     re.DOTALL,
 )
-MOBILE_STYLESHEET = '<link rel="stylesheet" href="./dist/mobile.css" />'
+MOBILE_STYLESHEETS = (
+    '<link rel="stylesheet" href="./dist/mobile.css" />',
+    '<link rel="stylesheet" href="./dist/mobile-chart.css" />',
+)
 
 RUNTIME_BLOCK = r'''function feedConfigured() {
   return Boolean(STATIC_DATA_FEED_URL);
@@ -100,12 +103,46 @@ def copy_public_source(output: Path) -> None:
 
 def patch_mobile_styles(index_path: Path) -> None:
     source = index_path.read_text(encoding="utf-8")
-    if MOBILE_STYLESHEET in source:
-        return
     if "</head>" not in source:
-        raise RuntimeError("Could not find </head> while adding mobile stylesheet")
-    source = source.replace("</head>", f"    {MOBILE_STYLESHEET}\n  </head>", 1)
+        raise RuntimeError("Could not find </head> while adding mobile stylesheets")
+    for stylesheet in MOBILE_STYLESHEETS:
+        if stylesheet not in source:
+            source = source.replace("</head>", f"    {stylesheet}\n  </head>", 1)
     index_path.write_text(source, encoding="utf-8")
+
+
+def patch_mobile_chart_runtime(source: str) -> str:
+    replacements = (
+        (
+            '  const left = metric === "orders" ? 38 : 58, right = 12, top = 28, bottom = 33;',
+            '  const compact = width < 520;\n'
+            '  const left = metric === "orders" ? (compact ? 24 : 38) : (compact ? 42 : 58), '
+            'right = compact ? 6 : 12, top = compact ? 22 : 28, bottom = compact ? 28 : 33;',
+        ),
+        (
+            '  const barWidth = Math.max(5, Math.min(42, slot * .58));',
+            '  const barWidth = Math.max(compact ? 3 : 5, Math.min(compact ? 18 : 42, slot * (compact ? .66 : .58)));',
+        ),
+        (
+            '    ctx.fillStyle = "#0e3137"; ctx.font = "600 10px DM Mono"; ctx.textAlign = "center";',
+            '    ctx.fillStyle = "#0e3137"; ctx.font = compact ? "600 8px DM Mono" : "600 10px DM Mono"; ctx.textAlign = "center";',
+        ),
+        (
+            '    if (index % 2 === 0 || data.length < 9 || width >= 940) { ctx.fillStyle = "#799194"; ctx.font = "11px Manrope"; ctx.fillText(label, x, height - 12); }',
+            '    ctx.fillStyle = "#799194";\n'
+            '    ctx.font = compact ? "9px Manrope" : "11px Manrope";\n'
+            '    const periodLabel = compact ? String(label).slice(0, 3) : label;\n'
+            '    if (compact || index % 2 === 0 || data.length < 9 || width >= 940) {\n'
+            '      ctx.fillText(periodLabel, x, height - (compact ? 8 : 12));\n'
+            '    }',
+        ),
+    )
+    for old, new in replacements:
+        count = source.count(old)
+        if count < 1:
+            raise RuntimeError(f"Mobile chart patch target missing: {old[:72]}")
+        source = source.replace(old, new, 1)
+    return source
 
 
 def patch_runtime(app_path: Path) -> None:
@@ -120,6 +157,7 @@ def patch_runtime(app_path: Path) -> None:
     source, block_count = NETWORK_BLOCK_RE.subn(RUNTIME_BLOCK, source, count=1)
     if block_count != 1:
         raise RuntimeError(f"Expected one public-feed runtime replacement, got {block_count}")
+    source = patch_mobile_chart_runtime(source)
     marker = "// M7 Pages artifact: static feed only; no Apps Script runtime dependency.\n"
     app_path.write_text(marker + source, encoding="utf-8")
 
@@ -151,7 +189,7 @@ def build_pages(output: Path, feed_file: Path) -> dict:
         "expenses": len(payload["expenses"]),
         "payload_hash": payload_hash(payload),
         "static_feed_path": "data/feed.json",
-        "mobile_stylesheet": "dist/mobile.css",
+        "mobile_stylesheets": ["dist/mobile.css", "dist/mobile-chart.css"],
         "legacy_rollback_configured": False,
         "source_git_data_snapshot_created": False,
         "external_write_operations": 0,
