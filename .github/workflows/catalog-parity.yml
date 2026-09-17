@@ -35,10 +35,13 @@ jobs:
         run: pip install -r python_catalog/requirements.txt
 
       - name: Compile M8 parity code
-        run: python -m py_compile python_catalog/parity.py
+        run: |
+          python -m py_compile python_catalog/parity.py
+          python -m py_compile python_catalog/live_contract.py
+          python -m py_compile python_catalog/run_live.py
 
       - name: Read-only preflight
-        run: python python_catalog/parity.py --preflight
+        run: python python_catalog/run_live.py parity --preflight
 
       - name: Require private OAuth for manual parity
         if: ${{ github.event_name == 'workflow_dispatch' }}
@@ -49,4 +52,4 @@ jobs:
 
       - name: Full read-only operational catalog parity
         if: ${{ github.event_name == 'workflow_dispatch' }}
-        run: python python_catalog/parity.py --parity
+        run: python python_catalog/run_live.py parity --parity

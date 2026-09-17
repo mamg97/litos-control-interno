@@ -53,9 +53,11 @@ jobs:
         run: |
           python -m py_compile python_catalog/parity.py
           python -m py_compile python_catalog/sync.py
+          python -m py_compile python_catalog/live_contract.py
+          python -m py_compile python_catalog/run_live.py
 
       - name: Read-only sync preflight
-        run: python python_catalog/sync.py --preflight
+        run: python python_catalog/run_live.py sync --preflight
 
       - name: Require private OAuth for manual execution
         if: ${{ github.event_name == 'workflow_dispatch' }}
@@ -66,7 +68,7 @@ jobs:
 
       - name: Manual dry-run
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run' }}
-        run: python python_catalog/sync.py --dry-run
+        run: python python_catalog/run_live.py sync --dry-run
 
       - name: Confirm canary
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'canary' }}
@@ -75,15 +77,15 @@ jobs:
 
       - name: Canary pre-write parity gate
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'canary' }}
-        run: python python_catalog/parity.py --parity
+        run: python python_catalog/run_live.py parity --parity
 
       - name: Production canary
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'canary' }}
-        run: python python_catalog/sync.py --canary --confirm CUTOVER_M8
+        run: python python_catalog/run_live.py sync --canary --confirm CUTOVER_M8
 
       - name: Post-canary parity
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'canary' }}
-        run: python python_catalog/parity.py --parity
+        run: python python_catalog/run_live.py parity --parity
 
       - name: Confirm production sync
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
@@ -92,8 +94,8 @@ jobs:
 
       - name: Production catalog sync
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
-        run: python python_catalog/sync.py --sync --confirm SYNC_M8
+        run: python python_catalog/run_live.py sync --sync --confirm SYNC_M8
 
       - name: Post-sync parity
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
-        run: python python_catalog/parity.py --parity
+        run: python python_catalog/run_live.py parity --parity
