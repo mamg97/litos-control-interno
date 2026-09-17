@@ -75,7 +75,7 @@ jobs:
                   "id": "TEST",
                   "model": "Lápida",
                   "invoiceFile": "https://drive.google.com/file/d/TEST/view",
-                  "invoiceDraftFile": "",
+                  "invoiceDraftFile": "https://docs.google.com/spreadsheets/d/DRAFT/edit",
                   "corelFile": "",
                   "noteFile": "https://drive.google.com/file/d/NOTE/view",
                   "attachmentFile": "",
@@ -86,19 +86,20 @@ jobs:
           assert payload["version"] == 8
           record = payload["records"][0]
           assert record["invoiceFile"].startswith("https://drive.google.com/")
+          assert record["invoiceDraftFile"].startswith("https://docs.google.com/")
           assert record["noteFile"].startswith("https://drive.google.com/")
           assert DOCUMENT_LINK_KEYS.issubset(record)
 
           bad = {
               **raw,
-              "records": [{**raw["records"][0], "invoiceFile": "https://example.com/not-drive"}],
+              "records": [{**raw["records"][0], "invoiceFile": "https://example.com/not-google"}],
           }
           try:
               sanitize_public_payload(bad)
           except RuntimeError:
               pass
           else:
-              raise AssertionError("non-Drive document URL was not rejected")
+              raise AssertionError("non-Google document URL was not rejected")
 
           print("M7_PUBLIC_PRIVACY_SANITIZER_OK")
           PY
@@ -108,7 +109,7 @@ jobs:
         run: |
           set -euo pipefail
           cat > "$RUNNER_TEMP/m7-synthetic-feed.json" <<'JSON'
-          {"version":8,"records":[{"id":"TEST","invoiceFile":"https://drive.google.com/file/d/TEST/view","invoiceDraftFile":"","corelFile":"","noteFile":"","attachmentFile":""}],"expenses":[],"generatedAt":"2026-09-17T00:00:00Z"}
+          {"version":8,"records":[{"id":"TEST","invoiceFile":"https://drive.google.com/file/d/TEST/view","invoiceDraftFile":"https://docs.google.com/spreadsheets/d/DRAFT/edit","corelFile":"","noteFile":"","attachmentFile":""}],"expenses":[],"generatedAt":"2026-09-17T00:00:00Z"}
           JSON
           python python_feed/build_pages.py --output "$RUNNER_TEMP/m7-site" --feed "$RUNNER_TEMP/m7-synthetic-feed.json"
           test -s "$RUNNER_TEMP/m7-site/index.html"
@@ -210,10 +211,10 @@ jobs:
               for key in DOCUMENT_LINK_KEYS
               if record.get(key)
           )
-          assert document_links > 0, 'Expected at least one Drive document link in production feed'
+          assert document_links > 0, 'Expected at least one Google Drive/Docs document link in production feed'
           print(
               f"M7_STAGED_SITE_OK records={len(payload['records'])} "
-              f"expenses={len(payload['expenses'])} drive_document_links={document_links}"
+              f"expenses={len(payload['expenses'])} google_document_links={document_links}"
           )
           PY
 
