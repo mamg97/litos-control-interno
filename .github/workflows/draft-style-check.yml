@@ -1,0 +1,56 @@
+name: LITOS Draft Corporate Style Check
+
+on:
+  pull_request:
+    paths:
+      - 'python_drafts/corporate_style.py'
+      - 'python_drafts/corporate_canary.py'
+      - 'python_drafts/validate_corporate_style.py'
+      - 'python_drafts/assets/**'
+      - 'python_drafts/requirements.txt'
+      - '.github/workflows/draft-style-check.yml'
+      - '.github/workflows/draft-style-canary.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'python_drafts/corporate_style.py'
+      - 'python_drafts/corporate_canary.py'
+      - 'python_drafts/validate_corporate_style.py'
+      - 'python_drafts/assets/**'
+      - 'python_drafts/requirements.txt'
+      - '.github/workflows/draft-style-check.yml'
+      - '.github/workflows/draft-style-canary.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: python_drafts
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: python_drafts/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Compile corporate draft modules
+        run: |
+          python -m py_compile corporate_style.py
+          python -m py_compile corporate_canary.py
+          python -m py_compile validate_corporate_style.py
+
+      - name: Validate immutable logo and A4 style contract
+        run: python validate_corporate_style.py
