@@ -1,0 +1,55 @@
+name: LITOS M7 Public Feed Parity
+
+on:
+  push:
+    paths:
+      - 'python_feed/**'
+      - '.github/workflows/public-feed-parity.yml'
+  pull_request:
+    paths:
+      - 'python_feed/**'
+      - '.github/workflows/public-feed-parity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      PYTHONUNBUFFERED: '1'
+      LITOS_FREE_ONLY: 'true'
+      GOOGLE_OAUTH_SABAN_JSON: ${{ secrets.GOOGLE_OAUTH_SABAN_JSON }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: python_feed/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r python_feed/requirements.txt
+
+      - name: Compile M7 generator
+        run: python -m py_compile python_feed/feed.py
+
+      - name: Read-only preflight
+        run: python python_feed/feed.py --preflight
+
+      - name: Require private OAuth for parity
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        shell: bash
+        run: |
+          test -n "$GOOGLE_OAUTH_SABAN_JSON"
+          echo 'OK: private Google OAuth credential present.'
+
+      - name: Full read-only Apps Script parity
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: python python_feed/feed.py --parity
