@@ -25,6 +25,7 @@ MASTER_ID = os.environ.get(
 )
 PEDIDOS_SHEET = "Pedidos"
 GASTOS_SHEET = "Gastos"
+MOVEMENTS_SHEET = "Movimientos M.S."
 LEGACY_FEED_URL = os.environ.get(
     "LITOS_LEGACY_FEED_URL",
     "https://script.google.com/macros/s/AKfycbyhzZOwkeSuBLskOnjtPNUs1yElq6dcNb4UXmNAA0Bp38qBfFX7DEPi8rNkuOPnT4DlHw/exec",
@@ -58,6 +59,19 @@ EXPENSE_FIELDS = {
     "category": "Categoría",
     "amount": "Importe (€)",
     "nature": "Naturaleza del dato",
+}
+
+MOVEMENT_FIELDS = {
+    "year": "Año",
+    "date": "Fecha contable",
+    "sourceDate": "Fecha escrita en fuente",
+    "type": "Tipo de movimiento",
+    "ref": "ID de trabajo / ref.",
+    "line": "Nº línea estadillo",
+    "concept": "Concepto de origen",
+    "debit": "Debe (€)",
+    "credit": "Entrega a cuenta / Haber (€)",
+    "balance": "Saldo acumulado (€)",
 }
 
 DOCUMENT_FIELDS = {
@@ -311,12 +325,58 @@ def read_expenses(sheets) -> list[dict]:
     return expenses
 
 
+def read_movements(sheets) -> list[dict]:
+    """Read the running Mateo Sabán account exactly as reconciled in the master Sheet."""
+    values = read_display_values(sheets, MOVEMENTS_SHEET)
+    if not values:
+        return []
+    header_index = next(
+        (
+            index
+            for index, row in enumerate(values)
+            if any(clean(cell) == MOVEMENT_FIELDS["date"] for cell in row)
+        ),
+        -1,
+    )
+    if header_index < 0:
+        raise RuntimeError("No se encontró la cabecera de Movimientos M.S.")
+    headers = [clean(cell) for cell in values[header_index]]
+    columns = {header: index for index, header in enumerate(headers)}
+    missing = sorted(field for field in MOVEMENT_FIELDS.values() if field not in columns)
+    if missing:
+        raise RuntimeError("Faltan columnas en Movimientos M.S.: " + ", ".join(missing))
+
+    movements: list[dict] = []
+    for row in values[header_index + 1 :]:
+        date = _read(row, columns, MOVEMENT_FIELDS["date"])
+        movement_type = _read(row, columns, MOVEMENT_FIELDS["type"])
+        balance = number_or_none(_read(row, columns, MOVEMENT_FIELDS["balance"]))
+        if not date or not movement_type or balance is None:
+            continue
+        movements.append(
+            {
+                "year": number_or_none(_read(row, columns, MOVEMENT_FIELDS["year"])),
+                "date": normalize_date(date),
+                "sourceDate": _read(row, columns, MOVEMENT_FIELDS["sourceDate"]),
+                "type": movement_type,
+                "ref": _read(row, columns, MOVEMENT_FIELDS["ref"]),
+                "line": number_or_none(_read(row, columns, MOVEMENT_FIELDS["line"])),
+                "concept": _read(row, columns, MOVEMENT_FIELDS["concept"]),
+                "debit": number_or_none(_read(row, columns, MOVEMENT_FIELDS["debit"])),
+                "credit": number_or_none(_read(row, columns, MOVEMENT_FIELDS["credit"])),
+                "balance": balance,
+            }
+        )
+    return movements
+
+
 def build_payload(sheets) -> dict:
     return {
         "version": 6,
         "generatedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "records": read_operational_records(sheets),
         "expenses": read_expenses(sheets),
+        "movements": read_movements(sheets),
     }
 
 
