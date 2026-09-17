@@ -8,6 +8,8 @@ from urllib.parse import urlparse
 
 from feed import build_payload, build_sheets_service, payload_hash
 
+MOVEMENT_KEYS = frozenset({"year", "date", "sourceDate", "type", "ref", "line", "concept", "debit", "credit", "balance"})
+
 DOCUMENT_LINK_KEYS = frozenset(
     {
         "invoiceFile",
@@ -69,11 +71,23 @@ def sanitize_public_payload(payload: dict[str, Any]) -> dict[str, Any]:
                 )
         sanitized_records.append(record)
 
+    sanitized_movements: list[dict[str, Any]] = []
+    for index, raw_movement in enumerate(payload.get("movements", []) or []):
+        if not isinstance(raw_movement, dict):
+            raise RuntimeError(f"Public feed privacy guard: invalid movement at index {index}")
+        extra = set(raw_movement) - MOVEMENT_KEYS
+        if extra:
+            raise RuntimeError(
+                "Public feed privacy guard: unexpected movement fields: " + ", ".join(sorted(extra))
+            )
+        sanitized_movements.append({key: raw_movement.get(key) for key in MOVEMENT_KEYS})
+
     sanitized = {
-        "version": 8,
+        "version": 9,
         "generatedAt": payload.get("generatedAt"),
         "records": sanitized_records,
         "expenses": payload.get("expenses", []) or [],
+        "movements": sanitized_movements,
     }
     assert_public_payload_safe(sanitized)
     return sanitized
@@ -106,6 +120,16 @@ def assert_public_payload_safe(payload: dict[str, Any]) -> None:
                 raise RuntimeError(
                     f"Public feed privacy guard: non-Google document URL at record {index}, field {key}"
                 )
+
+    movements = payload.get("movements", []) or []
+    for index, movement in enumerate(movements):
+        if not isinstance(movement, dict):
+            raise RuntimeError(f"Public feed privacy guard: invalid movement at index {index}")
+        extra = set(movement) - MOVEMENT_KEYS
+        if extra:
+            raise RuntimeError(
+                "Public feed privacy guard: unexpected movement fields: " + ", ".join(sorted(extra))
+            )
 
     leaked_urls = [
         value
@@ -140,6 +164,7 @@ def export_feed(output: Path) -> dict:
         "public_schema_version": payload.get("version"),
         "records": len(payload.get("records", [])),
         "expenses": len(payload.get("expenses", [])),
+        "movements": len(payload.get("movements", [])),
         "payload_hash": payload_hash(payload),
         "google_document_links_exported": document_links,
         "output": str(output),

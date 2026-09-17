@@ -27,6 +27,7 @@ function applyPublicPayload(payload) {
   if (!payload || !Array.isArray(payload.records)) throw new Error("Respuesta no válida");
   state.rows = mapPublicRows(payload.records);
   state.expenses = mapPublicExpenses(payload.expenses);
+  state.movements = mapPublicMovements(payload.movements);
   state.summary = makeSummary(state.rows);
   state.generatedAt = text(payload.generatedAt) || new Date().toISOString();
   state.connected = true;
@@ -171,6 +172,8 @@ def build_pages(output: Path, feed_file: Path) -> dict:
         raise RuntimeError("Generated feed is invalid")
     if not isinstance(payload.get("expenses"), list):
         raise RuntimeError("Generated expenses payload is invalid")
+    if not isinstance(payload.get("movements"), list):
+        raise RuntimeError("Generated movements payload is invalid")
 
     if output.exists():
         shutil.rmtree(output)
@@ -188,6 +191,7 @@ def build_pages(output: Path, feed_file: Path) -> dict:
         "phase": "M7",
         "records": len(payload["records"]),
         "expenses": len(payload["expenses"]),
+        "movements": len(payload["movements"]),
         "payload_hash": payload_hash(payload),
         "static_feed_path": "data/feed.json",
         "mobile_stylesheets": [

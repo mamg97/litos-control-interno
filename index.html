@@ -87,6 +87,9 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
 .financial-kpi .kpi-value { font-size: clamp(1.25rem, 1.55vw, 1.72rem); white-space: nowrap; }
 .pending-kpi .kpi-value { color: #9aabaa; }
 .kpi-foot { margin-top: .3rem; color: var(--ink-soft); font-size: .72rem; }
+.balance-kpi { grid-column: span 2; }
+.balance-kpi .kpi-value { font-size: clamp(1.45rem, 1.9vw, 2rem); }
+.chart-footnote { margin: .65rem 0 0; color: var(--ink-soft); font-size: .72rem; line-height: 1.5; }
 
 .dashboard-grid { display: grid; gap: 1rem; margin-bottom: 1rem; }.overview-grid { grid-template-columns: minmax(0, 1fr); }.bottom-grid { grid-template-columns: minmax(0, 1fr); }
 .panel { border: 1px solid var(--line); border-radius: 14px; background: var(--panel); box-shadow: 0 2px 4px rgba(24,58,59,.015); }
@@ -107,7 +110,17 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
 
 .strategy-grid { display: grid; grid-template-columns: minmax(360px,1.15fr) minmax(310px,.85fr); gap: 1rem; margin-bottom: 1rem; }.strategy-intro, .strategy-inputs { padding: 1.55rem; }.strategy-intro { background: linear-gradient(145deg, #eff9f7, #fbfcf8); }.strategy-intro h2 { max-width: 540px; margin-bottom: .65rem; font-size: 1.55rem; }.strategy-intro > p:not(.eyebrow) { max-width: 650px; margin: 0; color: var(--ink-soft); font-size: .85rem; line-height: 1.65; }.strategy-roadmap { display: grid; grid-template-columns: repeat(3,1fr); gap: .85rem; margin-top: 1.35rem; }.strategy-roadmap div { display: grid; grid-template-columns: 1.55rem 1fr; gap: .5rem; align-items: start; }.strategy-roadmap span { display: grid; width: 1.55rem; height: 1.55rem; place-items: center; border-radius: 6px; background: #ccebe7; color: var(--teal); font-family: "DM Mono", monospace; font-size: .65rem; }.strategy-roadmap p { margin: 0; color: var(--ink-soft); font-size: .73rem; line-height: 1.5; }.strategy-roadmap strong { color: var(--ink); }.strategy-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-bottom: 1rem; }.strategy-card { min-height: 185px; padding: 1.35rem; }.strategy-card h2 { margin-bottom: .5rem; font-size: 1rem; }.strategy-card p:not(.eyebrow) { margin: 0; color: var(--ink-soft); font-size: .78rem; line-height: 1.58; }.strategy-decision-grid { grid-template-columns: minmax(340px,.75fr) minmax(430px,1.25fr); }.strategy-decision-grid .cnc-panel { margin-top: 0; }.strategy-inputs .assumptions-form { grid-template-columns: 1fr; margin-top: 1rem; }.strategy-inputs .form-note { margin-top: .85rem; }
 
-.finance-kpis { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 1rem; margin-bottom: 1rem; }.finance-kpis article { min-height: 118px; padding: 1rem 1.15rem; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfc; }.finance-kpis span, .finance-kpis small { display: block; color: var(--ink-soft); font-size: .7rem; }.finance-kpis strong { display: block; margin: .35rem 0; color: var(--deep); font-family: "DM Mono", monospace; font-size: 1.35rem; letter-spacing: -.06em; }.sankey-panel { padding: 1.35rem; }.finance-sankey { min-height: 500px; margin-top: .75rem; overflow-x: auto; overflow-y: hidden; border: 1px solid #e2ecea; border-radius: 12px; background: linear-gradient(180deg, #fbfefd, #f5faf9); }.finance-sankey svg { display: block; width: 100%; min-width: 820px; height: auto; }.finance-sankey .empty-state { margin: 0; padding: 5rem 1rem; text-align: center; }.sankey-column-title { fill: #718b8d; font-family: "DM Mono", monospace; font-size: 12px; font-weight: 500; letter-spacing: 1.3px; }.sankey-node rect { stroke-width: 1.15; }.sankey-node-label { fill: #244448; font-family: "Manrope", Arial, sans-serif; font-size: 12px; font-weight: 800; }.sankey-node-value { fill: #5e797b; font-family: "DM Mono", monospace; font-size: 11px; }.sankey-node.income rect { fill: #e6f2f8; stroke: #92b6ca; }.sankey-node.center rect { fill: var(--deep); stroke: var(--deep); }.sankey-node.center .sankey-node-label, .sankey-node.center .sankey-node-value { fill: white; }.sankey-node.material rect { fill: #f5eee2; stroke: #d8bd8c; }.sankey-node.consumables rect { fill: #fff4da; stroke: #e1bc6a; }.sankey-node.fixed rect { fill: #edf0f5; stroke: #aebaca; }.sankey-node.direct rect { fill: #f5ebf1; stroke: #d0a6bf; }.sankey-node.labour rect { fill: #ecebe3; stroke: #c5c0a8; }.sankey-node.margin rect { fill: #e4f4eb; stroke: #8fc5a5; }.sankey-node.warning rect { fill: #fff0e8; stroke: #da985d; }.sankey-link { stroke: none; opacity: .8; transition: opacity .16s ease; }.sankey-link:hover { opacity: 1; }.income-link { fill: rgba(49, 117, 156, .30); }.material-link { fill: rgba(176, 133, 69, .31); }.consumables-link { fill: rgba(213, 160, 45, .30); }.fixed-link { fill: rgba(112, 133, 164, .25); }.direct-link { fill: rgba(173, 97, 139, .27); }.labour-link { fill: rgba(137, 131, 96, .28); }.margin-link { fill: rgba(48, 140, 91, .30); }.warning-link { fill: rgba(202, 108, 46, .34); }.finance-scope { margin: 1rem 0 0; padding: .8rem .9rem; border-left: 3px solid #8bc5bf; border-radius: 0 8px 8px 0; background: #f4faf8; color: var(--ink-soft); font-size: .73rem; line-height: 1.55; }.finance-scope strong { color: var(--ink); }.finance-layout { display: grid; grid-template-columns: minmax(430px,1.25fr) minmax(310px,.75fr); gap: 1rem; margin-top: 1rem; }.finance-inputs, .cost-register, .finance-register-note { padding: 1.45rem; }.finance-inputs .panel-head { margin-bottom: .2rem; }.finance-form { display: grid; grid-template-columns: 1fr 1fr; gap: .85rem; margin-top: 1rem; }.finance-form label { display: grid; gap: .35rem; color: var(--ink-soft); font-size: .72rem; font-weight: 700; }.finance-form input { min-height: 38px; padding: .45rem .6rem; border: 1px solid #cfe0de; border-radius: 8px; background: white; color: var(--ink); font-size: .82rem; outline-color: var(--teal); }.cost-register { background: #fffdf8; }.cost-register h2 { margin-bottom: .9rem; }.cost-list { display: grid; gap: .1rem; }.cost-list div { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: .8rem; padding: .65rem 0; border-bottom: 1px solid #eee8d9; color: #607274; font-size: .74rem; line-height: 1.35; }.cost-list strong, .cost-register-total strong { color: #6e4d19; font-family: "DM Mono", monospace; font-size: .76rem; white-space: nowrap; }.cost-register-total { display: flex; justify-content: space-between; gap: 1rem; margin-top: .8rem; padding-top: .8rem; border-top: 1px solid #e4d8be; color: #735b32; font-size: .78rem; font-weight: 800; }.finance-register-note { display: grid; grid-template-columns: minmax(230px,.65fr) minmax(0,1.35fr); column-gap: 1.5rem; align-items: start; margin-top: 1rem; background: #f5f8f7; }.finance-register-note .eyebrow { grid-column: 1 / -1; }.finance-register-note h2 { margin-bottom: 0; font-size: 1.1rem; }.finance-register-note p:not(.eyebrow) { margin: 0; color: var(--ink-soft); font-size: .79rem; line-height: 1.65; }
+.finance-kpis { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 1rem; margin-bottom: 1rem; }.finance-kpis article { min-height: 118px; padding: 1rem 1.15rem; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfc; }.finance-kpis span, .finance-kpis small { display: block; color: var(--ink-soft); font-size: .7rem; }.finance-kpis strong { display: block; margin: .35rem 0; color: var(--deep); font-family: "DM Mono", monospace; font-size: 1.35rem; letter-spacing: -.06em; }.sankey-panel { padding: 1.35rem; }.finance-sankey { min-height: 500px; margin-top: .75rem; overflow-x: auto; overflow-y: hidden; border: 1px solid #e2ecea; border-radius: 12px; background: linear-gradient(180deg, #fbfefd, #f5faf9); }.finance-sankey svg { display: block; width: 100%; min-width: 820px; height: auto; }.finance-sankey .empty-state { margin: 0; padding: 5rem 1rem; text-align: center; }.sankey-column-title { fill: #718b8d; font-family: "DM Mono", monospace; font-size: 12px; font-weight: 500; letter-spacing: 1.3px; }.sankey-node rect { stroke-width: 1.15; }.sankey-node-label { fill: #244448; font-family: "Manrope", Arial, sans-serif; font-size: 12px; font-weight: 800; }.sankey-node-value { fill: #5e797b; font-family: "DM Mono", monospace; font-size: 11px; }.sankey-node.income rect { fill: #e6f2f8; stroke: #92b6ca; }.sankey-node.center rect { fill: var(--deep); stroke: var(--deep); }.sankey-node.center .sankey-node-label, .sankey-node.center .sankey-node-value { fill: white; }.sankey-node.material rect { fill: #f5eee2; stroke: #d8bd8c; }.sankey-node.consumables rect { fill: #fff4da; stroke: #e1bc6a; }.sankey-node.fixed rect { fill: #edf0f5; stroke: #aebaca; }.sankey-node.direct rect { fill: #f5ebf1; stroke: #d0a6bf; }.sankey-node.labour rect { fill: #ecebe3; stroke: #c5c0a8; }.sankey-node.margin rect { fill: #e4f4eb; stroke: #8fc5a5; }.sankey-node.warning rect { fill: #fff0e8; stroke: #da985d; }.sankey-link { stroke: none; opacity: .8; transition: opacity .16s ease; }.sankey-link:hover { opacity: 1; }.income-link { fill: rgba(49, 117, 156, .30); }.material-link { fill: rgba(176, 133, 69, .31); }.consumables-link { fill: rgba(213, 160, 45, .30); }.fixed-link { fill: rgba(112, 133, 164, .25); }.direct-link { fill: rgba(173, 97, 139, .27); }.labour-link { fill: rgba(137, 131, 96, .28); }.margin-link { fill: rgba(48, 140, 91, .30); }.warning-link { fill: rgba(202, 108, 46, .34); }.finance-scope { margin: 1rem 0 0; padding: .8rem .9rem; border-left: 3px solid #8bc5bf; border-radius: 0 8px 8px 0; background: #f4faf8; color: var(--ink-soft); font-size: .73rem; line-height: 1.55; }.finance-scope strong { color: var(--ink); }.finance-layout { display: grid; grid-template-columns: minmax(430px,1.25fr) minmax(310px,.75fr); gap: 1rem; margin-top: 1rem; }.finance-layout .cost-register:only-child { grid-column: 1 / -1; }
+.mateo-ledger-panel { margin-top: 1rem; padding: 1.35rem; }
+.mateo-ledger-wrap { max-height: 520px; margin-top: 1rem; overflow: auto; border: 1px solid #e1ecea; border-radius: 10px; }
+.mateo-ledger-table { width: 100%; min-width: 900px; border-collapse: collapse; font-size: .75rem; }
+.mateo-ledger-table th { position: sticky; top: 0; z-index: 1; padding: .58rem .68rem; border-bottom: 1px solid var(--line); background: #f8fbfa; color: var(--ink-soft); font-family: "DM Mono", monospace; font-size: .62rem; font-weight: 600; letter-spacing: .05em; text-align: left; text-transform: uppercase; }
+.mateo-ledger-table td { padding: .62rem .68rem; border-bottom: 1px solid #edf2f1; color: #345457; vertical-align: top; }
+.mateo-ledger-table td:nth-child(1), .mateo-ledger-table td:nth-child(3), .mateo-ledger-table td:nth-child(n+5) { font-family: "DM Mono", monospace; white-space: nowrap; }
+.mateo-ledger-table td:nth-child(n+5) { text-align: right; }
+.mateo-ledger-table tr:last-child td { border-bottom: 0; }
+.mateo-balance-note { color: var(--ink-soft); font-size: .72rem; line-height: 1.5; }
+.finance-inputs, .cost-register, .finance-register-note { padding: 1.45rem; }.finance-inputs .panel-head { margin-bottom: .2rem; }.finance-form { display: grid; grid-template-columns: 1fr 1fr; gap: .85rem; margin-top: 1rem; }.finance-form label { display: grid; gap: .35rem; color: var(--ink-soft); font-size: .72rem; font-weight: 700; }.finance-form input { min-height: 38px; padding: .45rem .6rem; border: 1px solid #cfe0de; border-radius: 8px; background: white; color: var(--ink); font-size: .82rem; outline-color: var(--teal); }.cost-register { background: #fffdf8; }.cost-register h2 { margin-bottom: .9rem; }.cost-list { display: grid; gap: .1rem; }.cost-list div { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: .8rem; padding: .65rem 0; border-bottom: 1px solid #eee8d9; color: #607274; font-size: .74rem; line-height: 1.35; }.cost-list strong, .cost-register-total strong { color: #6e4d19; font-family: "DM Mono", monospace; font-size: .76rem; white-space: nowrap; }.cost-register-total { display: flex; justify-content: space-between; gap: 1rem; margin-top: .8rem; padding-top: .8rem; border-top: 1px solid #e4d8be; color: #735b32; font-size: .78rem; font-weight: 800; }.finance-register-note { display: grid; grid-template-columns: minmax(230px,.65fr) minmax(0,1.35fr); column-gap: 1.5rem; align-items: start; margin-top: 1rem; background: #f5f8f7; }.finance-register-note .eyebrow { grid-column: 1 / -1; }.finance-register-note h2 { margin-bottom: 0; font-size: 1.1rem; }.finance-register-note p:not(.eyebrow) { margin: 0; color: var(--ink-soft); font-size: .79rem; line-height: 1.65; }
 
 .sources-panel { padding: 1.35rem; }.sources-table-wrap { margin-top: 1rem; overflow-x: auto; }.sources-table { width: 100%; min-width: 1040px; border-collapse: collapse; font-size: .76rem; }.sources-table th { padding: .6rem .7rem; border-bottom: 1px solid var(--line); color: var(--ink-soft); font-family: "DM Mono", monospace; font-size: .64rem; font-weight: 500; letter-spacing: .06em; text-align: left; text-transform: uppercase; }.sources-table td { padding: .85rem .7rem; border-bottom: 1px solid #edf2f1; color: #486266; line-height: 1.45; vertical-align: top; }.sources-table tbody tr:last-child td { border-bottom: 0; }.sources-table td:first-child { min-width: 135px; color: var(--deep); }.sources-table strong, .sources-table small { display: block; }.sources-table strong { color: var(--ink); font-size: .78rem; }.sources-table small { margin-top: .16rem; color: var(--ink-soft); font-size: .68rem; }.source-status { display: inline-flex; align-items: center; min-height: 22px; margin-bottom: .25rem; padding: 0 .46rem; border-radius: 999px; font-family: "DM Mono", monospace; font-size: .62rem; font-weight: 700; letter-spacing: .02em; white-space: nowrap; }.source-status.pending { background: #fff4da; color: #906514; }.source-status.portal { background: #f5ebf1; color: #86516e; }.source-status.active { background: #e4f4eb; color: #2d7955; }.source-status.staged { background: #edf0f5; color: #506b8c; }.sources-guides { display: grid; grid-template-columns: minmax(300px,.8fr) minmax(420px,1.2fr); gap: 1rem; margin-top: 1rem; }.source-guide { padding: 1.45rem; }.source-guide h2 { margin-bottom: .65rem; font-size: 1.1rem; }.source-guide > p:not(.eyebrow) { margin: 0; color: var(--ink-soft); font-size: .8rem; line-height: 1.65; }.privacy-guide { background: #f5f8f7; }.automation-guide { background: #fbfcfc; }.automation-guide ol { display: grid; gap: .7rem; margin: .85rem 0 0; padding: 0; list-style: none; }.automation-guide li { display: grid; grid-template-columns: 1.5rem minmax(0,1fr); gap: .55rem; align-items: start; }.automation-guide li span { display: grid; width: 1.5rem; height: 1.5rem; place-items: center; border-radius: 6px; background: var(--teal-light); color: var(--teal); font-family: "DM Mono", monospace; font-size: .6rem; }.automation-guide li p { margin: 0; color: var(--ink-soft); font-size: .76rem; line-height: 1.48; }.automation-guide li strong { color: var(--ink); }
 
@@ -205,15 +218,10 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
               <div class="kpi-value" id="ordersInProduction">—</div>
               <div class="kpi-foot">Trimestre actual · sin factura/albarán</div>
             </article>
-            <article class="kpi-card accent-amber pending-kpi">
-              <div class="kpi-label">Pedidos por cobrar</div>
-              <div class="kpi-value" id="ordersToCollect">—</div>
-              <div class="kpi-foot">Pendiente de registrar entrega</div>
-            </article>
-            <article class="kpi-card accent-blue pending-kpi">
-              <div class="kpi-label">Último pedido entregado</div>
-              <div class="kpi-value" id="lastDeliveredOrder">—</div>
-              <div class="kpi-foot">Pendiente de registrar entregas</div>
+            <article class="kpi-card accent-lilac balance-kpi">
+              <div class="kpi-label">Saldo con Mateo Sabán</div>
+              <div class="kpi-value" id="mateoBalance">—</div>
+              <div class="kpi-foot" id="mateoBalanceFoot">Pendiente de cargar el estadillo</div>
             </article>
           </div>
 
@@ -228,10 +236,10 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
                   <label>Año <select id="summaryYear" aria-label="Año del gráfico de pedidos"><option value="">Cargando años…</option></select></label>
                   <label>Vista <select id="summaryGranularity" aria-label="Agrupación temporal del resumen"><option value="year">Anual · meses</option><option value="quarter">Trimestral</option></select></label>
                   <label>Indicador <select id="summaryMetric" aria-label="Indicador del gráfico y tabla histórica"><option value="orders">Pedidos</option><option value="profit">Beneficio estimado</option></select></label>
-                  <span class="chart-note" id="summaryChartNote">Selecciona un año</span>
                 </div>
               </div>
               <div class="canvas-wrap"><canvas id="ordersChart" aria-label="Gráfico de pedidos por periodo" role="img"></canvas></div>
+              <p class="chart-footnote" id="summaryChartNote">Los pedidos se agrupan por su fecha de recepción; si no consta, se usa la mejor fecha operativa disponible.</p>
               <div class="history-matrix-head">
                 <div><p class="eyebrow">HISTÓRICO COMPLETO</p><p>Todos los años permanecen visibles; el año seleccionado se resalta.</p></div>
               </div>
@@ -435,7 +443,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
             <div>
               <p class="eyebrow">FLUJO ECONÓMICO</p>
               <h1 id="financeHeading">Ingresos y gastos, en un solo flujo.</h1>
-              <p class="page-lead">El año y los pedidos proceden del libro maestro. La facturación usa el precio medio conocido hasta que se incorporen importes facturados y facturas al control financiero.</p>
+              <p class="page-lead">El año, los trabajos entregados, las entregas a cuenta y los gastos proceden del libro maestro. Los importes del estadillo alimentan la cuenta corriente con Mateo y el análisis económico del taller.</p>
             </div>
             <div class="filter-row finance-period-filter">
               <label>Año operativo <select id="financeYear"><option value="">Cargando años…</option></select></label>
@@ -445,7 +453,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
 
           <div class="finance-kpis">
             <article><span>Pedidos del periodo</span><strong id="financeOrders">—</strong><small id="financePeriod">Datos operativos pendientes</small></article>
-            <article><span>Ingresos de pedidos</span><strong id="financeRevenue">—</strong><small>precio medio de referencia</small></article>
+            <article><span>Ingresos de pedidos</span><strong id="financeRevenue">—</strong><small>estadillo cuando consta · estimación si falta</small></article>
             <article><span>Gasto documentado / estimado</span><strong id="financeCosts">—</strong><small>materia prima y consumibles</small></article>
             <article><span>Margen disponible</span><strong id="financeMargin">—</strong><small>antes de gastos pendientes e impuestos</small></article>
           </div>
@@ -472,23 +480,21 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
             <p class="finance-scope"><strong>Lectura correcta:</strong> los ingresos se separan por tipo de modelo y usan el precio medio de referencia hasta registrar importes facturados. El margen disponible no equivale todavía al beneficio final: faltan mano de obra, impuestos y facturas pendientes. La materia prima se estima por la placa frontal, con un 10 % de merma, y no incluye bases, cornisas ni remates.</p>
           </article>
 
-          <div class="finance-layout">
-            <article class="panel finance-inputs">
-              <div class="panel-head"><div><p class="eyebrow">VALORES A CONTRASTAR</p><h2>Ingresos y gastos registrados</h2></div><button id="resetFinance" class="button secondary" type="button">Restablecer</button></div>
-              <div class="finance-form">
-                <label>Precio medio por pedido (€)<input id="financeAveragePrice" type="number" min="0" step="1" value="200" /></label>
-                <label>Otros ingresos facturados (€)<input id="financeOtherIncome" type="number" min="0" step="1" value="0" /></label>
-                <label>Luz · libro maestro (€)<input id="financeElectricity" type="number" min="0" step="0.01" value="0" /></label>
-                <label>Agua y residuos · libro maestro (€)<input id="financeWaterWaste" type="number" min="0" step="0.01" value="0" /></label>
-                <label>Internet · libro maestro (€)<input id="financeInternet" type="number" min="0" step="0.01" value="0" /></label>
-                <label>Letras · Bronces Jordá (€)<input id="financeLetters" type="number" min="0" step="1" value="0" /></label>
-                <label>Transporte y colocación (€)<input id="financeTransport" type="number" min="0" step="1" value="0" /></label>
-                <label>Mano de obra / autónomos (€)<input id="financeLabour" type="number" min="0" step="1" value="0" /></label>
-                <label>Otros gastos (€)<input id="financeOtherCosts" type="number" min="0" step="1" value="0" /></label>
-              </div>
-              <p id="financeLedgerNote" class="form-note">Los suministros se leerán del libro maestro al actualizar los datos. El resto de partidas sigue siendo editable hasta que se registre su factura.</p>
-            </article>
+          <article class="panel mateo-ledger-panel">
+            <div class="panel-head">
+              <div><p class="eyebrow">ESTADILLO M.S.</p><h2>Trabajos, entregas a cuenta y saldo</h2></div>
+              <span class="chart-note" id="mateoLedgerBalance">Saldo actual pendiente</span>
+            </div>
+            <p class="mateo-balance-note">El saldo se arrastra movimiento a movimiento: los trabajos entregados aumentan lo que Mateo debe al taller y sus entregas a cuenta lo reducen. Un saldo negativo significa que Mateo tiene dinero a su favor.</p>
+            <div class="mateo-ledger-wrap">
+              <table class="mateo-ledger-table">
+                <thead><tr><th>Fecha</th><th>Movimiento</th><th>Trabajo</th><th>Concepto</th><th>Debe</th><th>Entrega a cuenta</th><th>Saldo</th></tr></thead>
+                <tbody id="mateoLedgerBody"><tr><td colspan="7" class="empty-state">Cargando estadillo…</td></tr></tbody>
+              </table>
+            </div>
+          </article>
 
+          <div class="finance-layout">
             <article class="panel cost-register">
               <p class="eyebrow">GASTOS YA CONOCIDOS</p>
               <h2>Base anual de consumibles</h2>
