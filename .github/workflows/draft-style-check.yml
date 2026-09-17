@@ -6,11 +6,13 @@ on:
       - 'python_drafts/corporate_style.py'
       - 'python_drafts/client_header.py'
       - 'python_drafts/corporate_canary.py'
+      - 'python_drafts/corporate_batch.py'
       - 'python_drafts/validate_corporate_style.py'
       - 'python_drafts/assets/**'
       - 'python_drafts/requirements.txt'
       - '.github/workflows/draft-style-check.yml'
       - '.github/workflows/draft-style-canary.yml'
+      - '.github/workflows/draft-style-batch.yml'
   push:
     branches:
       - main
@@ -18,11 +20,13 @@ on:
       - 'python_drafts/corporate_style.py'
       - 'python_drafts/client_header.py'
       - 'python_drafts/corporate_canary.py'
+      - 'python_drafts/corporate_batch.py'
       - 'python_drafts/validate_corporate_style.py'
       - 'python_drafts/assets/**'
       - 'python_drafts/requirements.txt'
       - '.github/workflows/draft-style-check.yml'
       - '.github/workflows/draft-style-canary.yml'
+      - '.github/workflows/draft-style-batch.yml'
 
 permissions:
   contents: read
@@ -53,6 +57,7 @@ jobs:
           python -m py_compile corporate_style.py
           python -m py_compile client_header.py
           python -m py_compile corporate_canary.py
+          python -m py_compile corporate_batch.py
           python -m py_compile validate_corporate_style.py
 
       - name: Validate immutable logo and A4 style contract
