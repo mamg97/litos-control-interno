@@ -24,7 +24,8 @@ on:
         required: false
         type: string
   schedule:
-    - cron: '3,13,23,33,43,53 * * * *'
+    - cron: '6,16,26,36,46,56 * * * *'
+      timezone: 'Europe/Madrid'
 
 permissions:
   contents: read
