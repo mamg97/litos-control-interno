@@ -28,6 +28,7 @@ const emptySummary = {
 const state = {
   rows: [],
   expenses: [],
+  movements: [],
   summary: emptySummary,
   connected: false,
   generatedAt: null,
@@ -342,6 +343,86 @@ function mapPublicExpenses(records) {
     const amount = parseNumber(record.amount);
     return { month, category, amount, nature: text(record.nature) || "Sin clasificar" };
   }).filter((record) => /^\d{4}-(0[1-9]|1[0-2])$/.test(record.month) && record.category && record.amount !== null);
+}
+
+
+function mapPublicMovements(records) {
+  if (!Array.isArray(records)) return [];
+  return records.map((record, index) => ({
+    _index: index,
+    year: parseNumber(record.year),
+    date: text(record.date),
+    sourceDate: text(record.sourceDate),
+    type: text(record.type),
+    ref: text(record.ref),
+    line: parseNumber(record.line),
+    concept: text(record.concept),
+    debit: parseNumber(record.debit),
+    credit: parseNumber(record.credit),
+    balance: parseNumber(record.balance)
+  })).filter((record) => record.date && record.type && record.balance !== null);
+}
+
+function latestMateoMovement() {
+  for (let index = state.movements.length - 1; index >= 0; index -= 1) {
+    if (state.movements[index].balance !== null) return state.movements[index];
+  }
+  return null;
+}
+
+function mateoBalanceExplanation(balance) {
+  if (balance === null || balance === undefined) return "Pendiente de cargar el estadillo";
+  if (balance > 0) return "Mateo debe " + formatMoney(balance) + " al taller";
+  if (balance < 0) return "Mateo tiene " + formatMoney(Math.abs(balance)) + " a su favor";
+  return "Cuenta cuadrada con Mateo";
+}
+
+function renderMateoLedger(year) {
+  const body = $("#mateoLedgerBody");
+  if (!body) return;
+  const selectedYear = Number(year);
+  const rows = state.movements
+    .filter((movement) => !selectedYear || movement.year === selectedYear)
+    .slice()
+    .reverse();
+
+  body.replaceChildren();
+  if (!rows.length) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 7;
+    td.className = "empty-state";
+    td.textContent = "No hay movimientos de estadillo para este año.";
+    tr.append(td);
+    body.append(tr);
+  } else {
+    rows.forEach((movement) => {
+      const tr = document.createElement("tr");
+      const values = [
+        formatOperationalDate(movement.date),
+        movement.type === "ENTREGA A CUENTA" ? "Entrega a cuenta" : movement.type === "TRABAJO ENTREGADO" ? "Trabajo entregado" : movement.type,
+        movement.ref && movement.ref !== "—" ? movement.ref : "—",
+        movement.concept || "—",
+        movement.debit === null ? "—" : formatMoney(movement.debit),
+        movement.credit === null ? "—" : formatMoney(movement.credit),
+        formatMoney(movement.balance)
+      ];
+      values.forEach((value) => {
+        const td = document.createElement("td");
+        td.textContent = value;
+        tr.append(td);
+      });
+      body.append(tr);
+    });
+  }
+
+  const balanceNode = $("#mateoLedgerBalance");
+  if (balanceNode) {
+    const latestForYear = rows.length ? rows[0] : null;
+    balanceNode.textContent = latestForYear
+      ? formatMoney(latestForYear.balance) + " · " + mateoBalanceExplanation(latestForYear.balance)
+      : "Sin movimientos";
+  }
 }
 
 function makeSummary(rows) {
@@ -848,6 +929,18 @@ function renderSummary() {
       ? `${currentQuarterLabel()} · sin factura/albarán`
       : "Pendiente de actualización";
   }
+  const mateoMovement = latestMateoMovement();
+  const mateoBalance = $("#mateoBalance");
+  const mateoBalanceFoot = $("#mateoBalanceFoot");
+  if (mateoBalance) {
+    mateoBalance.textContent = connected && mateoMovement ? formatMoney(mateoMovement.balance) : "—";
+    mateoBalance.closest(".kpi-card")?.classList.toggle("pending-kpi", !(connected && mateoMovement));
+  }
+  if (mateoBalanceFoot) {
+    mateoBalanceFoot.textContent = connected && mateoMovement
+      ? mateoBalanceExplanation(mateoMovement.balance)
+      : "Pendiente de cargar el estadillo";
+  }
   $("#measuredOrders").textContent = connected ? formatInt.format(s.measured) : "—";
   $("#distinctSizes").textContent = connected ? formatInt.format(s.distinctSizes) : "—";
   const topSize = s.sizes[0];
@@ -863,13 +956,11 @@ function renderSummary() {
     : "Actualizando datos";
   $("#summaryChartHeading").textContent = `${metricLabels[metric]} por periodo`;
 
-  const chartDateBasis = metric === "orders"
-    ? "Fecha: recepción (email) · si falta: ficha · histórico: fecha disponible"
-    : "Fecha: operativa / entrega";
-
   $("#summaryChartNote").textContent = connected && year
-    ? `${metricLabels[metric]} ${granularity === "quarter" ? "por trimestre" : "por mes"} · ${year} · ${chartDateBasis}`
-    : "Pendiente de actualización";
+    ? metric === "orders"
+      ? "En " + year + ", los pedidos se agrupan " + (granularity === "quarter" ? "por trimestre" : "por mes") + " según su fecha de recepción por email; si no consta, se usa la fecha de ficha y, en el histórico incompleto, la mejor fecha disponible."
+      : "En " + year + ", el beneficio se agrupa " + (granularity === "quarter" ? "por trimestre" : "por mes") + " según la fecha operativa de entrega registrada."
+    : "La nota de fecha se completará al cargar los datos.";
   const series = performanceSeries(year || new Date().getFullYear(), granularity);
   drawOrdersChart(series.map((point) => [point.label, metricValue(point, metric)]), metric);
   renderMetricStrip(years, year, granularity, metric);
@@ -1081,7 +1172,9 @@ function setupForecastYearFilter(years = []) {
 }
 
 function financeValue(id) {
-  return numberAt({ value: $(`#${id}`).value }, "value") || 0;
+  const input = $(`#${id}`);
+  if (!input) return FINANCE_DEFAULTS[id] || 0;
+  return numberAt({ value: input.value }, "value") || 0;
 }
 
 function financeRows() {
@@ -1367,6 +1460,7 @@ function renderFinance() {
   $("#financeFlowStatus").textContent = state.connected
     ? `${rows.length} trabajos · ${finance.recordedIncomeRows} importes de estadillo · ${finance.ledger.rows.length ? "gastos maestro" : "gastos pendientes"} · año ${$("#financeYear").value}`
     : "Actualizando pedidos";
+  renderMateoLedger(year);
   drawFinancialSummaryChart(performanceSeries(year, granularity));
   $("#financeChartScope").textContent = `Resultado ${granularity === "quarter" ? "por trimestre" : "por mes"}: ingresos del estadillo cuando constan, materia prima estimada y gastos del libro maestro. El beneficio es ingresos menos gastos.`;
   renderFinanceSankey(finance, sankeyIncomeByModel(rows, finance));
@@ -1378,12 +1472,6 @@ function renderFinance() {
 }
 
 function loadFinanceSettings() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(FINANCE_KEY) || "{}");
-    Object.entries(FINANCE_DEFAULTS).forEach(([id, value]) => { $(`#${id}`).value = Number.isFinite(saved[id]) ? saved[id] : value; });
-  } catch {
-    Object.entries(FINANCE_DEFAULTS).forEach(([id, value]) => { $(`#${id}`).value = value; });
-  }
   renderFinance();
 }
 
@@ -1394,10 +1482,8 @@ function renderFinancialViews() {
 }
 
 function resetFinance() {
-  Object.entries(FINANCE_DEFAULTS).forEach(([id, value]) => { $(`#${id}`).value = value; });
   localStorage.removeItem(FINANCE_KEY);
   renderFinancialViews();
-  showToast("Valores financieros restablecidos.");
 }
 
 function updateBenefit() {
@@ -1517,6 +1603,7 @@ function refreshPublicFeed() {
       if (!payload || !Array.isArray(payload.records)) throw new Error("Respuesta no válida");
       state.rows = mapPublicRows(payload.records);
       state.expenses = mapPublicExpenses(payload.expenses);
+      state.movements = mapPublicMovements(payload.movements);
       state.summary = makeSummary(state.rows);
       state.generatedAt = text(payload.generatedAt) || new Date().toISOString();
       state.connected = true;
@@ -1583,11 +1670,9 @@ function init() {
   $("#ordersSearch").addEventListener("input", renderRecentOrders);
   $("#summaryOrdersSearch").addEventListener("input", renderRecentOrders);
   ["#assumptionOrders", "#assumptionPrice", "#assumptionProcurement", "#assumptionExtraJobs", "#assumptionContribution", "#assumptionRework", "#assumptionCncCapacity", "#assumptionCncInvestment", "#assumptionCncPayback"].forEach((selector) => $(selector).addEventListener("input", updateBenefit));
-  ["#financeAveragePrice", "#financeOtherIncome", "#financeElectricity", "#financeWaterWaste", "#financeInternet", "#financeLetters", "#financeTransport", "#financeLabour", "#financeOtherCosts"].forEach((selector) => $(selector).addEventListener("input", renderFinancialViews));
   $("#financeYear").addEventListener("change", renderFinancialViews);
   $("#financeGranularity").addEventListener("change", renderFinance);
   $("#resetAssumptions").addEventListener("click", resetAssumptions);
-  $("#resetFinance").addEventListener("click", resetFinance);
   window.setInterval(refreshPublicFeed, AUTO_REFRESH_MS);
   window.addEventListener("resize", () => {
     if (state.activeView === "summary") renderSummary();
