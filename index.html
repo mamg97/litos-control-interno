@@ -78,17 +78,14 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
 .button.tertiary { padding-left: 0; border-color: transparent; background: transparent; color: var(--teal); }
 .button.tertiary span { font-size: 1rem; }
 
-.kpi-grid { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 1rem; margin-bottom: 1rem; }
+.kpi-grid { display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 1rem; margin-bottom: 1rem; }
 .kpi-card { min-height: 144px; padding: 1.16rem 1.22rem 1rem; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); box-shadow: 0 2px 4px rgba(24,58,59,.015); overflow: hidden; position: relative; }
 .kpi-card::after { position: absolute; right: 0; bottom: 0; left: 0; height: 4px; content: ""; background: var(--teal); }
-.kpi-card.accent-amber::after { background: var(--amber); }.kpi-card.accent-green::after { background: var(--green); }.kpi-card.accent-lilac::after { background: var(--lilac); }
 .kpi-label { color: var(--ink-soft); font-size: .76rem; font-weight: 700; letter-spacing: .025em; text-transform: uppercase; }
 .kpi-value { margin-top: .7rem; color: var(--deep); font-family: "DM Mono", monospace; font-size: 2rem; font-weight: 500; letter-spacing: -.08em; }.kpi-value span { margin-left: .2rem; font-size: 1rem; letter-spacing: -.04em; }
 .financial-kpi .kpi-value { font-size: clamp(1.25rem, 1.55vw, 1.72rem); white-space: nowrap; }
 .pending-kpi .kpi-value { color: #9aabaa; }
 .kpi-foot { margin-top: .3rem; color: var(--ink-soft); font-size: .72rem; }
-.balance-kpi { grid-column: span 2; }
-.balance-kpi .kpi-value { font-size: clamp(1.45rem, 1.9vw, 2rem); }
 .chart-footnote { margin: .65rem 0 0; color: var(--ink-soft); font-size: .72rem; line-height: 1.5; }
 
 .dashboard-grid { display: grid; gap: 1rem; margin-bottom: 1rem; }.overview-grid { grid-template-columns: minmax(0, 1fr); }.bottom-grid { grid-template-columns: minmax(0, 1fr); }
@@ -219,7 +216,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
               <div class="kpi-foot">Trimestre actual · sin factura/albarán</div>
             </article>
             <article class="kpi-card accent-lilac balance-kpi">
-              <div class="kpi-label">Saldo con Mateo Sabán</div>
+              <div class="kpi-label">Saldo estadillo</div>
               <div class="kpi-value" id="mateoBalance">—</div>
               <div class="kpi-foot" id="mateoBalanceFoot">Pendiente de cargar el estadillo</div>
             </article>
