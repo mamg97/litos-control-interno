@@ -9,11 +9,13 @@ on:
     paths:
       - 'python_albaranes/sync.py'
       - '.github/workflows/albaranes-cutover.yml'
-  schedule:
-    - cron: '9,24,39,54 * * * *'
-      timezone: 'Europe/Madrid'
-    - cron: '14 * * * *'
-      timezone: 'Europe/Madrid'
+  workflow_run:
+    workflows:
+      - 'LITOS Draft Sync'
+    types:
+      - completed
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       mode:
@@ -39,6 +41,7 @@ concurrency:
 
 jobs:
   run:
+    if: ${{ github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'schedule' && github.event.workflow_run.head_branch == 'main') }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
@@ -115,23 +118,17 @@ jobs:
         working-directory: python_albaranes
         run: python parity_v2.py
 
-      - name: Scheduled sync blocked unless explicitly enabled
-        if: ${{ github.event_name == 'schedule' && vars.LITOS_ALBARAN_KILL_SWITCH != 'false' }}
-        run: echo 'M6 scheduled production is disabled by fail-closed kill switch.'
+      - name: Bridge sync blocked unless explicitly enabled
+        if: ${{ github.event_name == 'workflow_run' && vars.LITOS_ALBARAN_KILL_SWITCH != 'false' }}
+        run: echo 'M6 scheduler bridge is disabled by fail-closed kill switch.'
 
-      - name: Scheduled 15-minute link sync
-        if: ${{ github.event_name == 'schedule' && github.event.schedule == '9,24,39,54 * * * *' && vars.LITOS_ALBARAN_KILL_SWITCH == 'false' }}
-        env:
-          LITOS_ALBARAN_WRITE_ENABLED: 'true'
-        run: python python_albaranes/sync.py --sync --links-only --max-rows 0
-
-      - name: Scheduled hourly full sync
-        if: ${{ github.event_name == 'schedule' && github.event.schedule == '14 * * * *' && vars.LITOS_ALBARAN_KILL_SWITCH == 'false' }}
+      - name: Bridged production sync from certified Draft Sync schedule
+        if: ${{ github.event_name == 'workflow_run' && vars.LITOS_ALBARAN_KILL_SWITCH == 'false' }}
         env:
           LITOS_ALBARAN_WRITE_ENABLED: 'true'
         run: python python_albaranes/sync.py --sync --max-rows 0
 
-      - name: Post-scheduled formula-aware parity
-        if: ${{ github.event_name == 'schedule' && vars.LITOS_ALBARAN_KILL_SWITCH == 'false' }}
+      - name: Post-bridge formula-aware parity
+        if: ${{ github.event_name == 'workflow_run' && vars.LITOS_ALBARAN_KILL_SWITCH == 'false' }}
         working-directory: python_albaranes
         run: python parity_v2.py
