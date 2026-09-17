@@ -179,7 +179,7 @@ function materialFor(row) {
   // material as “Negro absoluto”; keep both spellings in one demand group.
   if (value === "absoluto" || value.includes("negro absoluto")) return "Granito negro absoluto";
   if (value.includes("italia") || value.includes("italiano")) return "Mármol blanco italiano";
-  if (value.includes("blanco") || value.includes("macael")) return "Mármol blanco Macael · M.S.";
+  if (value.includes("blanco") || value.includes("macael")) return "Mármol blanco Macael · cliente";
   if (value === "suyo" || value === "suya") {
     return isReform(row) ? "Piedra existente" : "Material aportado · cliente";
   }
@@ -188,8 +188,8 @@ function materialFor(row) {
 
 function materialRateFor(row) {
   const value = normalize(rawMaterialFor(row));
-  // “Suyo” is either existing stone in a reform or material supplied by M.S.;
-  // white Macael is also supplied by M.S. None is a workshop stone purchase.
+  // “Suyo” is either existing stone in a reform or material supplied by the client;
+  // white Macael is also supplied by the client None is a workshop stone purchase.
   if (!value || value === "suyo" || value === "suya" || value.includes("macael") || (value.includes("blanco") && !value.includes("italiano") && !value.includes("italia"))) return 0;
   if (value.includes("negro absoluto") || value === "absoluto") return 110;
   if (value.includes("labrador")) return 80;
