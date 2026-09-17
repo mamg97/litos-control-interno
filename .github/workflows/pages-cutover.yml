@@ -61,12 +61,36 @@ jobs:
           python -m py_compile python_feed/export.py
           python -m py_compile python_feed/build_pages.py
 
+      - name: Validate public-feed privacy sanitizer
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=python_feed python - <<'PY'
+          from export import FORBIDDEN_PUBLIC_RECORD_KEYS, sanitize_public_payload
+          raw = {
+              "version": 6,
+              "generatedAt": "2026-09-17T00:00:00Z",
+              "records": [{
+                  "id": "TEST",
+                  "model": "Lápida",
+                  "invoiceFile": "https://drive.google.com/private-test",
+                  "noteFile": "https://drive.google.com/private-note",
+              }],
+              "expenses": [],
+          }
+          payload = sanitize_public_payload(raw)
+          assert payload["version"] == 7
+          assert payload["records"] == [{"id": "TEST", "model": "Lápida"}]
+          assert not FORBIDDEN_PUBLIC_RECORD_KEYS.intersection(payload["records"][0])
+          print("M7_PUBLIC_PRIVACY_SANITIZER_OK")
+          PY
+
       - name: Validate static-only artifact with synthetic feed
         shell: bash
         run: |
           set -euo pipefail
           cat > "$RUNNER_TEMP/m7-synthetic-feed.json" <<'JSON'
-          {"records":[{"Pedido":"TEST"}],"expenses":[],"generatedAt":"2026-09-17T00:00:00Z"}
+          {"version":7,"records":[{"id":"TEST"}],"expenses":[],"generatedAt":"2026-09-17T00:00:00Z"}
           JSON
           python python_feed/build_pages.py --output "$RUNNER_TEMP/m7-site" --feed "$RUNNER_TEMP/m7-synthetic-feed.json"
           test -s "$RUNNER_TEMP/m7-site/index.html"
@@ -128,13 +152,13 @@ jobs:
           test -n "$GOOGLE_OAUTH_SABAN_JSON"
           echo 'OK: private Google OAuth credential present.'
 
-      - name: Generate ephemeral public feed
+      - name: Generate privacy-sanitized ephemeral public feed
         run: python python_feed/export.py --output "$RUNNER_TEMP/litos-feed.json"
 
       - name: Build Pages artifact without Git data snapshots
         run: python python_feed/build_pages.py --output _site --feed "$RUNNER_TEMP/litos-feed.json"
 
-      - name: Validate staged site
+      - name: Validate staged site and public-feed privacy
         shell: bash
         run: |
           set -euo pipefail
@@ -151,13 +175,21 @@ jobs:
             echo 'Unexpected legacy fallback constant in staged runtime.' >&2
             exit 1
           fi
-          python - <<'PY'
+          PYTHONPATH=python_feed python - <<'PY'
           import json
           from pathlib import Path
+          from export import FORBIDDEN_PUBLIC_RECORD_KEYS, assert_public_payload_safe
           payload = json.loads(Path('_site/data/feed.json').read_text(encoding='utf-8'))
+          assert payload.get('version') == 7
           assert isinstance(payload.get('records'), list) and payload['records']
           assert isinstance(payload.get('expenses'), list)
-          print(f"M7_STAGED_SITE_OK records={len(payload['records'])} expenses={len(payload['expenses'])}")
+          for record in payload['records']:
+              assert not FORBIDDEN_PUBLIC_RECORD_KEYS.intersection(record)
+          assert_public_payload_safe(payload)
+          print(
+              f"M7_STAGED_SITE_OK records={len(payload['records'])} "
+              f"expenses={len(payload['expenses'])} private_document_fields=0"
+          )
           PY
 
       - name: Upload GitHub Pages artifact
