@@ -57,12 +57,7 @@ def preflight(cfg: CutoverConfig) -> dict:
         "write_guard_consistent": not (cfg.kill_switch and cfg.write_enabled),
         "google_user_identity_present": cfg.google_oauth_user_json_present,
     }
-    ready_for_write = (
-        all(checks.values())
-        and cfg.free_only
-        and (not cfg.kill_switch)
-        and cfg.write_enabled
-    )
+    ready_for_write = all(checks.values()) and cfg.free_only and (not cfg.kill_switch) and cfg.write_enabled
     return {
         "phase": "PYTHON_DRAFT_CUTOVER_EXECUTOR",
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
@@ -75,6 +70,7 @@ def preflight(cfg: CutoverConfig) -> dict:
             "draft_root_folder_id": cfg.draft_root_folder_id,
             "backup_folder_id": cfg.backup_folder_id,
             "google_oauth_user_json_present": cfg.google_oauth_user_json_present,
+            "corporate_style_enabled": _truthy(os.getenv("LITOS_DRAFT_CORPORATE_STYLE", "false")),
         },
         "checks": checks,
         "ready_for_write": ready_for_write,
@@ -91,10 +87,79 @@ def _build_user_services():
 
 def _planner_api():
     try:
-        from .executor import build_plan, summarize_plan, execute_sync
+        from . import executor as executor_module
     except ImportError:
-        from executor import build_plan, summarize_plan, execute_sync
-    return build_plan, summarize_plan, execute_sync
+        import executor as executor_module
+
+    if _truthy(os.getenv("LITOS_DRAFT_CORPORATE_STYLE", "false")):
+        try:
+            from .corporate_style import LOGO_SHA256, STYLE_VERSION, apply_corporate_a4
+            from .client_header import CUSTOMER_PROFILE_VERSION, apply_client_header
+        except ImportError:
+            from corporate_style import LOGO_SHA256, STYLE_VERSION, apply_corporate_a4
+            from client_header import CUSTOMER_PROFILE_VERSION, apply_client_header
+
+        original_build_plan = executor_module.build_plan
+
+        def _styled_target(target: dict) -> dict:
+            raw_bytes = target.get("xlsx_bytes")
+            if not isinstance(raw_bytes, (bytes, bytearray)) or not raw_bytes:
+                raise RuntimeError("Corporate production style: semantic builder returned no XLSX bytes")
+            styled = apply_corporate_a4(bytes(raw_bytes))
+            styled = apply_client_header(styled)
+            out = dict(target)
+            out["xlsx_bytes"] = styled
+            out["style_version"] = STYLE_VERSION
+            out["logo_sha256"] = LOGO_SHA256
+            out["customer_profile_version"] = CUSTOMER_PROFILE_VERSION
+            return out
+
+        def corporate_build_plan(services):
+            plan = original_build_plan(services)
+            for item in plan:
+                semantic_action = item.get("action")
+                target = item.get("target")
+                if semantic_action not in {"created", "updated", "unchanged"} or not target:
+                    continue
+
+                styled_target = _styled_target(target)
+
+                if semantic_action == "created":
+                    item["target"] = styled_target
+                    item["corporate_style_applied"] = True
+                    continue
+
+                draft = item.get("draft")
+                if not draft:
+                    continue
+
+                actual = executor_module._download(services.drive, draft["id"])
+                styled_cmp = executor_module.compare_target_actual(
+                    styled_target["xlsx_bytes"], actual, item["pedido"]
+                )
+
+                if styled_cmp.get("match"):
+                    item["target"] = styled_target
+                    item["comparison"] = styled_cmp
+                    item["action"] = "unchanged"
+                    item["corporate_style_applied"] = True
+                elif semantic_action == "updated":
+                    # When business data really changed, write the new content using
+                    # the approved corporate A4/customer presentation at the same time.
+                    item["target"] = styled_target
+                    item["comparison"] = styled_cmp
+                    item["corporate_style_applied"] = True
+                else:
+                    # Do not turn a semantically unchanged historical draft into a
+                    # production mutation merely to restyle it. Existing backlog is
+                    # migrated separately in guarded batches.
+                    item["corporate_style_deferred"] = True
+
+            return plan
+
+        executor_module.build_plan = corporate_build_plan
+
+    return executor_module.build_plan, executor_module.summarize_plan, executor_module.execute_sync
 
 
 def main() -> int:
@@ -126,6 +191,7 @@ def main() -> int:
                 "kill_switch": cfg.kill_switch,
                 "write_enabled": cfg.write_enabled,
                 "free_only": cfg.free_only,
+                "corporate_style_enabled": _truthy(os.getenv("LITOS_DRAFT_CORPORATE_STYLE", "false")),
                 "plan": summary,
             }
             print(json.dumps(outcome, ensure_ascii=False, indent=2, default=str))

@@ -49,6 +49,7 @@ jobs:
       LITOS_FREE_ONLY: "true"
       LITOS_KILL_SWITCH: "true"
       LITOS_WRITE_ENABLED: "false"
+      LITOS_DRAFT_CORPORATE_STYLE: "true"
       LITOS_SPREADSHEET_ID: "1ZS-L0eJmfukNr0rmc8ZvC3UxdVKw7Rnggx5TlRydZ2Q"
       LITOS_DRAFT_ROOT_FOLDER_ID: "1eUAupqLzfBhkiEexWqpI3JtYReT8c9A_"
       LITOS_BACKUP_FOLDER_ID: "1weWKeCLjQnrL2Qg2rPt1BYHGJhfZtKrv"
@@ -97,7 +98,8 @@ jobs:
         run: |
           python - <<'PY'
           from google_user_auth import build_user_services
-          from executor import build_plan, summarize_plan
+          from runner import _planner_api
+          build_plan, summarize_plan, _ = _planner_api()
           services = build_user_services()
           summary = summarize_plan(build_plan(services))
           print(summary)
