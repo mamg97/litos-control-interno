@@ -1,0 +1,148 @@
+name: LITOS M3+M4 Cutover
+
+on:
+  push:
+    paths:
+      - 'python_saban/**'
+      - 'python_handwriting/**'
+      - '.github/workflows/saban-handwriting-cutover.yml'
+  pull_request:
+    paths:
+      - 'python_saban/**'
+      - 'python_handwriting/**'
+      - '.github/workflows/saban-handwriting-cutover.yml'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Execution mode"
+        required: true
+        default: "dry-run"
+        type: choice
+        options:
+          - dry-run
+          - cutover-canary
+          - sync
+      confirm:
+        description: "For canary type CUTOVER_M3_M4; for full sync type SYNC_M3_M4"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: litos-m3-m4-cutover
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONUNBUFFERED: "1"
+      LITOS_FREE_ONLY: "true"
+      LITOS_SPREADSHEET_ID: "1ZS-L0eJmfukNr0rmc8ZvC3UxdVKw7Rnggx5TlRydZ2Q"
+      LITOS_SABAN_FOLDER_ID: "1eUAupqLzfBhkiEexWqpI3JtYReT8c9A_"
+      LITOS_SABAN_LABEL: "saban"
+      LITOS_SABAN_YEAR: "2026"
+      LITOS_SABAN_LOOKBACK_DAYS: "30"
+      LITOS_GEMINI_MODEL: "gemini-3.8-flash"
+      GOOGLE_OAUTH_SABAN_JSON: ${{ secrets.GOOGLE_OAUTH_SABAN_JSON }}
+      SABAN_ALLOWED_SENDER: ${{ secrets.SABAN_ALLOWED_SENDER }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      LITOS_SABAN_KILL_SWITCH: ${{ vars.LITOS_SABAN_KILL_SWITCH }}
+      LITOS_HANDWRITING_KILL_SWITCH: ${{ vars.LITOS_HANDWRITING_KILL_SWITCH }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: |
+            python_saban/requirements.txt
+            python_handwriting/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r python_saban/requirements.txt -r python_handwriting/requirements.txt
+
+      - name: Compile production adapters
+        run: |
+          python -m py_compile python_saban/intake_sync.py python_saban/canary_gate.py python_handwriting/sync.py
+
+      - name: Read-only preflights
+        run: |
+          (cd python_saban && python runner.py --preflight)
+          (cd python_handwriting && python runner.py --preflight)
+
+      - name: Require private credentials
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        shell: bash
+        run: |
+          test -n "$GOOGLE_OAUTH_SABAN_JSON"
+          test -n "$SABAN_ALLOWED_SENDER"
+          test -n "$GEMINI_API_KEY"
+          echo "OK: private credentials present."
+
+      - name: Read-only M3+M4 dry-run
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run' }}
+        run: |
+          (cd python_saban && python runner.py --dry-run)
+          (cd python_handwriting && python runner.py --dry-run)
+
+      - name: Confirm cutover canary
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'cutover-canary' }}
+        shell: bash
+        run: |
+          test "${{ inputs.confirm }}" = "CUTOVER_M3_M4"
+          echo "OK: M3+M4 cutover canary explicitly confirmed."
+
+      - name: Fresh M3 mutation gate
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'cutover-canary' }}
+        working-directory: python_saban
+        run: python canary_gate.py
+
+      - name: M3 production canary
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'cutover-canary' }}
+        working-directory: python_saban
+        env:
+          LITOS_SABAN_WRITE_ENABLED: "true"
+        run: python intake_sync.py --max-mutations 1
+
+      - name: M4 one-item production canary
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'cutover-canary' }}
+        working-directory: python_handwriting
+        env:
+          LITOS_HANDWRITING_WRITE_ENABLED: "true"
+        run: python sync.py --max-items 1
+
+      - name: Post-canary read-only verification
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'cutover-canary' }}
+        run: |
+          (cd python_saban && python runner.py --dry-run)
+          (cd python_handwriting && python runner.py --dry-run)
+
+      - name: Confirm full sync
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
+        shell: bash
+        run: |
+          test "${{ inputs.confirm }}" = "SYNC_M3_M4"
+          echo "OK: M3+M4 full sync explicitly confirmed."
+
+      - name: M3 production sync
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
+        working-directory: python_saban
+        env:
+          LITOS_SABAN_WRITE_ENABLED: "true"
+        run: python intake_sync.py
+
+      - name: M4 production sync
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
+        working-directory: python_handwriting
+        env:
+          LITOS_HANDWRITING_WRITE_ENABLED: "true"
+        run: python sync.py --max-items 4
