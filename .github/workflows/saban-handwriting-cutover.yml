@@ -113,6 +113,7 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'cutover-canary' }}
         working-directory: python_saban
         env:
+          LITOS_SABAN_KILL_SWITCH: "false"
           LITOS_SABAN_WRITE_ENABLED: "true"
         run: python intake_sync_safe.py --max-mutations 1
 
@@ -120,6 +121,7 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'cutover-canary' }}
         working-directory: python_handwriting
         env:
+          LITOS_HANDWRITING_KILL_SWITCH: "false"
           LITOS_HANDWRITING_WRITE_ENABLED: "true"
         run: python sync_safe.py --max-items 1
 
@@ -136,22 +138,42 @@ jobs:
           test "${{ inputs.confirm }}" = "SYNC_M3_M4"
           echo "OK: M3+M4 full sync explicitly confirmed."
 
-      - name: M3 hardened production sync
-        if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'sync') }}
+      - name: M3 hardened manual production sync
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
+        working-directory: python_saban
+        env:
+          LITOS_SABAN_KILL_SWITCH: "false"
+          LITOS_SABAN_WRITE_ENABLED: "true"
+        run: python intake_sync_safe.py
+
+      - name: M4 hardened manual production sync
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
+        working-directory: python_handwriting
+        env:
+          LITOS_HANDWRITING_KILL_SWITCH: "false"
+          LITOS_HANDWRITING_WRITE_ENABLED: "true"
+        run: python sync_safe.py --max-items 4
+
+      - name: Scheduled production sync blocked by kill switch
+        if: ${{ github.event_name == 'schedule' && (vars.LITOS_SABAN_KILL_SWITCH == 'true' || vars.LITOS_HANDWRITING_KILL_SWITCH == 'true') }}
+        run: echo "Scheduled M3+M4 production sync is disabled while either repository kill switch is true."
+
+      - name: M3 hardened scheduled production sync
+        if: ${{ github.event_name == 'schedule' && vars.LITOS_SABAN_KILL_SWITCH != 'true' && vars.LITOS_HANDWRITING_KILL_SWITCH != 'true' }}
         working-directory: python_saban
         env:
           LITOS_SABAN_WRITE_ENABLED: "true"
         run: python intake_sync_safe.py
 
-      - name: M4 hardened production sync
-        if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'sync') }}
+      - name: M4 hardened scheduled production sync
+        if: ${{ github.event_name == 'schedule' && vars.LITOS_SABAN_KILL_SWITCH != 'true' && vars.LITOS_HANDWRITING_KILL_SWITCH != 'true' }}
         working-directory: python_handwriting
         env:
           LITOS_HANDWRITING_WRITE_ENABLED: "true"
         run: python sync_safe.py --max-items 4
 
       - name: Post-sync read-only verification
-        if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'sync') }}
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'sync') || (github.event_name == 'schedule' && vars.LITOS_SABAN_KILL_SWITCH != 'true' && vars.LITOS_HANDWRITING_KILL_SWITCH != 'true') }}
         run: |
           (cd python_saban && python runner.py --dry-run)
           (cd python_handwriting && python runner.py --dry-run)
