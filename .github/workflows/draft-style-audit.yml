@@ -2,12 +2,6 @@ name: LITOS Draft Corporate Coverage Audit
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - draft-corporate-audit
-    paths:
-      - 'python_drafts/corporate_audit.py'
-      - '.github/workflows/draft-style-audit.yml'
 
 permissions:
   contents: read
