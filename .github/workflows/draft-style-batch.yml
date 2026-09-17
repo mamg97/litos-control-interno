@@ -1,0 +1,89 @@
+name: LITOS Draft Corporate Style Batch
+
+on:
+  workflow_dispatch:
+    inputs:
+      orders:
+        description: 'Comma-separated four-digit orders to restyle (max 8)'
+        required: true
+        default: ''
+        type: string
+      mode:
+        description: 'Execution mode'
+        required: true
+        default: 'dry-run'
+        type: choice
+        options:
+          - dry-run
+          - sync
+      confirm:
+        description: 'For sync only: type STYLE_BATCH'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: litos-draft-style-batch
+  cancel-in-progress: false
+
+jobs:
+  batch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: python_drafts
+    env:
+      PYTHONUNBUFFERED: '1'
+      GOOGLE_OAUTH_USER_JSON: ${{ secrets.GOOGLE_OAUTH_USER_JSON }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: python_drafts/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Compile guarded batch module
+        run: python -m py_compile corporate_batch.py
+
+      - name: Validate immutable logo, A4 and customer contracts
+        run: |
+          python validate_corporate_style.py
+          python client_header.py
+
+      - name: Require private Google OAuth
+        shell: bash
+        run: |
+          test -n "$GOOGLE_OAUTH_USER_JSON"
+          echo 'OK: private Google OAuth credential present.'
+
+      - name: Fresh explicit batch dry-run
+        run: python corporate_batch.py --orders '${{ inputs.orders }}' --dry-run
+
+      - name: Require explicit batch confirmation
+        if: ${{ inputs.mode == 'sync' }}
+        env:
+          LITOS_BATCH_CONFIRM_INPUT: ${{ inputs.confirm }}
+        shell: bash
+        run: |
+          test "$LITOS_BATCH_CONFIRM_INPUT" = 'STYLE_BATCH'
+          echo 'OK: explicit corporate batch confirmation received.'
+
+      - name: Execute guarded corporate style batch
+        if: ${{ inputs.mode == 'sync' }}
+        env:
+          LITOS_STYLE_BATCH_CONFIRM: STYLE_BATCH
+          LITOS_DRAFT_STYLE_BATCH_KILL_SWITCH: 'false'
+          LITOS_DRAFT_STYLE_BATCH_WRITE_ENABLED: 'true'
+        run: python corporate_batch.py --orders '${{ inputs.orders }}' --sync
