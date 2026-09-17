@@ -112,12 +112,12 @@
     line-height: 1.28;
   }
 
-  .kpi-grid .kpi-card:nth-child(7) {
+  .kpi-grid .balance-kpi {
     grid-column: 1 / -1;
     min-height: 88px;
   }
 
-  .kpi-grid .kpi-card:nth-child(7) .kpi-value {
+  .kpi-grid .balance-kpi .kpi-value {
     font-size: 1.25rem;
   }
 
