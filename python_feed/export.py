@@ -4,6 +4,7 @@ import argparse
 import json
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 from feed import build_payload, build_sheets_service, payload_hash
 
@@ -17,6 +18,13 @@ DOCUMENT_LINK_KEYS = frozenset(
     }
 )
 
+ALLOWED_GOOGLE_DOCUMENT_HOSTS = frozenset(
+    {
+        "drive.google.com",
+        "docs.google.com",
+    }
+)
+
 
 def _is_url(value: Any) -> bool:
     if not isinstance(value, str):
@@ -25,19 +33,27 @@ def _is_url(value: Any) -> bool:
     return lowered.startswith("http://") or lowered.startswith("https://")
 
 
-def _is_allowed_drive_url(value: Any) -> bool:
+def _is_allowed_google_document_url(value: Any) -> bool:
     if not isinstance(value, str):
         return False
-    return value.strip().lower().startswith("https://drive.google.com/")
+    try:
+        parsed = urlparse(value.strip())
+    except ValueError:
+        return False
+    return (
+        parsed.scheme.lower() == "https"
+        and (parsed.hostname or "").lower() in ALLOWED_GOOGLE_DOCUMENT_HOSTS
+    )
 
 
 def sanitize_public_payload(payload: dict[str, Any]) -> dict[str, Any]:
-    """Publish only the approved operational schema and Drive document links.
+    """Publish only the approved operational schema and Google document links.
 
     Document URLs are intentionally retained because the dashboard has always
-    exposed them as navigation targets while Drive itself enforces access.
-    Every document URL must remain a drive.google.com URL; arbitrary URLs are
-    rejected before the Pages artifact is created.
+    exposed them as navigation targets while Google Drive itself enforces
+    access. Both drive.google.com file links and docs.google.com links are
+    legitimate forms returned by Google for Drive-backed documents. Arbitrary
+    external URLs are rejected before the Pages artifact is created.
     """
     sanitized_records: list[dict[str, Any]] = []
     for raw_record in payload.get("records", []) or []:
@@ -47,9 +63,9 @@ def sanitize_public_payload(payload: dict[str, Any]) -> dict[str, Any]:
             if value in (None, ""):
                 record[key] = ""
                 continue
-            if not _is_allowed_drive_url(value):
+            if not _is_allowed_google_document_url(value):
                 raise RuntimeError(
-                    f"Public feed privacy guard: non-Drive document URL in field {key}"
+                    f"Public feed privacy guard: non-Google document URL in field {key}"
                 )
         sanitized_records.append(record)
 
@@ -86,9 +102,9 @@ def assert_public_payload_safe(payload: dict[str, Any]) -> None:
             value = record.get(key)
             if value in (None, ""):
                 continue
-            if not _is_allowed_drive_url(value):
+            if not _is_allowed_google_document_url(value):
                 raise RuntimeError(
-                    f"Public feed privacy guard: non-Drive document URL at record {index}, field {key}"
+                    f"Public feed privacy guard: non-Google document URL at record {index}, field {key}"
                 )
 
     leaked_urls = [
@@ -125,7 +141,7 @@ def export_feed(output: Path) -> dict:
         "records": len(payload.get("records", [])),
         "expenses": len(payload.get("expenses", [])),
         "payload_hash": payload_hash(payload),
-        "drive_document_links_exported": document_links,
+        "google_document_links_exported": document_links,
         "output": str(output),
         "external_write_operations": 0,
     }
