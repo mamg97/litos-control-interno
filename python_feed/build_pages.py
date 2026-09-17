@@ -13,6 +13,7 @@ NETWORK_BLOCK_RE = re.compile(
     r"function feedConfigured\(\) \{.*?\n\}\n\nfunction switchView\(view\) \{",
     re.DOTALL,
 )
+MOBILE_STYLESHEET = '<link rel="stylesheet" href="./dist/mobile.css" />'
 
 RUNTIME_BLOCK = r'''function feedConfigured() {
   return Boolean(STATIC_DATA_FEED_URL);
@@ -97,6 +98,16 @@ def copy_public_source(output: Path) -> None:
         shutil.copytree("oauth", output / "oauth")
 
 
+def patch_mobile_styles(index_path: Path) -> None:
+    source = index_path.read_text(encoding="utf-8")
+    if MOBILE_STYLESHEET in source:
+        return
+    if "</head>" not in source:
+        raise RuntimeError("Could not find </head> while adding mobile stylesheet")
+    source = source.replace("</head>", f"    {MOBILE_STYLESHEET}\n  </head>", 1)
+    index_path.write_text(source, encoding="utf-8")
+
+
 def patch_runtime(app_path: Path) -> None:
     source = app_path.read_text(encoding="utf-8")
     source, url_count = DATA_URL_RE.subn(
@@ -126,6 +137,7 @@ def build_pages(output: Path, feed_file: Path) -> dict:
         shutil.rmtree(output)
     output.mkdir(parents=True)
     copy_public_source(output)
+    patch_mobile_styles(output / "index.html")
     patch_runtime(output / "dist" / "app.js")
     data_dir = output / "data"
     data_dir.mkdir(parents=True)
@@ -139,6 +151,7 @@ def build_pages(output: Path, feed_file: Path) -> dict:
         "expenses": len(payload["expenses"]),
         "payload_hash": payload_hash(payload),
         "static_feed_path": "data/feed.json",
+        "mobile_stylesheet": "dist/mobile.css",
         "legacy_rollback_configured": False,
         "source_git_data_snapshot_created": False,
         "external_write_operations": 0,
