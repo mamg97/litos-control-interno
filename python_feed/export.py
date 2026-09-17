@@ -7,7 +7,7 @@ from typing import Any
 
 from feed import build_payload, build_sheets_service, payload_hash
 
-FORBIDDEN_PUBLIC_RECORD_KEYS = frozenset(
+DOCUMENT_LINK_KEYS = frozenset(
     {
         "invoiceFile",
         "invoiceDraftFile",
@@ -18,19 +18,43 @@ FORBIDDEN_PUBLIC_RECORD_KEYS = frozenset(
 )
 
 
+def _is_url(value: Any) -> bool:
+    if not isinstance(value, str):
+        return False
+    lowered = value.strip().lower()
+    return lowered.startswith("http://") or lowered.startswith("https://")
+
+
+def _is_allowed_drive_url(value: Any) -> bool:
+    if not isinstance(value, str):
+        return False
+    return value.strip().lower().startswith("https://drive.google.com/")
+
+
 def sanitize_public_payload(payload: dict[str, Any]) -> dict[str, Any]:
-    """Remove private document locators before anything is written to Pages."""
-    sanitized_records = []
+    """Publish only the approved operational schema and Drive document links.
+
+    Document URLs are intentionally retained because the dashboard has always
+    exposed them as navigation targets while Drive itself enforces access.
+    Every document URL must remain a drive.google.com URL; arbitrary URLs are
+    rejected before the Pages artifact is created.
+    """
+    sanitized_records: list[dict[str, Any]] = []
     for raw_record in payload.get("records", []) or []:
-        record = {
-            key: value
-            for key, value in dict(raw_record).items()
-            if key not in FORBIDDEN_PUBLIC_RECORD_KEYS
-        }
+        record = dict(raw_record)
+        for key in DOCUMENT_LINK_KEYS:
+            value = record.get(key)
+            if value in (None, ""):
+                record[key] = ""
+                continue
+            if not _is_allowed_drive_url(value):
+                raise RuntimeError(
+                    f"Public feed privacy guard: non-Drive document URL in field {key}"
+                )
         sanitized_records.append(record)
 
     sanitized = {
-        "version": 7,
+        "version": 8,
         "generatedAt": payload.get("generatedAt"),
         "records": sanitized_records,
         "expenses": payload.get("expenses", []) or [],
@@ -39,35 +63,42 @@ def sanitize_public_payload(payload: dict[str, Any]) -> dict[str, Any]:
     return sanitized
 
 
-def _walk_strings(value: Any):
+def _walk_non_document_values(value: Any, *, parent_key: str | None = None):
     if isinstance(value, str):
-        yield value
+        if parent_key not in DOCUMENT_LINK_KEYS:
+            yield value
         return
     if isinstance(value, dict):
-        for child in value.values():
-            yield from _walk_strings(child)
+        for key, child in value.items():
+            yield from _walk_non_document_values(child, parent_key=str(key))
         return
     if isinstance(value, list):
         for child in value:
-            yield from _walk_strings(child)
+            yield from _walk_non_document_values(child, parent_key=parent_key)
 
 
 def assert_public_payload_safe(payload: dict[str, Any]) -> None:
-    for index, record in enumerate(payload.get("records", []) or []):
-        leaked_keys = sorted(FORBIDDEN_PUBLIC_RECORD_KEYS.intersection(record))
-        if leaked_keys:
-            raise RuntimeError(
-                f"Public feed privacy guard: forbidden document fields at record {index}: {leaked_keys}"
-            )
+    records = payload.get("records", []) or []
+    for index, record in enumerate(records):
+        if not isinstance(record, dict):
+            raise RuntimeError(f"Public feed privacy guard: invalid record at index {index}")
+        for key in DOCUMENT_LINK_KEYS:
+            value = record.get(key)
+            if value in (None, ""):
+                continue
+            if not _is_allowed_drive_url(value):
+                raise RuntimeError(
+                    f"Public feed privacy guard: non-Drive document URL at record {index}, field {key}"
+                )
 
     leaked_urls = [
         value
-        for value in _walk_strings(payload)
-        if "http://" in value.lower() or "https://" in value.lower()
+        for value in _walk_non_document_values(payload)
+        if _is_url(value)
     ]
     if leaked_urls:
         raise RuntimeError(
-            f"Public feed privacy guard: found {len(leaked_urls)} URL value(s) in exported payload"
+            f"Public feed privacy guard: found {len(leaked_urls)} non-document URL value(s) in exported payload"
         )
 
 
@@ -81,6 +112,12 @@ def export_feed(output: Path) -> dict:
         encoding="utf-8",
     )
     temp.replace(output)
+    document_links = sum(
+        1
+        for record in payload.get("records", [])
+        for key in DOCUMENT_LINK_KEYS
+        if record.get(key)
+    )
     return {
         "mode": "M7_PUBLIC_FEED_EXPORT",
         "phase": "M7",
@@ -88,7 +125,7 @@ def export_feed(output: Path) -> dict:
         "records": len(payload.get("records", [])),
         "expenses": len(payload.get("expenses", [])),
         "payload_hash": payload_hash(payload),
-        "private_document_fields_exported": 0,
+        "drive_document_links_exported": document_links,
         "output": str(output),
         "external_write_operations": 0,
     }
