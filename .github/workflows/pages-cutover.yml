@@ -48,6 +48,9 @@ jobs:
         with:
           python-version: '3.13'
 
+      - name: Install validation dependencies
+        run: pip install -r python_feed/requirements.txt
+
       - name: Compile M7 artifact code
         run: |
           python -m py_compile python_feed/feed.py
