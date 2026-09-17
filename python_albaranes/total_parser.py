@@ -15,6 +15,13 @@ SUM_RANGE_RE = re.compile(
     r"^=SUM\((?:(?:'([^']+)'|([^'!]+))!)?(\$?[A-Z]+\$?\d+):(\$?[A-Z]+\$?\d+)\)$",
     re.IGNORECASE,
 )
+CELL_REF_RE = re.compile(r"^\$?([A-Z]+)\$?(\d+)$", re.IGNORECASE)
+DIRECT_REF_RE = re.compile(r"^=\$?([A-Z]+)\$?(\d+)$", re.IGNORECASE)
+BINARY_RE = re.compile(
+    r"^=(\$?[A-Z]+\$?\d+|-?\d+(?:[.,]\d+)?)([+\-*/])(\$?[A-Z]+\$?\d+|-?\d+(?:[.,]\d+)?)$",
+    re.IGNORECASE,
+)
+MAX_FORMULA_DEPTH = 24
 
 
 def _clean(value: Any) -> str:
@@ -33,7 +40,13 @@ def _number(value: Any) -> float | None:
         number = float(value)
         return number if math.isfinite(number) else None
 
-    raw = re.sub(r"[^0-9,.-]", "", _clean(value))
+    text = _clean(value)
+    # Never interpret an Excel formula such as '=SUM(G11:G15)' as the digits
+    # contained in its cell references.
+    if text.startswith("="):
+        return None
+
+    raw = re.sub(r"[^0-9,.-]", "", text)
     if not raw:
         return None
     comma = raw.rfind(",")
@@ -52,6 +65,8 @@ def _number(value: Any) -> float | None:
 
 
 def _decimal(value: Any) -> Decimal | None:
+    if isinstance(value, Decimal):
+        return value
     number = _number(value)
     if number is None:
         return None
@@ -70,51 +85,150 @@ def _currency(value: Decimal | float | int | None) -> float | None:
     return float(decimal.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
 
 
-def _sum_formula(
-    formula: str,
-    current_formula_sheet,
+def _cell_is_blank(formula_book, value_book, sheet_name: str, coord: str) -> bool:
+    return (
+        formula_book[sheet_name][coord].value in (None, "")
+        and value_book[sheet_name][coord].value in (None, "")
+    )
+
+
+def _operand_value(
+    token: str,
+    formula_book,
     value_book,
+    sheet_name: str,
+    memo: dict[tuple[str, str], Decimal | None],
+    stack: set[tuple[str, str]],
+    depth: int,
+) -> Decimal | None:
+    token = token.strip()
+    ref = CELL_REF_RE.match(token)
+    if ref:
+        coord = f"{ref.group(1).upper()}{ref.group(2)}"
+        return _eval_cell(formula_book, value_book, sheet_name, coord, memo, stack, depth + 1)
+    return _decimal(token)
+
+
+def _eval_formula(
+    formula: str,
+    formula_book,
+    value_book,
+    sheet_name: str,
+    memo: dict[tuple[str, str], Decimal | None],
+    stack: set[tuple[str, str]],
+    depth: int,
 ) -> Decimal | None:
     compact = formula.replace(" ", "")
+
     match = SUM_RANGE_RE.match(compact)
-    if not match:
+    if match:
+        quoted_sheet, plain_sheet, start_ref, end_ref = match.groups()
+        target_sheet = quoted_sheet or plain_sheet or sheet_name
+        if target_sheet not in formula_book.sheetnames or target_sheet not in value_book.sheetnames:
+            return None
+        start_ref = start_ref.replace("$", "")
+        end_ref = end_ref.replace("$", "")
+        min_col, min_row, max_col, max_row = range_boundaries(f"{start_ref}:{end_ref}")
+        total = Decimal("0")
+        saw_value = False
+        target = formula_book[target_sheet]
+        for row in range(min_row, max_row + 1):
+            for col in range(min_col, max_col + 1):
+                coord = target.cell(row=row, column=col).coordinate
+                value = _eval_cell(
+                    formula_book,
+                    value_book,
+                    target_sheet,
+                    coord,
+                    memo,
+                    stack,
+                    depth + 1,
+                )
+                if value is None:
+                    if _cell_is_blank(formula_book, value_book, target_sheet, coord):
+                        continue
+                    return None
+                total += value
+                saw_value = True
+        return total if saw_value else Decimal("0")
+
+    match = BINARY_RE.match(compact)
+    if match:
+        left_token, operator, right_token = match.groups()
+        left = _operand_value(left_token, formula_book, value_book, sheet_name, memo, stack, depth)
+        right = _operand_value(right_token, formula_book, value_book, sheet_name, memo, stack, depth)
+        if left is None or right is None:
+            return None
+        if operator == "+":
+            return left + right
+        if operator == "-":
+            return left - right
+        if operator == "*":
+            return left * right
+        if operator == "/":
+            return None if right == 0 else left / right
+
+    match = DIRECT_REF_RE.match(compact)
+    if match:
+        coord = f"{match.group(1).upper()}{match.group(2)}"
+        return _eval_cell(formula_book, value_book, sheet_name, coord, memo, stack, depth + 1)
+
+    return None
+
+
+def _eval_cell(
+    formula_book,
+    value_book,
+    sheet_name: str,
+    coord: str,
+    memo: dict[tuple[str, str], Decimal | None],
+    stack: set[tuple[str, str]],
+    depth: int = 0,
+) -> Decimal | None:
+    key = (sheet_name, coord)
+    if key in memo:
+        return memo[key]
+    if depth > MAX_FORMULA_DEPTH or key in stack:
         return None
 
-    quoted_sheet, plain_sheet, start_ref, end_ref = match.groups()
-    target_title = quoted_sheet or plain_sheet or current_formula_sheet.title
-    if target_title not in value_book.sheetnames:
-        return None
-    value_sheet = value_book[target_title]
+    formula_cell = formula_book[sheet_name][coord]
+    cached_cell = value_book[sheet_name][coord]
+    formula = formula_cell.value if formula_cell.data_type == "f" else None
 
-    start_ref = start_ref.replace("$", "")
-    end_ref = end_ref.replace("$", "")
-    min_col, min_row, max_col, max_row = range_boundaries(f"{start_ref}:{end_ref}")
+    next_stack = set(stack)
+    next_stack.add(key)
 
-    total = Decimal("0")
-    saw_number = False
-    for row in value_sheet.iter_rows(
-        min_row=min_row,
-        max_row=max_row,
-        min_col=min_col,
-        max_col=max_col,
-    ):
-        for cell in row:
-            decimal = _decimal(cell.value)
-            if decimal is None:
-                if cell.value in (None, ""):
-                    continue
-                return None
-            total += decimal
-            saw_number = True
-    return total if saw_number else None
+    result: Decimal | None = None
+    if isinstance(formula, str):
+        # Prefer deterministic evaluation of the small formula grammar actually
+        # used by the workshop files. This avoids stale/missing cached formula
+        # values and reproduces Google Sheets recalculation for these cases.
+        result = _eval_formula(
+            formula,
+            formula_book,
+            value_book,
+            sheet_name,
+            memo,
+            next_stack,
+            depth,
+        )
+        if result is None:
+            result = _decimal(cached_cell.value)
+    else:
+        result = _decimal(formula_cell.value)
+        if result is None:
+            result = _decimal(cached_cell.value)
+
+    memo[key] = result
+    return result
 
 
 def read_total_openxml(content: bytes) -> float | None:
     formula_book = openpyxl.load_workbook(io.BytesIO(content), read_only=False, data_only=False)
     value_book = openpyxl.load_workbook(io.BytesIO(content), read_only=False, data_only=True)
     try:
+        memo: dict[tuple[str, str], Decimal | None] = {}
         for formula_sheet in formula_book.worksheets:
-            value_sheet = value_book[formula_sheet.title]
             for row in formula_sheet.iter_rows():
                 for cell in row:
                     if _normalize(cell.value) != "total":
@@ -122,20 +236,16 @@ def read_total_openxml(content: bytes) -> float | None:
 
                     for column in range(cell.column + 1, formula_sheet.max_column + 1):
                         formula_cell = formula_sheet.cell(row=cell.row, column=column)
-                        cached_cell = value_sheet.cell(row=cell.row, column=column)
-
-                        if formula_cell.data_type == "f" and isinstance(formula_cell.value, str):
-                            evaluated = _sum_formula(formula_cell.value, formula_sheet, value_book)
-                            if evaluated is not None:
-                                return _currency(evaluated)
-
-                        cached = _decimal(cached_cell.value)
-                        if cached is not None:
-                            return _currency(cached)
-
-                        literal = _decimal(formula_cell.value)
-                        if literal is not None:
-                            return _currency(literal)
+                        value = _eval_cell(
+                            formula_book,
+                            value_book,
+                            formula_sheet.title,
+                            formula_cell.coordinate,
+                            memo,
+                            set(),
+                        )
+                        if value is not None:
+                            return _currency(value)
         return None
     finally:
         formula_book.close()
