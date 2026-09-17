@@ -59,6 +59,9 @@ jobs:
       - name: Validate immutable logo and A4 style contract
         run: python validate_corporate_style.py
 
+      - name: Validate customer header contract
+        run: python client_header.py
+
       - name: Require private Google OAuth
         shell: bash
         run: |
