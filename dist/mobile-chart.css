@@ -1,0 +1,31 @@
+/* Extra-small chart refinements for the summary dashboard. */
+@media (max-width: 760px) {
+  #summary .chart-panel {
+    overflow: hidden;
+    padding: .78rem .55rem .82rem;
+  }
+
+  #summary .canvas-wrap {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 188px;
+    overflow: hidden;
+  }
+
+  #summary .canvas-wrap canvas {
+    display: block;
+    width: 100% !important;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  #summary .chart-panel {
+    padding-inline: .45rem;
+  }
+
+  #summary .canvas-wrap {
+    height: 176px;
+  }
+}
