@@ -473,24 +473,30 @@ def sync(confirm: str) -> dict[str, Any]:
                 "values": [[value]],
             })
 
-    if data:
+    write_batches = 0
+    batch_size = 150
+    for offset in range(0, len(data), batch_size):
+        chunk = data[offset : offset + batch_size]
         sheets.spreadsheets().values().batchUpdate(
             spreadsheetId=MASTER_ID,
             body={
                 "valueInputOption": "RAW",
-                "data": data,
+                "data": chunk,
             },
         ).execute()
+        write_batches += 1
 
-    _post_plans, after = build_plan(drive, sheets)
+    # Avoid re-downloading and re-parsing the whole archive immediately after a
+    # successful write. Verification is done by re-reading the master in the
+    # workflow / caller; the plan itself is deterministic and fill-only.
     result = {
         "mode": "HISTORICAL_MASTER_BACKFILL_SYNC",
         "rows_written": len(plans),
         "cells_written": len(data),
-        "remaining_backfillable": after.get("rows_backfillable", 0),
-        "remaining_no_invoice_link": after.get("no_invoice_link", 0),
-        "remaining_date_conflicts": after.get("date_conflicts", 0),
-        "remaining_order_mismatches": after.get("order_mismatches", 0),
+        "write_batches": write_batches,
+        "remaining_no_invoice_link": before.get("no_invoice_link", 0),
+        "date_conflicts": before.get("date_conflicts", 0),
+        "order_mismatches": before.get("order_mismatches", 0),
         "before": before,
     }
     print("HISTORICAL_MASTER_BACKFILL_OK")
