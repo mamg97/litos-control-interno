@@ -46,48 +46,6 @@ async function fetchStaticPublicFeed() {
   return payload;
 }
 
-function fetchLegacyPublicFeed() {
-  return new Promise((resolve, reject) => {
-    if (!LEGACY_DATA_FEED_URL) {
-      reject(new Error("Legacy feed unavailable"));
-      return;
-    }
-    const callbackName = `__litosLegacyFeed${Date.now()}${Math.random().toString(36).slice(2)}`;
-    const script = document.createElement("script");
-    let settled = false;
-    let timer;
-    const cleanUp = () => {
-      window.clearTimeout(timer);
-      script.remove();
-      delete window[callbackName];
-    };
-    const finish = (handler, value) => {
-      if (settled) return;
-      settled = true;
-      cleanUp();
-      handler(value);
-    };
-    window[callbackName] = (payload) => {
-      if (!payload || !Array.isArray(payload.records)) {
-        finish(reject, new Error("Respuesta legacy no válida"));
-        return;
-      }
-      finish(resolve, payload);
-    };
-    // ContentService redirects before serving JSONP. As in the legacy client,
-    // the timeout is the failure authority because browsers may emit an error
-    // during the redirect even when the callback subsequently arrives.
-    script.onerror = () => {};
-    timer = window.setTimeout(
-      () => finish(reject, new Error("Tiempo de espera agotado")),
-      FEED_TIMEOUT_MS
-    );
-    const separator = LEGACY_DATA_FEED_URL.includes("?") ? "&" : "?";
-    script.src = `${LEGACY_DATA_FEED_URL}${separator}callback=${encodeURIComponent(callbackName)}&v=${Date.now()}`;
-    document.head.append(script);
-  });
-}
-
 async function refreshPublicFeed() {
   if (state.loading) return;
   if (!feedConfigured()) {
@@ -104,18 +62,10 @@ async function refreshPublicFeed() {
 
   state.loading = true;
   $("#refreshData").textContent = "Actualizando…";
-  let usedLegacyFallback = false;
   try {
-    let payload;
-    try {
-      payload = await fetchStaticPublicFeed();
-    } catch (staticError) {
-      usedLegacyFallback = true;
-      console.warn("M7 static feed unavailable; using rollback feed.", staticError);
-      payload = await fetchLegacyPublicFeed();
-    }
+    const payload = await fetchStaticPublicFeed();
     applyPublicPayload(payload);
-    showToast(`${formatInt.format(state.rows.length)} trabajos actualizados${usedLegacyFallback ? " · respaldo" : ""}.`);
+    showToast(`${formatInt.format(state.rows.length)} trabajos actualizados.`);
   } catch {
     const hasPreviousData = state.rows.length > 0;
     state.connected = hasPreviousData;
@@ -147,15 +97,10 @@ def copy_public_source(output: Path) -> None:
         shutil.copytree("oauth", output / "oauth")
 
 
-def patch_runtime(app_path: Path) -> str:
+def patch_runtime(app_path: Path) -> None:
     source = app_path.read_text(encoding="utf-8")
-    url_match = DATA_URL_RE.search(source)
-    if not url_match:
-        raise RuntimeError("M7 build could not locate the legacy DATA_FEED_URL")
-    legacy_url = url_match.group(1)
     source, url_count = DATA_URL_RE.subn(
-        'const STATIC_DATA_FEED_URL = "./data/feed.json";\n'
-        f'const LEGACY_DATA_FEED_URL = "{legacy_url}";',
+        'const STATIC_DATA_FEED_URL = "./data/feed.json";',
         source,
         count=1,
     )
@@ -164,9 +109,8 @@ def patch_runtime(app_path: Path) -> str:
     source, block_count = NETWORK_BLOCK_RE.subn(RUNTIME_BLOCK, source, count=1)
     if block_count != 1:
         raise RuntimeError(f"Expected one public-feed runtime replacement, got {block_count}")
-    marker = "// M7 Pages artifact: static feed first, Apps Script rollback fallback.\n"
+    marker = "// M7 Pages artifact: static feed only; no Apps Script runtime dependency.\n"
     app_path.write_text(marker + source, encoding="utf-8")
-    return legacy_url
 
 
 def build_pages(output: Path, feed_file: Path) -> dict:
@@ -182,7 +126,7 @@ def build_pages(output: Path, feed_file: Path) -> dict:
         shutil.rmtree(output)
     output.mkdir(parents=True)
     copy_public_source(output)
-    legacy_url = patch_runtime(output / "dist" / "app.js")
+    patch_runtime(output / "dist" / "app.js")
     data_dir = output / "data"
     data_dir.mkdir(parents=True)
     shutil.copy2(feed_file, data_dir / "feed.json")
@@ -195,7 +139,7 @@ def build_pages(output: Path, feed_file: Path) -> dict:
         "expenses": len(payload["expenses"]),
         "payload_hash": payload_hash(payload),
         "static_feed_path": "data/feed.json",
-        "legacy_rollback_configured": legacy_url.startswith("https://"),
+        "legacy_rollback_configured": False,
         "source_git_data_snapshot_created": False,
         "external_write_operations": 0,
     }
