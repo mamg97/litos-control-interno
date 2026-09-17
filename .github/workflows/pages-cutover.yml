@@ -66,22 +66,40 @@ jobs:
         run: |
           set -euo pipefail
           PYTHONPATH=python_feed python - <<'PY'
-          from export import FORBIDDEN_PUBLIC_RECORD_KEYS, sanitize_public_payload
+          from export import DOCUMENT_LINK_KEYS, sanitize_public_payload
+
           raw = {
               "version": 6,
               "generatedAt": "2026-09-17T00:00:00Z",
               "records": [{
                   "id": "TEST",
                   "model": "Lápida",
-                  "invoiceFile": "https://drive.google.com/private-test",
-                  "noteFile": "https://drive.google.com/private-note",
+                  "invoiceFile": "https://drive.google.com/file/d/TEST/view",
+                  "invoiceDraftFile": "",
+                  "corelFile": "",
+                  "noteFile": "https://drive.google.com/file/d/NOTE/view",
+                  "attachmentFile": "",
               }],
               "expenses": [],
           }
           payload = sanitize_public_payload(raw)
-          assert payload["version"] == 7
-          assert payload["records"] == [{"id": "TEST", "model": "Lápida"}]
-          assert not FORBIDDEN_PUBLIC_RECORD_KEYS.intersection(payload["records"][0])
+          assert payload["version"] == 8
+          record = payload["records"][0]
+          assert record["invoiceFile"].startswith("https://drive.google.com/")
+          assert record["noteFile"].startswith("https://drive.google.com/")
+          assert DOCUMENT_LINK_KEYS.issubset(record)
+
+          bad = {
+              **raw,
+              "records": [{**raw["records"][0], "invoiceFile": "https://example.com/not-drive"}],
+          }
+          try:
+              sanitize_public_payload(bad)
+          except RuntimeError:
+              pass
+          else:
+              raise AssertionError("non-Drive document URL was not rejected")
+
           print("M7_PUBLIC_PRIVACY_SANITIZER_OK")
           PY
 
@@ -90,7 +108,7 @@ jobs:
         run: |
           set -euo pipefail
           cat > "$RUNNER_TEMP/m7-synthetic-feed.json" <<'JSON'
-          {"version":7,"records":[{"id":"TEST"}],"expenses":[],"generatedAt":"2026-09-17T00:00:00Z"}
+          {"version":8,"records":[{"id":"TEST","invoiceFile":"https://drive.google.com/file/d/TEST/view","invoiceDraftFile":"","corelFile":"","noteFile":"","attachmentFile":""}],"expenses":[],"generatedAt":"2026-09-17T00:00:00Z"}
           JSON
           python python_feed/build_pages.py --output "$RUNNER_TEMP/m7-site" --feed "$RUNNER_TEMP/m7-synthetic-feed.json"
           test -s "$RUNNER_TEMP/m7-site/index.html"
@@ -178,17 +196,24 @@ jobs:
           PYTHONPATH=python_feed python - <<'PY'
           import json
           from pathlib import Path
-          from export import FORBIDDEN_PUBLIC_RECORD_KEYS, assert_public_payload_safe
+          from export import DOCUMENT_LINK_KEYS, assert_public_payload_safe
+
           payload = json.loads(Path('_site/data/feed.json').read_text(encoding='utf-8'))
-          assert payload.get('version') == 7
+          assert payload.get('version') == 8
           assert isinstance(payload.get('records'), list) and payload['records']
           assert isinstance(payload.get('expenses'), list)
-          for record in payload['records']:
-              assert not FORBIDDEN_PUBLIC_RECORD_KEYS.intersection(record)
           assert_public_payload_safe(payload)
+
+          document_links = sum(
+              1
+              for record in payload['records']
+              for key in DOCUMENT_LINK_KEYS
+              if record.get(key)
+          )
+          assert document_links > 0, 'Expected at least one Drive document link in production feed'
           print(
               f"M7_STAGED_SITE_OK records={len(payload['records'])} "
-              f"expenses={len(payload['expenses'])} private_document_fields=0"
+              f"expenses={len(payload['expenses'])} drive_document_links={document_links}"
           )
           PY
 
