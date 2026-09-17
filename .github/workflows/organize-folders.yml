@@ -22,9 +22,10 @@ on:
         options:
           - dry-run
           - canary
+          - folder-canary
           - sync
       confirm:
-        description: "For canary type CUTOVER_M5; for sync type SYNC_M5"
+        description: "For canary type CUTOVER_M5; folder-canary CUTOVER_M5_FOLDER; sync SYNC_M5"
         required: false
         default: ""
         type: string
@@ -93,6 +94,24 @@ jobs:
 
       - name: Post-canary read-only verification
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'canary' }}
+        run: python python_organize/organize.py --dry-run
+
+      - name: Confirm folder-creation canary
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'folder-canary' }}
+        shell: bash
+        run: |
+          test "${{ inputs.confirm }}" = "CUTOVER_M5_FOLDER"
+          echo "OK: M5 folder-creation canary explicitly confirmed."
+
+      - name: One-folder production canary
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'folder-canary' }}
+        env:
+          LITOS_ORGANIZE_KILL_SWITCH: "false"
+          LITOS_ORGANIZE_WRITE_ENABLED: "true"
+        run: python python_organize/organize.py --sync --max-moves 1 --require-folder-create
+
+      - name: Post-folder-canary read-only verification
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'folder-canary' }}
         run: python python_organize/organize.py --dry-run
 
       - name: Confirm full sync
