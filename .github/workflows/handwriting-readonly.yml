@@ -19,6 +19,7 @@ on:
         options:
           - preflight
           - dry-run
+          - gemini-canary
 
 permissions:
   contents: read
@@ -39,6 +40,7 @@ jobs:
       LITOS_FREE_ONLY: "true"
       LITOS_HANDWRITING_WRITE_ENABLED: "false"
       LITOS_SPREADSHEET_ID: "1ZS-L0eJmfukNr0rmc8ZvC3UxdVKw7Rnggx5TlRydZ2Q"
+      LITOS_GEMINI_MODEL: "gemini-3.8-flash"
       GOOGLE_OAUTH_SABAN_JSON: ${{ secrets.GOOGLE_OAUTH_SABAN_JSON }}
 
     steps:
@@ -59,7 +61,7 @@ jobs:
         run: python runner.py --preflight
 
       - name: Require private Google credential
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && (inputs.mode == 'dry-run' || inputs.mode == 'gemini-canary') }}
         shell: bash
         run: |
           test -n "$GOOGLE_OAUTH_SABAN_JSON"
@@ -68,3 +70,7 @@ jobs:
       - name: Fresh handwriting state dry-run
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run' }}
         run: python runner.py --dry-run
+
+      - name: One-call Gemini read-only canary
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'gemini-canary' }}
+        run: python gemini_canary.py
