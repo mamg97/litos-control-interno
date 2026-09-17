@@ -2,8 +2,18 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 
 import sync as base
+
+
+def _sanitize_error(exc: Exception) -> str:
+    text = str(exc).replace("\n", " ").replace("\r", " ")
+    # Avoid leaking common credential-like query/header material if an SDK ever
+    # includes it in an exception. Keep only a short technical diagnostic.
+    text = re.sub(r"(?i)(key|api[_-]?key|token|authorization)=?[^\s,&]+", r"\1=[REDACTED]", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text[:800]
 
 
 def _gemini_read_json_schema(file_bytes: bytes, mime: str) -> tuple[dict, dict]:
@@ -11,19 +21,26 @@ def _gemini_read_json_schema(file_bytes: bytes, mime: str) -> tuple[dict, dict]:
 
     The LITOS schema intentionally uses nullable JSON Schema types such as
     ["number", "null"]. `response_json_schema` accepts that representation
-    without the Pydantic/OpenAPI coercion that caused the cutover canary's
+    without the Pydantic/OpenAPI coercion that caused the first cutover canary's
     pre-request ValidationError.
     """
     client = base.genai.Client()
-    response = client.models.generate_content(
-        model=base.MODEL,
-        contents=[base.types.Part.from_bytes(data=file_bytes, mime_type=mime), base.prompt()],
-        config=base.types.GenerateContentConfig(
-            temperature=0,
-            response_mime_type="application/json",
-            response_json_schema=base.response_schema(),
-        ),
-    )
+    try:
+        response = client.models.generate_content(
+            model=base.MODEL,
+            contents=[base.types.Part.from_bytes(data=file_bytes, mime_type=mime), base.prompt()],
+            config=base.types.GenerateContentConfig(
+                temperature=0,
+                response_mime_type="application/json",
+                response_json_schema=base.response_schema(),
+            ),
+        )
+    except Exception as exc:
+        print("HANDWRITING_GEMINI_CALL_FAILED")
+        print(json.dumps({"exception_type": type(exc).__name__, "message": _sanitize_error(exc)}, ensure_ascii=False, sort_keys=True))
+        raise
+
+    print("HANDWRITING_GEMINI_CALL_RETURNED")
     proposal = json.loads(response.text or "{}")
     technical = {"model": getattr(response, "model_version", None) or base.MODEL}
     return proposal, technical
@@ -46,7 +63,7 @@ def main() -> int:
     if int(result.get("temporary_error", 0)):
         raise RuntimeError("Handwriting sync ended with temporary errors")
     if int(result.get("candidates", 0)) and int(result.get("gemini_calls", 0)) < 1:
-        raise RuntimeError("Handwriting candidate was not actually sent to Gemini")
+        raise RuntimeError("Handwriting candidate was not actually returned by Gemini")
 
     print("HANDWRITING_SAFE_SYNC_OK")
     return 0
