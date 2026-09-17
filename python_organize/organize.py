@@ -188,9 +188,20 @@ def _ensure_folder(drive, parent_id: str, order_id: str) -> tuple[str, bool]:
     return str(created["id"]), True
 
 
-def execute_plan(drive, plan: list[MoveCandidate], max_moves: int) -> dict:
+def execute_plan(
+    drive,
+    plan: list[MoveCandidate],
+    max_moves: int,
+    require_folder_create: bool = False,
+) -> dict:
     assert_write_safety()
-    selected = plan[: max(0, max_moves)]
+    eligible = plan
+    if require_folder_create:
+        eligible = [candidate for candidate in plan if candidate.target_folder_id is None]
+        if not eligible:
+            raise RuntimeError("No M5 candidate currently requires a new folder")
+
+    selected = eligible[: max(0, max_moves)]
     folder_cache: dict[tuple[str, str], str] = {}
     created_folders: list[str] = []
     moved: list[tuple[str, str, str]] = []
@@ -202,6 +213,10 @@ def execute_plan(drive, plan: list[MoveCandidate], max_moves: int) -> dict:
             target_id = candidate.target_folder_id or folder_cache.get(key)
             if not target_id:
                 target_id, created = _ensure_folder(drive, candidate.year_folder_id, candidate.order_id)
+                if require_folder_create and not created:
+                    raise RuntimeError(
+                        "Folder-create canary lost its creation condition before the move; no canary move performed"
+                    )
                 folder_cache[key] = target_id
                 if created:
                     created_folders.append(target_id)
@@ -260,12 +275,23 @@ def execute_plan(drive, plan: list[MoveCandidate], max_moves: int) -> dict:
                 pass
         raise
 
+    if require_folder_create and len(created_folders) != 1:
+        raise RuntimeError(
+            f"Folder-create canary expected exactly 1 created folder, got {len(created_folders)}"
+        )
+    if require_folder_create and len(moved) != 1:
+        raise RuntimeError(
+            f"Folder-create canary expected exactly 1 moved file, got {len(moved)}"
+        )
+
     return {
         "mode": "ORGANIZE_PRODUCTION_SYNC",
         "candidate_moves_before_sync": len(plan),
+        "eligible_candidates": len(eligible),
         "move_limit": max_moves,
         "files_moved": len(moved),
         "folders_created": len(created_folders),
+        "require_folder_create": require_folder_create,
         "skipped_race": skipped_race,
         "remaining_from_initial_plan": max(0, len(plan) - len(selected)),
         "write_operations": len(moved) + len(created_folders),
@@ -279,6 +305,11 @@ def main() -> int:
     mode.add_argument("--dry-run", action="store_true")
     mode.add_argument("--sync", action="store_true")
     parser.add_argument("--max-moves", type=int, default=DEFAULT_MAX_MOVES)
+    parser.add_argument(
+        "--require-folder-create",
+        action="store_true",
+        help="For a guarded canary, select a candidate without an existing target folder and require one folder creation plus one move.",
+    )
     args = parser.parse_args()
 
     if args.preflight:
@@ -298,6 +329,11 @@ def main() -> int:
         )
         return 0
 
+    if args.require_folder_create and not args.sync:
+        raise RuntimeError("--require-folder-create is only valid with --sync")
+    if args.require_folder_create and args.max_moves != 1:
+        raise RuntimeError("--require-folder-create requires --max-moves 1")
+
     drive = build_drive()
     plan, summary = build_plan(drive)
     if args.dry_run:
@@ -305,9 +341,15 @@ def main() -> int:
         print(json.dumps(summary, sort_keys=True))
         return 0
 
-    result = execute_plan(drive, plan, args.max_moves)
+    result = execute_plan(
+        drive,
+        plan,
+        args.max_moves,
+        require_folder_create=args.require_folder_create,
+    )
     _, post = build_plan(drive)
     result["candidate_moves_after_sync"] = post["candidate_moves"]
+    result["folders_to_create_after_sync"] = post["folders_to_create"]
     print("ORGANIZE_SAFE_SYNC_OK")
     print(json.dumps(result, sort_keys=True))
     return 0
