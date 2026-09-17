@@ -1,0 +1,44 @@
+name: LITOS Retirement Audit
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/retirement-audit.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Inventory residual Apps Script dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== Apps Script / legacy feed references ==='
+          grep -RInE 'script\.google\.com|LEGACY_DATA_FEED_URL|DATA_FEED_URL' . \
+            --exclude='retirement-audit.yml' \
+            --exclude-dir='.git' || true
+
+          echo '=== Apps Script trigger constructors and continuation handlers ==='
+          grep -RInE 'ScriptApp\.newTrigger|install[A-Za-z0-9_]*Trigger|continuar[A-Za-z0-9_]+' apps-script || true
+
+          echo '=== GitHub Actions schedules / workflow bridges ==='
+          grep -RInE '^[[:space:]]+schedule:|workflow_run:' .github/workflows \
+            --exclude='retirement-audit.yml' || true
+
+          echo '=== Apps Script runtime APIs outside apps-script/ ==='
+          grep -RInE 'google\.script\.run|ScriptApp\.|SpreadsheetApp\.|DriveApp\.|GmailApp\.' . \
+            --exclude-dir='.git' \
+            --exclude-dir='apps-script' \
+            --exclude='retirement-audit.yml' || true
+
+          echo '=== Apps Script source inventory ==='
+          find apps-script -maxdepth 1 -type f -print | sort
+
+          echo 'RETIREMENT_AUDIT_COMPLETE'
