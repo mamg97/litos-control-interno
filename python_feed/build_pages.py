@@ -16,6 +16,7 @@ NETWORK_BLOCK_RE = re.compile(
 MOBILE_STYLESHEETS = (
     '<link rel="stylesheet" href="./dist/mobile.css" />',
     '<link rel="stylesheet" href="./dist/mobile-chart.css" />',
+    '<link rel="stylesheet" href="./dist/mobile-links.css" />',
 )
 
 RUNTIME_BLOCK = r'''function feedConfigured() {
@@ -189,7 +190,11 @@ def build_pages(output: Path, feed_file: Path) -> dict:
         "expenses": len(payload["expenses"]),
         "payload_hash": payload_hash(payload),
         "static_feed_path": "data/feed.json",
-        "mobile_stylesheets": ["dist/mobile.css", "dist/mobile-chart.css"],
+        "mobile_stylesheets": [
+            "dist/mobile.css",
+            "dist/mobile-chart.css",
+            "dist/mobile-links.css",
+        ],
         "legacy_rollback_configured": False,
         "source_git_data_snapshot_created": False,
         "external_write_operations": 0,
