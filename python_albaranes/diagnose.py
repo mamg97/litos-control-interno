@@ -7,8 +7,10 @@ from typing import Any
 
 import openpyxl
 import xlrd
+from openpyxl.utils.cell import range_boundaries
 
 import parity as p
+from total_parser import SUM_RANGE_RE, read_total_from_bytes
 
 
 def _safe_formula(value: Any) -> str:
@@ -17,6 +19,40 @@ def _safe_formula(value: Any) -> str:
         return ""
     text = re.sub(r'"[^"]*"', '"…"', text)
     return text[:200]
+
+
+def _sum_operands(formula: str, formula_sheet, value_book) -> list[dict]:
+    compact = formula.replace(" ", "")
+    match = SUM_RANGE_RE.match(compact)
+    if not match:
+        return []
+    quoted_sheet, plain_sheet, start_ref, end_ref = match.groups()
+    target_title = quoted_sheet or plain_sheet or formula_sheet.title
+    if target_title not in value_book.sheetnames:
+        return []
+    value_sheet = value_book[target_title]
+    start_ref = start_ref.replace("$", "")
+    end_ref = end_ref.replace("$", "")
+    min_col, min_row, max_col, max_row = range_boundaries(f"{start_ref}:{end_ref}")
+    formula_target = formula_sheet.parent[target_title]
+    out = []
+    for row in range(min_row, max_row + 1):
+        for col in range(min_col, max_col + 1):
+            fcell = formula_target.cell(row=row, column=col)
+            vcell = value_sheet.cell(row=row, column=col)
+            item = {
+                "coord": fcell.coordinate,
+                "cached_value": vcell.value,
+                "number_format": fcell.number_format,
+                "formula_type": fcell.data_type,
+            }
+            formula_text = _safe_formula(fcell.value)
+            if formula_text:
+                item["formula"] = formula_text
+            elif fcell.value is not None:
+                item["literal_value"] = fcell.value
+            out.append(item)
+    return out
 
 
 def _inspect_openxml(content: bytes) -> dict:
@@ -41,10 +77,14 @@ def _inspect_openxml(content: bytes) -> dict:
                             "coord": formula_cell.coordinate,
                             "formula_type": formula_cell.data_type,
                             "cached_value": value_cell.value,
+                            "number_format": formula_cell.number_format,
                         }
                         formula = _safe_formula(formula_cell.value)
                         if formula:
                             item["formula"] = formula
+                            operands = _sum_operands(formula_cell.value, formula_sheet, value_book)
+                            if operands:
+                                item["sum_operands"] = operands
                         elif formula_cell.value is not None:
                             number = p._number(formula_cell.value)
                             item["literal_number"] = number
@@ -113,6 +153,11 @@ def inspect_file(drive, file: p.DriveFile) -> dict:
     return _inspect_openxml(content)
 
 
+def read_total_v2(drive, file: p.DriveFile) -> float | None:
+    content = p._download_file(drive, file.file_id)
+    return read_total_from_bytes(file.name, content)
+
+
 def main() -> int:
     drive, sheets = p.build_services()
     index = p.scan_albaranes(drive)
@@ -136,7 +181,7 @@ def main() -> int:
             continue
 
         if active.file_id not in parsed_by_file:
-            parsed_by_file[active.file_id] = p.read_total(drive, active)
+            parsed_by_file[active.file_id] = read_total_v2(drive, active)
         python_total = parsed_by_file[active.file_id]
 
         total_col = columns[p.HEADERS["total"]]
@@ -165,12 +210,12 @@ def main() -> int:
         }
         mismatches.append(detail)
 
-    print("ALBARANES_DIAGNOSTIC_OK")
+    print("ALBARANES_DIAGNOSTIC_V2_OK")
     print(
         json.dumps(
             {
                 "phase": "M6",
-                "mode": "READ_ONLY_TOTAL_DIAGNOSTIC",
+                "mode": "READ_ONLY_TOTAL_DIAGNOSTIC_V2",
                 "mismatch_count": len(mismatches),
                 "mismatches": mismatches,
                 "write_operations": 0,
