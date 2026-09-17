@@ -43,6 +43,16 @@ jobs:
       - name: Read-only preflight
         run: python python_feed/feed.py --preflight
 
+      - name: Probe legacy feed transport
+        shell: bash
+        run: |
+          set -u
+          BASE='https://script.google.com/macros/s/AKfycbyhzZOwkeSuBLskOnjtPNUs1yElq6dcNb4UXmNAA0Bp38qBfFX7DEPi8rNkuOPnT4DlHw/exec'
+          echo 'Direct JSON:'
+          curl -sS -L --max-time 60 -o /dev/null -w 'http=%{http_code} redirects=%{num_redirects} content_type=%{content_type}\n' "$BASE" || true
+          echo 'Browser-style JSONP:'
+          curl -sS -L --max-time 60 -o /dev/null -w 'http=%{http_code} redirects=%{num_redirects} content_type=%{content_type}\n' "${BASE}?callback=__litosProbe&v=1" || true
+
       - name: Require private OAuth for parity
         if: ${{ github.event_name == 'workflow_dispatch' }}
         shell: bash
