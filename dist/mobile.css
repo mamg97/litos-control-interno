@@ -180,8 +180,8 @@
   }
 
   .history-matrix-row {
-    grid-template-columns: 46px repeat(var(--period-count), 44px) 58px;
-    min-width: calc(104px + var(--period-count) * 44px);
+    grid-template-columns: 46px repeat(var(--period-count), 44px) 58px 70px;
+    min-width: calc(174px + var(--period-count) * 44px);
   }
 
   .history-matrix-row span {
