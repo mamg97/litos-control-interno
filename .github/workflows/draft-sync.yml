@@ -1,0 +1,127 @@
+name: LITOS Draft Sync
+
+on:
+  push:
+    paths:
+      - 'python_drafts/**'
+      - '.github/workflows/draft-sync.yml'
+  pull_request:
+    paths:
+      - 'python_drafts/**'
+      - '.github/workflows/draft-sync.yml'
+  schedule:
+    # Central production clock for M2 and the M6/M7 workflow_run bridge.
+    # Offset from :00 to reduce GitHub Actions scheduler congestion.
+    - cron: '5,20,35,50 * * * *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Execution mode"
+        required: true
+        default: "preflight"
+        type: choice
+        options:
+          - preflight
+          - dry-run
+          - sync
+      confirm:
+        description: "For sync only: type CUTOVER"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: litos-draft-sync
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: python_drafts
+    env:
+      PYTHONUNBUFFERED: "1"
+      LITOS_FREE_ONLY: "true"
+      LITOS_KILL_SWITCH: "true"
+      LITOS_WRITE_ENABLED: "false"
+      LITOS_DRAFT_CORPORATE_STYLE: "true"
+      LITOS_SPREADSHEET_ID: "1ZS-L0eJmfukNr0rmc8ZvC3UxdVKw7Rnggx5TlRydZ2Q"
+      LITOS_DRAFT_ROOT_FOLDER_ID: "1eUAupqLzfBhkiEexWqpI3JtYReT8c9A_"
+      LITOS_BACKUP_FOLDER_ID: "1weWKeCLjQnrL2Qg2rPt1BYHGJhfZtKrv"
+      GOOGLE_OAUTH_USER_JSON: ${{ secrets.GOOGLE_OAUTH_USER_JSON }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: python_drafts/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Certified fail-closed preflight
+        run: python runner.py --preflight
+
+      - name: Require Google OAuth secret
+        if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && (inputs.mode == 'dry-run' || inputs.mode == 'sync')) }}
+        shell: bash
+        run: |
+          test -n "$GOOGLE_OAUTH_USER_JSON"
+          echo "OK: Google OAuth secret is present."
+
+      - name: Fresh Google dry-run
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run' }}
+        run: python runner.py --dry-run
+
+      - name: Require explicit cutover confirmation
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
+        env:
+          LITOS_SYNC_CONFIRM: ${{ inputs.confirm }}
+        shell: bash
+        run: |
+          test "$LITOS_SYNC_CONFIRM" = "CUTOVER"
+          echo "OK: explicit cutover confirmation received."
+
+      - name: Fresh zero-mutation cutover gate
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          from google_user_auth import build_user_services
+          from runner import _planner_api
+          build_plan, summarize_plan, _ = _planner_api()
+          services = build_user_services()
+          summary = summarize_plan(build_plan(services))
+          print(summary)
+          if summary.get("mutable") != 0:
+              raise SystemExit(f"CUTOVER BLOCKED: expected 0 mutable actions, got {summary}")
+          print("OK: fresh plan has 0 mutable actions; first live cutover run is a no-op.")
+          PY
+
+      - name: Execute guarded cutover sync
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
+        env:
+          LITOS_KILL_SWITCH: "false"
+          LITOS_WRITE_ENABLED: "true"
+        run: python runner.py --sync
+
+      - name: Scheduled sync disabled by kill switch
+        if: ${{ github.event_name == 'schedule' && vars.LITOS_DRAFT_SYNC_KILL == 'true' }}
+        run: echo "Scheduled Python draft sync is disabled by repository variable LITOS_DRAFT_SYNC_KILL=true."
+
+      - name: Execute scheduled production sync
+        if: ${{ github.event_name == 'schedule' && vars.LITOS_DRAFT_SYNC_KILL != 'true' }}
+        env:
+          LITOS_KILL_SWITCH: "false"
+          LITOS_WRITE_ENABLED: "true"
+        run: python runner.py --sync

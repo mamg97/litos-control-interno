@@ -1,0 +1,11 @@
+# Local credentials must never be committed
+google_oauth_user.json
+google_oauth_saban.json
+client_secret*.json
+credentials*.json
+*.oauth.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/

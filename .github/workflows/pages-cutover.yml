@@ -1,0 +1,268 @@
+name: LITOS M7 Pages Cutover
+
+on:
+  pull_request:
+    paths:
+      - 'python_feed/**'
+      - '.github/workflows/pages-cutover.yml'
+      - 'index.html'
+      - 'privacy.html'
+      - 'dist/**'
+      - 'oauth/**'
+  push:
+    branches:
+      - main
+    paths:
+      - 'python_feed/**'
+      - '.github/workflows/pages-cutover.yml'
+      - 'index.html'
+      - 'privacy.html'
+      - 'dist/**'
+      - 'oauth/**'
+  workflow_run:
+    workflows:
+      - 'LITOS Draft Sync'
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'build validates the artifact; deploy publishes it to GitHub Pages'
+        required: true
+        default: build
+        type: choice
+        options:
+          - build
+          - deploy
+      confirm:
+        description: 'For deploy type CUTOVER_M7'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: litos-pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install validation dependencies
+        run: pip install -r python_feed/requirements.txt
+
+      - name: Compile M7 artifact code
+        run: |
+          python -m py_compile python_feed/feed.py
+          python -m py_compile python_feed/export.py
+          python -m py_compile python_feed/build_pages.py
+
+      - name: Validate public-feed privacy sanitizer
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=python_feed python - <<'PY'
+          from export import DOCUMENT_LINK_KEYS, sanitize_public_payload
+
+          raw = {
+              "version": 6,
+              "generatedAt": "2026-09-17T00:00:00Z",
+              "records": [{
+                  "id": "TEST",
+                  "model": "Lápida",
+                  "invoiceFile": "https://drive.google.com/file/d/TEST/view",
+                  "invoiceDraftFile": "https://docs.google.com/spreadsheets/d/DRAFT/edit",
+                  "corelFile": "",
+                  "noteFile": "https://drive.google.com/file/d/NOTE/view",
+                  "attachmentFile": "",
+              }],
+              "expenses": [],
+              "movements": [{
+                  "year": 2026,
+                  "date": "2026-09-01",
+                  "sourceDate": "1/9/2026",
+                  "type": "ENTREGA A CUENTA",
+                  "ref": "—",
+                  "line": None,
+                  "concept": "—",
+                  "debit": None,
+                  "credit": 1000,
+                  "balance": -1733,
+              }],
+          }
+          payload = sanitize_public_payload(raw)
+          assert payload["version"] == 9
+          assert payload["movements"][0]["balance"] == -1733
+          record = payload["records"][0]
+          assert record["invoiceFile"].startswith("https://drive.google.com/")
+          assert record["invoiceDraftFile"].startswith("https://docs.google.com/")
+          assert record["noteFile"].startswith("https://drive.google.com/")
+          assert DOCUMENT_LINK_KEYS.issubset(record)
+
+          bad = {
+              **raw,
+              "records": [{**raw["records"][0], "invoiceFile": "https://example.com/not-google"}],
+          }
+          try:
+              sanitize_public_payload(bad)
+          except RuntimeError:
+              pass
+          else:
+              raise AssertionError("non-Google document URL was not rejected")
+
+          print("M7_PUBLIC_PRIVACY_SANITIZER_OK")
+          PY
+
+      - name: Validate static-only artifact with synthetic feed
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/m7-synthetic-feed.json" <<'JSON'
+          {"version":9,"records":[{"id":"TEST","invoiceFile":"https://drive.google.com/file/d/TEST/view","invoiceDraftFile":"https://docs.google.com/spreadsheets/d/DRAFT/edit","corelFile":"","noteFile":"","attachmentFile":""}],"expenses":[],"movements":[{"year":2026,"date":"2026-09-01","sourceDate":"1/9/2026","type":"ENTREGA A CUENTA","ref":"—","line":null,"concept":"—","debit":null,"credit":1000,"balance":-1733}],"generatedAt":"2026-09-17T00:00:00Z"}
+          JSON
+          python python_feed/build_pages.py --output "$RUNNER_TEMP/m7-site" --feed "$RUNNER_TEMP/m7-synthetic-feed.json"
+          test -s "$RUNNER_TEMP/m7-site/index.html"
+          test -s "$RUNNER_TEMP/m7-site/dist/app.js"
+          test -s "$RUNNER_TEMP/m7-site/data/feed.json"
+          grep -Fq 'const STATIC_DATA_FEED_URL = "./data/feed.json";' "$RUNNER_TEMP/m7-site/dist/app.js"
+          grep -Fq 'static feed only; no Apps Script runtime dependency' "$RUNNER_TEMP/m7-site/dist/app.js"
+          if grep -Fq 'script.google.com' "$RUNNER_TEMP/m7-site/dist/app.js"; then
+            echo 'Unexpected Apps Script URL in staged runtime.' >&2
+            exit 1
+          fi
+          if grep -Fq 'LEGACY_DATA_FEED_URL' "$RUNNER_TEMP/m7-site/dist/app.js"; then
+            echo 'Unexpected legacy fallback constant in staged runtime.' >&2
+            exit 1
+          fi
+
+  build:
+    if: ${{ github.event_name != 'pull_request' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'schedule' && github.event.workflow_run.head_branch == 'main' && vars.LITOS_PUBLIC_FEED_KILL_SWITCH == 'false')) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONUNBUFFERED: '1'
+      LITOS_FREE_ONLY: 'true'
+      GOOGLE_OAUTH_WORKSHOP_JSON: ${{ secrets.GOOGLE_OAUTH_WORKSHOP_JSON }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Confirm production deploy
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'deploy' }}
+        shell: bash
+        run: |
+          test "${{ inputs.confirm }}" = "CUTOVER_M7"
+          echo 'OK: explicit M7 deploy confirmation received.'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: python_feed/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r python_feed/requirements.txt
+
+      - name: Compile M7 artifact code
+        run: |
+          python -m py_compile python_feed/feed.py
+          python -m py_compile python_feed/export.py
+          python -m py_compile python_feed/build_pages.py
+
+      - name: Read-only preflight
+        run: python python_feed/feed.py --preflight
+
+      - name: Require private OAuth
+        shell: bash
+        run: |
+          test -n "$GOOGLE_OAUTH_WORKSHOP_JSON"
+          echo 'OK: private Google OAuth credential present.'
+
+      - name: Generate privacy-sanitized ephemeral public feed
+        run: python python_feed/export.py --output "$RUNNER_TEMP/litos-feed.json"
+
+      - name: Build Pages artifact without Git data snapshots
+        run: python python_feed/build_pages.py --output _site --feed "$RUNNER_TEMP/litos-feed.json"
+
+      - name: Validate staged site and public-feed privacy
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s _site/index.html
+          test -s _site/dist/app.js
+          test -s _site/data/feed.json
+          grep -Fq 'const STATIC_DATA_FEED_URL = "./data/feed.json";' _site/dist/app.js
+          grep -Fq 'static feed only; no Apps Script runtime dependency' _site/dist/app.js
+          if grep -Fq 'script.google.com' _site/dist/app.js; then
+            echo 'Unexpected Apps Script URL in staged runtime.' >&2
+            exit 1
+          fi
+          if grep -Fq 'LEGACY_DATA_FEED_URL' _site/dist/app.js; then
+            echo 'Unexpected legacy fallback constant in staged runtime.' >&2
+            exit 1
+          fi
+          PYTHONPATH=python_feed python - <<'PY'
+          import json
+          from pathlib import Path
+          from export import DOCUMENT_LINK_KEYS, assert_public_payload_safe
+
+          payload = json.loads(Path('_site/data/feed.json').read_text(encoding='utf-8'))
+          assert payload.get('version') == 9
+          assert isinstance(payload.get('records'), list) and payload['records']
+          assert isinstance(payload.get('expenses'), list)
+          assert isinstance(payload.get('movements'), list) and payload['movements']
+          assert isinstance(payload['movements'][-1].get('balance'), (int, float))
+          assert_public_payload_safe(payload)
+
+          document_links = sum(
+              1
+              for record in payload['records']
+              for key in DOCUMENT_LINK_KEYS
+              if record.get(key)
+          )
+          assert document_links > 0, 'Expected at least one Google Drive/Docs document link in production feed'
+          print(
+              f"M7_STAGED_SITE_OK records={len(payload['records'])} "
+              f"expenses={len(payload['expenses'])} movements={len(payload['movements'])} "
+              f"google_document_links={document_links}"
+          )
+          PY
+
+      - name: Upload GitHub Pages artifact
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_run' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'deploy') }}
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+          retention-days: 1
+
+  deploy:
+    needs: build
+    if: ${{ needs.build.result == 'success' && (github.event_name == 'push' || github.event_name == 'workflow_run' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'deploy')) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

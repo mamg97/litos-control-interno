@@ -1,0 +1,178 @@
+name: LITOS M3+M4 Cutover
+
+on:
+  push:
+    paths:
+      - 'python_client_intake/**'
+      - 'python_handwriting/**'
+      - '.github/workflows/client-intake-handwriting.yml'
+  pull_request:
+    paths:
+      - 'python_client_intake/**'
+      - 'python_handwriting/**'
+      - '.github/workflows/client-intake-handwriting.yml'
+  schedule:
+    - cron: '7 7,11,15,19 * * *'
+      timezone: 'Europe/Madrid'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Execution mode"
+        required: true
+        default: "dry-run"
+        type: choice
+        options:
+          - dry-run
+          - cutover-canary
+          - sync
+      confirm:
+        description: "For canary type CUTOVER_M3_M4; for full sync type SYNC_M3_M4"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: litos-m3-m4-cutover
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONUNBUFFERED: "1"
+      LITOS_FREE_ONLY: "true"
+      LITOS_SPREADSHEET_ID: "1ZS-L0eJmfukNr0rmc8ZvC3UxdVKw7Rnggx5TlRydZ2Q"
+      LITOS_CLIENT_FOLDER_ID: "1eUAupqLzfBhkiEexWqpI3JtYReT8c9A_"
+      LITOS_CLIENT_YEAR: "2026"
+      LITOS_CLIENT_LOOKBACK_DAYS: "30"
+      LITOS_GEMINI_MODEL: "gemini-3.8-flash"
+      GOOGLE_OAUTH_WORKSHOP_JSON: ${{ secrets.GOOGLE_OAUTH_WORKSHOP_JSON }}
+      CLIENT_ALLOWED_SENDER: ${{ secrets.CLIENT_ALLOWED_SENDER }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      LITOS_CLIENT_KILL_SWITCH: ${{ vars.LITOS_CLIENT_KILL_SWITCH }}
+      LITOS_HANDWRITING_KILL_SWITCH: ${{ vars.LITOS_HANDWRITING_KILL_SWITCH }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: |
+            python_client_intake/requirements.txt
+            python_handwriting/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r python_client_intake/requirements.txt -r python_handwriting/requirements.txt
+
+      - name: Compile production adapters
+        run: |
+          python -m py_compile python_client_intake/intake_sync.py python_client_intake/intake_sync_safe.py python_client_intake/canary_gate.py python_handwriting/sync.py python_handwriting/sync_safe.py
+
+      - name: Read-only preflights
+        run: |
+          (cd python_client_intake && python runner.py --preflight)
+          (cd python_handwriting && python runner.py --preflight)
+
+      - name: Require private credentials
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
+        shell: bash
+        run: |
+          test -n "$GOOGLE_OAUTH_WORKSHOP_JSON"
+          test -n "$CLIENT_ALLOWED_SENDER"
+          test -n "$GEMINI_API_KEY"
+          echo "OK: private credentials present."
+
+      - name: Read-only M3+M4 dry-run
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run' }}
+        run: |
+          (cd python_client_intake && python runner.py --dry-run)
+          (cd python_handwriting && python runner.py --dry-run)
+
+      - name: Confirm cutover canary
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'cutover-canary' }}
+        shell: bash
+        run: |
+          test "${{ inputs.confirm }}" = "CUTOVER_M3_M4"
+          echo "OK: M3+M4 cutover canary explicitly confirmed."
+
+      - name: Fresh M3 mutation gate
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'cutover-canary' }}
+        working-directory: python_client_intake
+        run: python canary_gate.py
+
+      - name: M3 hardened production canary
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'cutover-canary' }}
+        working-directory: python_client_intake
+        env:
+          LITOS_CLIENT_KILL_SWITCH: "false"
+          LITOS_CLIENT_WRITE_ENABLED: "true"
+        run: python intake_sync_safe.py --max-mutations 1
+
+      - name: M4 hardened one-item production canary
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'cutover-canary' }}
+        working-directory: python_handwriting
+        env:
+          LITOS_HANDWRITING_KILL_SWITCH: "false"
+          LITOS_HANDWRITING_WRITE_ENABLED: "true"
+        run: python sync_safe.py --max-items 1
+
+      - name: Post-canary read-only verification
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'cutover-canary' }}
+        run: |
+          (cd python_client_intake && python runner.py --dry-run)
+          (cd python_handwriting && python runner.py --dry-run)
+
+      - name: Confirm full sync
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
+        shell: bash
+        run: |
+          test "${{ inputs.confirm }}" = "SYNC_M3_M4"
+          echo "OK: M3+M4 full sync explicitly confirmed."
+
+      - name: M3 hardened manual production sync
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
+        working-directory: python_client_intake
+        env:
+          LITOS_CLIENT_KILL_SWITCH: "false"
+          LITOS_CLIENT_WRITE_ENABLED: "true"
+        run: python intake_sync_safe.py
+
+      - name: M4 hardened manual production sync
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
+        working-directory: python_handwriting
+        env:
+          LITOS_HANDWRITING_KILL_SWITCH: "false"
+          LITOS_HANDWRITING_WRITE_ENABLED: "true"
+        run: python sync_safe.py --max-items 4
+
+      - name: Scheduled production sync blocked by kill switch
+        if: ${{ github.event_name == 'schedule' && (vars.LITOS_CLIENT_KILL_SWITCH == 'true' || vars.LITOS_HANDWRITING_KILL_SWITCH == 'true') }}
+        run: echo "Scheduled M3+M4 production sync is disabled while either repository kill switch is true."
+
+      - name: M3 hardened scheduled production sync
+        if: ${{ github.event_name == 'schedule' && vars.LITOS_CLIENT_KILL_SWITCH != 'true' && vars.LITOS_HANDWRITING_KILL_SWITCH != 'true' }}
+        working-directory: python_client_intake
+        env:
+          LITOS_CLIENT_WRITE_ENABLED: "true"
+        run: python intake_sync_safe.py
+
+      - name: M4 hardened scheduled production sync
+        if: ${{ github.event_name == 'schedule' && vars.LITOS_CLIENT_KILL_SWITCH != 'true' && vars.LITOS_HANDWRITING_KILL_SWITCH != 'true' }}
+        working-directory: python_handwriting
+        env:
+          LITOS_HANDWRITING_WRITE_ENABLED: "true"
+        run: python sync_safe.py --max-items 4
+
+      - name: Post-sync read-only verification
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'sync') || (github.event_name == 'schedule' && vars.LITOS_CLIENT_KILL_SWITCH != 'true' && vars.LITOS_HANDWRITING_KILL_SWITCH != 'true') }}
+        run: |
+          (cd python_client_intake && python runner.py --dry-run)
+          (cd python_handwriting && python runner.py --dry-run)

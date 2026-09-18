@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LITOS Control Interno</title>
+  <meta name="description" content="Página pública de información de LITOS Control Interno y su integración con Google OAuth.">
+  <style>
+    :root { color-scheme: light dark; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { margin: 0; background: Canvas; color: CanvasText; }
+    main { max-width: 760px; margin: 0 auto; padding: 64px 24px; line-height: 1.6; }
+    h1 { font-size: clamp(2rem, 5vw, 3.2rem); margin-bottom: .4rem; }
+    h2 { margin-top: 2rem; }
+    .muted { opacity: .72; }
+    .card { border: 1px solid color-mix(in srgb, CanvasText 18%, transparent); border-radius: 14px; padding: 22px; margin-top: 24px; }
+    a { color: LinkText; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>LITOS Control Interno</h1>
+    <p class="muted">Herramienta privada de automatización y control operativo para un pequeño taller.</p>
+
+    <div class="card">
+      <h2>Qué hace LITOS</h2>
+      <p>LITOS automatiza tareas internas relacionadas con la recepción de documentación de pedidos, la organización de archivos y la lectura asistida de fichas manuscritas.</p>
+      <p>La aplicación utiliza autorización de Google para acceder únicamente a las cuentas expresamente autorizadas por sus propietarios y ejecutar los procesos internos configurados.</p>
+    </div>
+
+    <div class="card">
+      <h2>Uso de servicios de Google</h2>
+      <p>Según el proceso, LITOS puede utilizar Gmail para localizar mensajes concretos, Google Drive para organizar documentación y Google Sheets para mantener el registro operativo. Algunas fichas pueden ser procesadas mediante la API de Gemini para extraer información estructurada, con revisión humana cuando la confianza no es suficiente.</p>
+      <p>LITOS no se ofrece al público general. Está destinado a uso personal y a un número reducido de usuarios conocidos por el responsable del sistema.</p>
+    </div>
+
+    <p><a href="privacy/">Política de Privacidad</a></p>
+  </main>
+</body>
+</html>
