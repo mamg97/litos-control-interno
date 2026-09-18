@@ -610,14 +610,14 @@ function drawOrdersChart(data, metric = "orders") {
   if (!data.length) return;
   const slot = (width - left - right) / data.length;
   const barWidth = Math.max(5, Math.min(42, slot * .58));
-  data.forEach(([label, value], index) => {
+  data.forEach(([label, value, estimated = false], index) => {
     const x = left + slot * index + slot / 2;
     const y = yFor(value);
     const barTop = Math.min(y, zeroY);
     const barHeight = Math.max(1, Math.abs(zeroY - y));
-    ctx.fillStyle = metric === "profit" && value < 0 ? "#c86c58" : barColour;
+    ctx.fillStyle = estimated ? "#bd7e27" : (metric === "profit" && value < 0 ? "#c86c58" : barColour);
     ctx.fillRect(x - barWidth / 2, barTop, barWidth, barHeight);
-    ctx.fillStyle = "#0e3137"; ctx.font = "600 10px DM Mono"; ctx.textAlign = "center";
+    ctx.fillStyle = estimated ? "#805817" : "#0e3137"; ctx.font = "600 10px DM Mono"; ctx.textAlign = "center";
     const valueLabelY = value < 0 ? Math.min(height - 20, barTop + barHeight + 13) : Math.max(13, barTop - 8);
     ctx.fillText(chartValue(value, metric), x, valueLabelY);
     if (index % 2 === 0 || data.length < 9 || width >= 940) { ctx.fillStyle = "#799194"; ctx.font = "11px Manrope"; ctx.fillText(label, x, height - 12); }
@@ -694,6 +694,76 @@ function metricValue(point, metric) {
   return point[metric] ?? 0;
 }
 
+const FORECAST_HISTORY_WINDOW = 5;
+
+function weightedMonthlyForecast(targetYear, month, metric) {
+  const priorYears = availableDataYears()
+    .filter((year) => Number(year) < Number(targetYear))
+    .sort((a, b) => a - b)
+    .slice(-FORECAST_HISTORY_WINDOW);
+
+  if (!priorYears.length) return null;
+
+  let weightedTotal = 0;
+  let totalWeight = 0;
+  priorYears.forEach((year, index) => {
+    const point = performanceSeries(year, "year")[month];
+    const value = Number(metricValue(point || {}, metric));
+    if (!Number.isFinite(value)) return;
+    const weight = index + 1;
+    weightedTotal += value * weight;
+    totalWeight += weight;
+  });
+
+  if (!totalWeight) return null;
+  const estimate = weightedTotal / totalWeight;
+  return metric === "orders" ? Math.max(0, Math.round(estimate)) : estimate;
+}
+
+function forecastMetricSeries(year, granularity, metric) {
+  const targetYear = Number(year);
+  const monthlyActual = performanceSeries(targetYear, "year");
+  const now = new Date();
+  const isOpenYear = targetYear === now.getFullYear();
+  const currentMonth = now.getMonth();
+
+  return periodsFor(targetYear, granularity).map(({ label, months }) => {
+    let actualValue = 0;
+    let estimatedValue = 0;
+    let estimatedMonths = 0;
+
+    months.forEach((month) => {
+      if (isOpenYear && month > currentMonth) {
+        const estimate = weightedMonthlyForecast(targetYear, month, metric);
+        if (estimate !== null) {
+          estimatedValue += estimate;
+          estimatedMonths += 1;
+        }
+      } else {
+        actualValue += metricValue(monthlyActual[month] || {}, metric);
+      }
+    });
+
+    return {
+      label,
+      value: actualValue + estimatedValue,
+      actualValue,
+      estimatedValue,
+      estimated: estimatedMonths > 0,
+      estimatedMonths
+    };
+  });
+}
+
+function annualMetricProjection(year, metric) {
+  const targetYear = Number(year);
+  const now = new Date();
+  if (targetYear !== now.getFullYear() || now.getMonth() >= 11) return null;
+  const series = forecastMetricSeries(targetYear, "year", metric);
+  if (!series.some((point) => point.estimated)) return null;
+  return series.reduce((total, point) => total + point.value, 0);
+}
+
 function renderMetricStrip(years, selectedYear, granularity, metric) {
   const root = $("#summaryMetricTable");
   if (!root) return;
@@ -709,6 +779,7 @@ function renderMetricStrip(years, selectedYear, granularity, metric) {
   }
 
   const labels = periodsFor(selectedYear || years[0], granularity).map(({ label }) => label);
+  const formatMetric = (value) => metric === "orders" ? formatInt.format(value) : chartValue(value, metric);
   const makeCell = (content, className = "") => {
     const cell = document.createElement("span");
     cell.className = className;
@@ -717,20 +788,33 @@ function renderMetricStrip(years, selectedYear, granularity, metric) {
   };
   const header = document.createElement("div");
   header.className = "history-matrix-row history-matrix-header";
-  header.append(makeCell("Año"), ...labels.map((label) => makeCell(label)), makeCell("Total"));
+  header.append(
+    makeCell("Año"),
+    ...labels.map((label) => makeCell(label)),
+    makeCell("Total"),
+    makeCell("Estimación", "history-estimate")
+  );
   root.append(header);
 
   years.forEach((year) => {
-    const series = performanceSeries(year, granularity);
-    const total = series.reduce((sum, point) => sum + metricValue(point, metric), 0);
+    const actualSeries = performanceSeries(year, granularity);
+    const displaySeries = forecastMetricSeries(year, granularity, metric);
+    const actualTotal = actualSeries.reduce((sum, point) => sum + metricValue(point, metric), 0);
+    const projection = annualMetricProjection(year, metric);
     const row = document.createElement("div");
     row.className = `history-matrix-row${year === Number(selectedYear) ? " selected" : ""}`;
     row.append(makeCell(String(year), "history-year"));
-    series.forEach((point) => {
-      const value = metricValue(point, metric);
-      row.append(makeCell(metric === "orders" ? formatInt.format(value) : chartValue(value, metric)));
+    displaySeries.forEach((point) => {
+      row.append(makeCell(
+        formatMetric(point.value),
+        point.estimated ? "history-estimated-value" : ""
+      ));
     });
-    row.append(makeCell(metric === "orders" ? formatInt.format(total) : chartValue(total, metric), "history-total"));
+    row.append(makeCell(formatMetric(actualTotal), "history-total"));
+    row.append(makeCell(
+      projection === null ? "—" : formatMetric(projection),
+      projection === null ? "history-estimate" : "history-estimate history-estimated-value"
+    ));
     root.append(row);
   });
 }
@@ -961,8 +1045,12 @@ function renderSummary() {
       ? "En " + year + ", los pedidos se agrupan " + (granularity === "quarter" ? "por trimestre" : "por mes") + " según su fecha de recepción por email; si no consta, se usa la fecha de ficha y, en el histórico incompleto, la mejor fecha disponible."
       : "En " + year + ", el beneficio se agrupa " + (granularity === "quarter" ? "por trimestre" : "por mes") + " según la fecha operativa de entrega registrada."
     : "La nota de fecha se completará al cargar los datos.";
-  const series = performanceSeries(year || new Date().getFullYear(), granularity);
-  drawOrdersChart(series.map((point) => [point.label, metricValue(point, metric)]), metric);
+  const series = forecastMetricSeries(year || new Date().getFullYear(), granularity, metric);
+  const hasForecast = series.some((point) => point.estimated);
+  if (hasForecast) {
+    $("#summaryChartNote").textContent += " Las barras doradas son estimaciones de meses futuros mediante media móvil ponderada del mismo mes en hasta 5 años anteriores, dando más peso a los años recientes.";
+  }
+  drawOrdersChart(series.map((point) => [point.label, point.value, point.estimated]), metric);
   renderMetricStrip(years, year, granularity, metric);
 }
 
