@@ -96,8 +96,11 @@ function switchView(view) {'''
 
 
 def copy_public_source(output: Path) -> None:
-    for file_name in ("index.html", "privacy.html"):
-        shutil.copy2(file_name, output / file_name)
+    for file_name in ("index.html", "privacy.html", "favicon.png"):
+        source = Path(file_name)
+        if not source.is_file():
+            raise RuntimeError(f"Required public asset missing: {file_name}")
+        shutil.copy2(source, output / file_name)
     shutil.copytree("dist", output / "dist")
     if Path("oauth").exists():
         shutil.copytree("oauth", output / "oauth")
