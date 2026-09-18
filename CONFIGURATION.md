@@ -8,8 +8,8 @@ This file is the persistent inventory of non-code configuration required by prod
 
 | Secret | Purpose | Used by | Notes |
 | --- | --- | --- | --- |
-| `GOOGLE_OAUTH_USER_JSON` | Neutral Google OAuth for Drive/Sheets operations | M2 drafts, M5 folders, M6 albaranes, M7 public feed/pages and other non-Gmail flows | Private. Never print or commit its value. |
-| `GOOGLE_OAUTH_CLIENT_JSON` | Dedicated OAuth with Gmail readonly + Drive + Sheets scopes for the primary-client intake | M3/M4 intake + handwriting cutover and M3 read-only intake | Private. Neutral replacement for the retired legacy-named intake OAuth secret. |
+| `GOOGLE_OAUTH_USER_JSON` | Neutral Google OAuth for Drive/Sheets operations | M2 drafts, M5 folders, M6 albaranes, M7 public feed/pages, M8 catalog audit and other non-Gmail flows | Private. Never print or commit its value. |
+| `GOOGLE_OAUTH_CLIENT_JSON` | Dedicated OAuth with Gmail readonly + Drive + Sheets scopes for the primary-client intake | M3/M4 intake + handwriting cutover, M3 read-only intake and standalone handwriting validation | Private. Neutral replacement for the retired legacy-named intake OAuth secret. |
 | `GEMINI_API_KEY` | Gemini API credential for handwriting extraction | M4 | Private. Keep zero-cost policy and model guardrails. |
 
 ### Retired secrets

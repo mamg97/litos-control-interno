@@ -1,6 +1,6 @@
 # Google OAuth setup for LITOS Draft Sync
 
-This is the only manual credential bootstrap required for the GitHub Actions cutover.
+This document bootstraps the neutral Drive/Sheets credential used by non-Gmail LITOS components. M3/M4 use a separate Gmail-capable OAuth credential documented in `python_client_intake/bootstrap_google_oauth.py`.
 
 ## 1. Create a Google OAuth Desktop client
 
@@ -31,16 +31,10 @@ Value: paste the **complete contents** of `google_oauth_user.json`.
 
 Never commit this JSON or paste it into issues, pull requests, source files, or chat.
 
-## 4. First autonomous validation
+## 4. Validation and production state
 
-Run the workflow **LITOS Draft Sync** manually with mode `dry-run`.
+The initial cutover validation has already been completed and `LITOS Draft Sync` is in production.
 
-Expected safety state:
+For credential re-bootstrap or troubleshooting, run the workflow manually in `dry-run` before any write-enabled execution. The dry-run must remain fail-closed and report no write operations.
 
-- `LITOS_FREE_ONLY=true`
-- `LITOS_KILL_SWITCH=true`
-- `LITOS_WRITE_ENABLED=false`
-- `write_operations=0`
-- planner result consistent with the certified Colab validation
-
-Only after the dry-run is independently verified should the workflow gain a production `sync` mode and schedule.
+The same `GOOGLE_OAUTH_USER_JSON` credential is the standard non-Gmail OAuth for M2, M5, M6, M7 and M8. Do not create client-named or legacy-named replacements for these components.

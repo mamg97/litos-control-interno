@@ -28,6 +28,7 @@ Google Apps Script is retained only as historical rollback/reference source and 
 - M5 scheduled organizer completed with no remaining candidate moves.
 - M6 production synchronization and bridge executions completed successfully.
 - M7 sanitized feed build and GitHub Pages deployment completed successfully.
+- The obsolete Apps Script feed-parity path was retired; the auxiliary M7 workflow now audits the current sanitized static feed only.
 - Apps Script installed triggers were retired.
 - Apps Script active deployments were archived/retired.
 - The public dashboard no longer calls `script.google.com`.
