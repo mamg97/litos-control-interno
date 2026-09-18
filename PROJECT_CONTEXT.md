@@ -88,7 +88,7 @@ Therefore:
 
 - never commit personal names for customers/contacts or the workshop owner;
 - never commit email addresses, OAuth credentials, tokens or private document contents;
-- use repository secrets for authorized sender and OAuth credentials;
+- keep OAuth credentials in repository secrets; keep the authorized sender and other real identities only in the hidden private Sheet configuration;
 - use neutral role names in comments, docs and UI copy;
 - public dashboard output must stay limited to the approved sanitized schema.
 

@@ -1,27 +1,38 @@
 # M6 — sincronización de albaranes 2026 en Python
 
-Esta fase migra `apps-script/SyncAlbaranes.gs` fuera de Apps Script.
+M6 es la implementación de producción que sustituyó al antiguo sincronizador de Apps Script para conciliación de albaranes.
 
 ## Estado actual
 
-Solo existe la fase de **paridad read-only**. No modifica Google Sheets ni Drive y no tiene ejecución programada.
+**Producción certificada.** Apps Script ya no es una dependencia operativa.
 
-El comprobador:
+El componente:
 
 - recorre recursivamente la carpeta operativa 2026;
-- clasifica el XLS/XLSX/XLSM más reciente por pedido como definitivo o borrador;
-- compara los enlaces preparados en `Pedidos`;
-- descarga el fichero activo y busca el primer valor numérico a la derecha de una celda `TOTAL`;
-- compara ese valor con `Total sheet (€)`;
-- publica únicamente contadores técnicos en Actions, no nombres de ficheros ni IDs de pedido.
+- clasifica el XLS/XLSX/XLSM activo por pedido como definitivo o borrador;
+- valida enlaces y valores antes de escribir;
+- busca el primer valor numérico a la derecha de una celda `TOTAL` cuando corresponde;
+- sincroniza los campos permitidos del maestro mediante escritura fail-closed;
+- dispone de modos `dry-run`, canary y sincronización manual controlada;
+- puede ejecutarse mediante el bridge desde una ejecución programada y correcta de `LITOS Draft Sync`;
+- queda bloqueado si `LITOS_ALBARAN_KILL_SWITCH` no está explícitamente en `false`;
+- publica en Actions únicamente información técnica compatible con las reglas de privacidad.
 
-## Cutover previsto
+## Autenticación
 
-1. validar paridad read-only contra el Apps Script todavía activo;
-2. añadir escritura fail-closed, canary y rollback/guardas;
-3. ejecutar sync manual controlado;
-4. retirar el trigger `syncAlbaranes2026` de Apps Script;
-5. habilitar el schedule Python mediante kill switch explícito;
-6. validar una ejecución programada real.
+La credencial privada de Drive/Sheets vive en GitHub Secrets como `GOOGLE_OAUTH_USER_JSON`.
 
-La automatización final debe respetar `ZERO_COST_POLICY.md` y usar únicamente el OAuth privado almacenado en GitHub Actions.
+Por compatibilidad con el adaptador M6 certificado, el workflow la expone al proceso Python mediante la variable de entorno interna `GOOGLE_OAUTH_CLIENT_JSON`. Esto no implica un segundo secret ni debe recrearse ningún secret legacy.
+
+## Reglas de seguridad
+
+- Las escrituras requieren `LITOS_ALBARAN_WRITE_ENABLED=true`.
+- El kill switch debe estar explícitamente desactivado para cualquier escritura productiva.
+- Los modos manuales de escritura exigen confirmación explícita.
+- La ejecución por bridge solo procede desde un `LITOS Draft Sync` programado que haya terminado correctamente.
+- Los backfills históricos son operaciones excepcionales y no forman parte de la sincronización ordinaria.
+- Deben respetarse `BUSINESS_LOGIC.md`, `CONFIGURATION.md`, `PRIVACY_STATUS.md` y `ZERO_COST_POLICY.md`.
+
+## Estado legacy
+
+No reinstalar el antiguo trigger de Apps Script ni volver a desplegarlo como ruta normal. Cualquier rollback a Apps Script requiere una decisión deliberada y documentada.

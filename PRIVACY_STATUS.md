@@ -12,7 +12,7 @@ Public code must identify roles, not individuals. The recurring external party i
 
 - Public source uses neutral technical naming (`client`, `primary_client`, `python_client_intake`).
 - Real client and issuer identity is loaded at runtime from the hidden private master configuration, not from Git.
-- Authorized email sender and Gmail label are stored in the private master configuration.
+- The authorized email sender is stored in the hidden private master configuration; M3 no longer depends on a client-identifying Gmail label.
 - OAuth remains in GitHub Secrets and is never printed.
 - Retired Apps Script source was removed from the public repository.
 - Historical GitHub Actions runs and their artifacts/logs were cleared.

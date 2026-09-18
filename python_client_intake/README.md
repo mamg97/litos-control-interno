@@ -7,7 +7,7 @@ The client's real identity is deliberately absent from this public repository. P
 ## Production state
 
 - Gmail is read with `gmail.readonly`.
-- The authorized sender and Gmail label are read from the private `Configuracion privada` sheet.
+- The authorized sender is read from the private `Configuracion privada` sheet; intake no longer depends on a client-identifying Gmail label.
 - Drive and Sheets materialize order folders, attachments and master-sheet fields.
 - Production execution is scheduled together with M4 handwriting processing.
 - Public Actions logs must not print sender addresses, subjects, attachment names, Gmail IDs, Drive IDs or private message contents.
@@ -18,13 +18,12 @@ The Gmail-capable OAuth credential is exposed to Python only as the neutral runt
 
 Its value is private and must never be committed.
 
-The real client identity, sender address, Gmail label and invoice-header identity live outside this public repository.
+The real client identity, sender address and invoice-header identity live outside this public repository.
 
 ## Intake contract
 
 - Process only the explicitly authorized sender from private configuration.
-- Use the private Gmail label from configuration.
-- Apply the configured operating year and lookback window.
+- Apply the runtime operating year and lookback window; production currently queries the authorized sender directly.
 - Extract a four-digit order ID from subject or attachment names.
 - Maintain one Drive order folder per order ID.
 - Preserve existing materialization and fill only missing master data.

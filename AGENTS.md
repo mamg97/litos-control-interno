@@ -7,7 +7,9 @@ Before changing production behavior, read these files in order:
 1. `PROJECT_CONTEXT.md` — current architecture, schedules and component ownership.
 2. `BUSINESS_LOGIC.md` — business semantics and data precedence rules.
 3. `MIGRATION_STATUS.md` — migration closure and residual legacy policy.
-4. `CONFIGURATION.md` — GitHub Secrets/Variables and private Sheet configuration registry.\n5. `PRIVACY_STATUS.md` — public-repository privacy and clone-safety rules.\n6. `ZERO_COST_POLICY.md` — mandatory zero-cost constraint.
+4. `CONFIGURATION.md` — GitHub Secrets/Variables and private Sheet configuration registry.
+5. `PRIVACY_STATUS.md` — public-repository privacy and clone-safety rules.
+6. `ZERO_COST_POLICY.md` — mandatory zero-cost constraint.
 
 ## Non-negotiable rules
 
