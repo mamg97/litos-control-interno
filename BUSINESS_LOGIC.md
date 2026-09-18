@@ -129,3 +129,20 @@ Public code/docs/UI should use neutral roles:
 - private running account / estadillo
 
 Avoid real personal names, addresses and email addresses in public source, comments, workflow names and commit messages.
+
+## 10. Monthly forecast logic
+
+Summary-view forecasts apply only to the current open year.
+
+- Real recorded values always take precedence and are never replaced by a forecast.
+- The current calendar month remains actual even if it is partial.
+- Only future months after the current calendar month are forecast.
+- Each future month is estimated from the same calendar month in up to the five most recent prior years.
+- The weighted moving average uses linearly increasing weights from oldest to newest sample: `1, 2, 3, 4, 5` (or `1..N` when fewer than five prior years exist).
+- Order forecasts are rounded to whole orders.
+- Profit forecasts retain their monetary numeric value and use the same weighted-month rule.
+- Forecast values are rendered in the dashboard's gold/amber forecast color.
+- The historical matrix keeps `Total` as the actual recorded total and adds `Estimación` as the projected year-end total.
+- Closed years show `—` in the `Estimación` column.
+- Quarterly display aggregates monthly actuals plus any monthly forecasts; forecasts are still computed month-by-month before aggregation.
+
