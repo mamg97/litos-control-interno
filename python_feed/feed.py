@@ -3,6 +3,7 @@ from __future__ import annotations
 # Privacy-safe public feed production baseline; public output remains sanitized.
 
 import argparse
+import hashlib
 import json
 import math
 import os
@@ -372,6 +373,23 @@ def build_payload(sheets) -> dict:
         "expenses": read_expenses(sheets),
         "movements": read_movements(sheets),
     }
+
+
+def payload_hash(payload: dict) -> str:
+    """Stable hash of the current business payload, excluding generation time."""
+    business_payload = {
+        "version": payload.get("version"),
+        "records": payload.get("records", []),
+        "expenses": payload.get("expenses", []),
+        "movements": payload.get("movements", []),
+    }
+    raw = json.dumps(
+        business_payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(raw).hexdigest()
 
 
 def preflight() -> dict:
