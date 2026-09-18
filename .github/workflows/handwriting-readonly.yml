@@ -41,7 +41,7 @@ jobs:
       LITOS_HANDWRITING_WRITE_ENABLED: "false"
       LITOS_SPREADSHEET_ID: "1ZS-L0eJmfukNr0rmc8ZvC3UxdVKw7Rnggx5TlRydZ2Q"
       LITOS_GEMINI_MODEL: "gemini-3.8-flash"
-      GOOGLE_OAUTH_CLIENT_JSON: ${{ secrets[format('GOOGLE_OAUTH_{0}{1}_JSON', 'SA', 'BAN')] }}
+      GOOGLE_OAUTH_CLIENT_JSON: ${{ secrets.GOOGLE_OAUTH_CLIENT_JSON }}
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
     steps:

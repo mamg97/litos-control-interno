@@ -1,6 +1,11 @@
 name: LITOS M8 Curated Catalog Audit
 
 on:
+  push:
+    paths:
+      - 'python_catalog/**'
+      - '.github/workflows/catalog-parity.yml'
+      - 'python_drafts/**'
   pull_request:
     paths:
       - 'python_catalog/**'
@@ -17,7 +22,7 @@ jobs:
     timeout-minutes: 10
     env:
       PYTHONUNBUFFERED: '1'
-      GOOGLE_OAUTH_CLIENT_JSON: ${{ secrets[format('GOOGLE_OAUTH_{0}{1}_JSON', 'SA', 'BAN')] }}
+      GOOGLE_OAUTH_USER_JSON: ${{ secrets.GOOGLE_OAUTH_USER_JSON }}
 
     steps:
       - name: Checkout
@@ -43,7 +48,7 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' }}
         shell: bash
         run: |
-          test -n "$GOOGLE_OAUTH_CLIENT_JSON"
+          test -n "$GOOGLE_OAUTH_USER_JSON"
           echo 'OK: private Google OAuth credential present.'
 
       - name: Full read-only curated catalog audit
