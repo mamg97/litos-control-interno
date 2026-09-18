@@ -14,10 +14,7 @@ This file is the persistent inventory of non-code configuration required by prod
 
 ### Retired secrets
 
-The following legacy-named secrets are no longer required after neutral cutover and should be deleted from GitHub Settings once the neutral intake verification is green:
-
-- legacy-named intake OAuth secret;
-- legacy-named authorized-sender secret.
+The legacy-named intake OAuth secret and legacy-named authorized-sender secret were removed from GitHub Settings after the neutral intake verification succeeded.
 
 Do not recreate legacy-named secrets.
 
@@ -37,7 +34,7 @@ Known operational variables include:
 
 The M3 primary-client intake kill switch no longer belongs in GitHub Variables. It lives in the private Sheet configuration as `intake_kill_switch`.
 
-Any legacy variable whose name contains a real customer/client identifier is retired and should be deleted from GitHub Settings.
+Any legacy variable whose name contains a real customer/client identifier is retired and must not be recreated.
 
 ## 3. Private master configuration
 
