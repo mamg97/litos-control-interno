@@ -103,6 +103,8 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
 .production-grid { grid-template-columns: 1fr 1fr; }.wide-table { grid-column: 1 / -1; }.table-panel { padding: 1.25rem; }.rank-table { display: grid; gap: .22rem; margin-top: 1rem; }.rank-row { display: grid; grid-template-columns: 1.75rem minmax(0,1fr) 2.3rem; align-items: center; gap: .6rem; padding: .47rem 0; border-bottom: 1px solid #edf2f1; }.rank-row:last-child { border-bottom: 0; }.rank-index { color: #88a19e; font-family: "DM Mono", monospace; font-size: .68rem; }.rank-label { overflow: hidden; color: #345457; font-size: .81rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }.rank-value { color: var(--deep); font-family: "DM Mono", monospace; font-size: .76rem; text-align: right; }.rank-bar { grid-column: 2 / -1; height: 3px; margin-top: -.2rem; border-radius: 99px; background: #e9f0ef; overflow: hidden; }.rank-bar > i { display: block; height: 100%; border-radius: inherit; background: var(--teal); }.size-column-head { display: grid; grid-template-columns: 1.75rem minmax(0,1fr) minmax(88px,.7fr) 4.6rem; gap: .6rem; margin-top: 1rem; padding: 0 0 .45rem; border-bottom: 1px solid var(--line); color: var(--ink-soft); font-family: "DM Mono", monospace; font-size: .62rem; letter-spacing: .06em; text-transform: uppercase; }.size-column-head span:nth-child(3), .size-column-head span:last-child { text-align: right; }.sizes { margin-top: .2rem; }.sizes .size-rank-row { grid-template-columns: 1.75rem minmax(0,1fr) minmax(88px,.7fr) 4.6rem; }.rank-net { color: var(--teal); font-family: "DM Mono", monospace; font-size: .73rem; text-align: right; white-space: nowrap; }.sizes .size-rank-row .rank-bar { grid-column: 2 / -1; }
 .measure-scope { margin: 1rem 0 0; padding: .8rem .9rem; border-left: 3px solid #8bc5bf; border-radius: 0 8px 8px 0; background: #f4faf8; color: var(--ink-soft); font-size: .73rem; line-height: 1.55; }.measure-scope strong { color: var(--ink); }
 
+.strategy-journey { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: .75rem; margin: 0 0 1.8rem; }.strategy-journey a { display: grid; grid-template-columns: 2rem minmax(0,1fr); gap: .12rem .65rem; align-items: start; min-height: 96px; padding: .9rem 1rem; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfc; color: inherit; text-decoration: none; transition: border-color .16s ease, background .16s ease, transform .16s ease; }.strategy-journey a:hover { border-color: #9fcac5; background: #f3faf8; transform: translateY(-1px); }.strategy-journey span { grid-row: 1 / 3; display: grid; width: 2rem; height: 2rem; place-items: center; border-radius: 8px; background: var(--teal-light); color: var(--teal); font-family: "DM Mono", monospace; font-size: .67rem; font-weight: 800; }.strategy-journey strong { color: var(--deep); font-size: .8rem; }.strategy-journey small { color: var(--ink-soft); font-size: .67rem; line-height: 1.4; }.strategy-step-heading { display: grid; grid-template-columns: 2.4rem minmax(0,1fr); gap: .8rem; align-items: start; margin: 2rem 0 .9rem; scroll-margin-top: 88px; }.strategy-step-heading > span { display: grid; width: 2.35rem; height: 2.35rem; place-items: center; border-radius: 9px; background: #e4f2f0; color: var(--teal); font-family: "DM Mono", monospace; font-size: .72rem; font-weight: 800; }.strategy-step-heading h2 { margin: 0 0 .25rem; font-size: 1.35rem; }.strategy-step-heading .eyebrow { margin-bottom: .2rem; }.strategy-step-heading p:not(.eyebrow) { max-width: 820px; margin: 0; color: var(--ink-soft); font-size: .78rem; line-height: 1.55; }.strategy-step-heading-actions { grid-template-columns: 2.4rem minmax(0,1fr) auto; align-items: center; }.strategy-step-panel { margin-bottom: 1rem; }.strategy-assumptions { align-items: end; }.assumption-group-label { grid-column: 1 / -1; margin: .45rem 0 -.2rem; padding-top: .65rem; border-top: 1px solid #e5edec; color: var(--teal); font-family: "DM Mono", monospace; font-size: .64rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }.strategy-assumptions .assumption-group-label:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+
 .forecast-panel { margin-bottom: 1rem; padding: 1.35rem; }.forecast-canvas-wrap { height: 300px; }.forecast-scope { display: flex; align-items: baseline; gap: .35rem; margin: .95rem 0 0; padding: .78rem .9rem; border-left: 3px solid #bd7e27; border-radius: 0 8px 8px 0; background: #fffaf0; color: #6e6451; font-size: .73rem; line-height: 1.55; }.forecast-scope > span { flex: 0 0 20px; height: 2px; border-top: 2px dashed #bd7e27; }.forecast-scope strong { color: var(--ink); }.profit-layout { display: grid; grid-template-columns: minmax(300px,.92fr) minmax(390px,1.08fr); gap: 1rem; }.assumptions-panel, .profit-result { padding: 1.45rem; }.assumptions-form { display: grid; grid-template-columns: 1fr 1fr; gap: .85rem; margin-top: 1.2rem; }.form-note { margin: 1rem 0 0; color: var(--ink-soft); font-size: .71rem; line-height: 1.55; }.profit-result { color: white; background: linear-gradient(145deg, #11373b, #155a58); }.profit-result .eyebrow { color: #92cec8; }.result-number { margin-top: .8rem; color: white; font-family: "DM Mono", monospace; font-size: clamp(2.4rem,5vw,3.8rem); letter-spacing: -.1em; }.result-label { max-width: 310px; margin: 0 0 1.3rem; color: #b4d0cd; font-size: .78rem; }.profit-bars { display: grid; gap: .7rem; }.profit-bars > div { display: grid; grid-template-columns: 1fr auto; column-gap: 1rem; color: #d8eae8; font-size: .75rem; }.profit-bars strong { color: white; font-family: "DM Mono", monospace; font-size: .78rem; font-weight: 500; }.profit-bars i { grid-column: 1 / -1; height: 5px; margin-top: .3rem; border-radius: 99px; background: rgba(255,255,255,.16); overflow: hidden; }.profit-bars b { display: block; height: 100%; border-radius: inherit; background: #9bd8d2; }.ten-year { display: grid; grid-template-columns: 1fr auto; gap: .2rem 1rem; margin-top: 1.35rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,.22); color: #b8d1ce; font-size: .75rem; }.ten-year strong { color: white; font-family: "DM Mono", monospace; font-size: 1.05rem; }.ten-year small { grid-column: 1 / -1; color: #8eb8b4; }.strategy-details { margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--line); }.strategy-section-heading { margin-bottom: 1rem; }.strategy-section-heading h2 { font-size: 1.55rem; }.strategy-section-heading .page-lead { max-width: 800px; font-size: .86rem; }
 .cnc-panel { display: grid; grid-template-columns: 1fr 1.15fr; gap: 2.5rem; margin-top: 1rem; padding: 1.55rem; background: #fffaf0; border-color: #f2d9ab; }.cnc-panel p:not(.eyebrow) { margin-bottom: 0; color: #70634d; font-size: .85rem; }.cnc-math { display: grid; grid-template-columns: repeat(3,1fr); gap: .65rem; align-items: stretch; }.cnc-math > div { display: flex; flex-direction: column; justify-content: center; padding: .8rem; border: 1px solid #eedbb7; border-radius: 10px; background: rgba(255,255,255,.56); }.cnc-math span { color: #806d4f; font-size: .7rem; }.cnc-math strong { margin: .2rem 0; color: #6e4d19; font-family: "DM Mono", monospace; font-size: 1.2rem; letter-spacing: -.06em; }.cnc-math small { color: #8d8067; font-size: .64rem; }.cnc-math .verdict { border-color: #dcbf8b; background: #fff4dd; }.cnc-math .verdict span { color: #aa6a17; font-weight: 800; }
 
@@ -128,9 +130,9 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
 
 .toast { position: fixed; z-index: 20; right: 1rem; bottom: 1rem; max-width: 360px; padding: .8rem 1rem; border-radius: 10px; background: var(--deep); box-shadow: var(--shadow); color: white; font-size: .8rem; opacity: 0; pointer-events: none; transform: translateY(8px); transition: opacity .2s, transform .2s; }.toast.visible { opacity: 1; transform: translateY(0); }
 
-@media (max-width: 1120px) { .kpi-grid { grid-template-columns: repeat(3,1fr); }.overview-grid, .bottom-grid, .profit-layout, .data-layout, .cnc-panel, .strategy-grid, .strategy-decision-grid, .finance-layout, .finance-register-note, .sources-guides { grid-template-columns: 1fr; }.finance-kpis { grid-template-columns: repeat(2,1fr); }.insight-panel { min-height: 230px; }.cnc-math { min-height: 155px; }.production-grid { grid-template-columns: 1fr; }.wide-table { grid-column: auto; } }
+@media (max-width: 1120px) { .strategy-journey { grid-template-columns: repeat(2,1fr); } .kpi-grid { grid-template-columns: repeat(3,1fr); }.overview-grid, .bottom-grid, .profit-layout, .data-layout, .cnc-panel, .strategy-grid, .strategy-decision-grid, .finance-layout, .finance-register-note, .sources-guides { grid-template-columns: 1fr; }.finance-kpis { grid-template-columns: repeat(2,1fr); }.insight-panel { min-height: 230px; }.cnc-math { min-height: 155px; }.production-grid { grid-template-columns: 1fr; }.wide-table { grid-column: auto; } }
 @media (max-width: 1360px) { .sources-table-wrap { overflow: visible; }.sources-table { min-width: 0; }.sources-table thead { display: none; }.sources-table, .sources-table tbody { display: block; width: 100%; }.sources-table tbody { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .8rem; }.sources-table tr { display: grid; gap: .38rem; padding: .95rem; border: 1px solid var(--line); border-radius: 10px; background: #fbfcfc; }.sources-table td { display: block; padding: .13rem 0; border: 0; font-size: .72rem; }.sources-table td::before { display: block; margin-bottom: .12rem; color: var(--ink-soft); font-family: "DM Mono", monospace; font-size: .58rem; letter-spacing: .06em; text-transform: uppercase; }.sources-table td:nth-child(1)::before { content: "Dato"; }.sources-table td:nth-child(2)::before { content: "Origen"; }.sources-table td:nth-child(3)::before { content: "Destino"; }.sources-table td:nth-child(4)::before { content: "Regla"; }.sources-table td:nth-child(5)::before { content: "Automatización"; } }
-@media (max-width: 760px) { .app-shell { display: block; }.sidebar { position: fixed; z-index: 14; left: -270px; width: 254px; transition: left .2s; }.sidebar.open { left: 0; box-shadow: 25px 0 50px rgba(0,0,0,.25); }.topbar { height: 64px; padding: 0 1rem; }.mobile-menu { display: inline-grid; width: 33px; height: 33px; place-items: center; border: 0; border-radius: 7px; background: #e6efee; color: var(--deep); }.breadcrumb { flex: 1; margin-left: .4rem; }.private-badge { display: none; }.view { padding: 1.75rem 1rem 3rem; }.page-heading { display: grid; gap: 1rem; }.heading-date { align-self: start; }.kpi-grid, .production-metrics, .privacy-rules, .assumptions-form, .strategy-cards, .strategy-roadmap, .finance-kpis, .finance-form, .sources-table tbody { grid-template-columns: 1fr; }.kpi-card { min-height: 132px; }.filter-row { width: 100%; }.filter-row label { flex: 1; min-width: 125px; }.canvas-wrap, .forecast-canvas-wrap { height: 220px; }.summary-chart-controls { justify-content: flex-start; width: 100%; }.summary-chart-controls.compact-controls { flex-wrap: wrap; }.summary-chart-controls .chart-note { width: 100%; padding-bottom: 0; white-space: normal; }.history-matrix-head { display: grid; align-items: start; }.history-matrix-head label { width: max-content; }.finance-chart-legend { justify-content: flex-start; }.cnc-math { grid-template-columns: 1fr; }.topbar-actions .button { padding: .45rem .6rem; font-size: .72rem; }.connection-status { grid-template-columns: .55rem 1fr; }.connection-status small { grid-column: 2; }.privacy-rules { gap: .8rem; }.finance-sankey { min-height: 430px; }.finance-register-note .eyebrow { grid-column: auto; }.forecast-scope { align-items: flex-start; }.year-folder-links { align-items: flex-start; }.year-folder-links small { flex-basis: 100%; margin-left: 0; } }
+@media (max-width: 760px) { .strategy-journey { grid-template-columns: 1fr; } .strategy-journey a { min-height: 0; } .strategy-step-heading, .strategy-step-heading-actions { grid-template-columns: 2.2rem minmax(0,1fr); } .strategy-step-heading-actions .button { grid-column: 2; justify-self: start; } .app-shell { display: block; }.sidebar { position: fixed; z-index: 14; left: -270px; width: 254px; transition: left .2s; }.sidebar.open { left: 0; box-shadow: 25px 0 50px rgba(0,0,0,.25); }.topbar { height: 64px; padding: 0 1rem; }.mobile-menu { display: inline-grid; width: 33px; height: 33px; place-items: center; border: 0; border-radius: 7px; background: #e6efee; color: var(--deep); }.breadcrumb { flex: 1; margin-left: .4rem; }.private-badge { display: none; }.view { padding: 1.75rem 1rem 3rem; }.page-heading { display: grid; gap: 1rem; }.heading-date { align-self: start; }.kpi-grid, .production-metrics, .privacy-rules, .assumptions-form, .strategy-cards, .strategy-roadmap, .finance-kpis, .finance-form, .sources-table tbody { grid-template-columns: 1fr; }.kpi-card { min-height: 132px; }.filter-row { width: 100%; }.filter-row label { flex: 1; min-width: 125px; }.canvas-wrap, .forecast-canvas-wrap { height: 220px; }.summary-chart-controls { justify-content: flex-start; width: 100%; }.summary-chart-controls.compact-controls { flex-wrap: wrap; }.summary-chart-controls .chart-note { width: 100%; padding-bottom: 0; white-space: normal; }.history-matrix-head { display: grid; align-items: start; }.history-matrix-head label { width: max-content; }.finance-chart-legend { justify-content: flex-start; }.cnc-math { grid-template-columns: 1fr; }.topbar-actions .button { padding: .45rem .6rem; font-size: .72rem; }.connection-status { grid-template-columns: .55rem 1fr; }.connection-status small { grid-column: 2; }.privacy-rules { gap: .8rem; }.finance-sankey { min-height: 430px; }.finance-register-note .eyebrow { grid-column: auto; }.forecast-scope { align-items: flex-start; }.year-folder-links { align-items: flex-start; }.year-folder-links small { flex-basis: 100%; margin-left: 0; } }
 
 </style>
   </head>
@@ -311,128 +313,153 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
         <section id="strategy" class="view" aria-labelledby="strategyHeading">
           <div class="page-heading compact">
             <div>
-              <p class="eyebrow">ESTRATEGIA Y ESTIMACIONES</p>
-              <h1 id="strategyHeading">Decidir con capacidad, margen y previsión.</h1>
-              <p class="page-lead">Aquí se reúnen los escenarios, la previsión hasta cierre de año y las decisiones de proceso. Las estimaciones no sustituyen los costes y márgenes que deben registrarse en el libro maestro.</p>
+              <p class="eyebrow">ESTRATEGIA</p>
+              <h1 id="strategyHeading">De los datos a una decisión concreta.</h1>
+              <p class="page-lead">Esta página sigue una secuencia: entender cómo puede cerrar el año, cuantificar mejoras operativas, decidir qué merece una prueba y, solo después, evaluar una inversión en CNC.</p>
             </div>
-            <button id="resetAssumptions" class="button secondary" type="button">Restablecer supuestos</button>
           </div>
 
-          <article id="strategyEstimates" class="panel forecast-panel">
+          <nav class="strategy-journey" aria-label="Ruta de decisión estratégica">
+            <a href="#strategyEstimates"><span>01</span><strong>Cierre del año</strong><small>¿Qué nivel de ingresos sugiere el ritmo actual?</small></a>
+            <a href="#strategyScenario"><span>02</span><strong>Mejora operativa</strong><small>¿Cuánto aportan margen, ahorro y capacidad?</small></a>
+            <a href="#strategyPlaybook"><span>03</span><strong>Pruebas primero</strong><small>¿Qué podemos validar sin una gran inversión?</small></a>
+            <a href="#strategyCnc"><span>04</span><strong>Decisión CNC</strong><small>¿Qué retorno mínimo tendría que justificarla?</small></a>
+          </nav>
+
+          <div class="strategy-step-heading">
+            <span>01</span>
+            <div>
+              <p class="eyebrow">SITUACIÓN</p>
+              <h2>Primero, una referencia de cierre.</h2>
+              <p>Sirve para poner contexto al resto de decisiones. No convierte una estimación en un objetivo ni sustituye la previsión de pedidos y beneficio del Resumen.</p>
+            </div>
+          </div>
+
+          <article id="strategyEstimates" class="panel forecast-panel strategy-step-panel">
             <div class="panel-head">
-              <div><p class="eyebrow">PREVISIÓN DE INGRESOS</p><h2>Del histórico al cierre de año</h2></div>
+              <div><p class="eyebrow">INGRESOS · REFERENCIA SIMPLE</p><h2>Ritmo observado y cierre orientativo</h2></div>
               <div class="summary-chart-controls compact-controls">
                 <label>Año <select id="forecastYear" aria-label="Año de la previsión de ingresos"><option value="">Cargando años…</option></select></label>
                 <span class="chart-note" id="forecastChartNote">Pendiente de datos</span>
               </div>
             </div>
             <div class="canvas-wrap forecast-canvas-wrap"><canvas id="forecastChart" aria-label="Gráfico de ingresos reales y previsión hasta cierre de año" role="img"></canvas></div>
-            <p class="forecast-scope"><span></span><strong>Real:</strong> ingresos estimados a partir de los pedidos registrados y el precio medio configurado. <strong>Previsión punteada:</strong> media mensual de los meses con datos del año seleccionado, prolongada hasta diciembre.</p>
+            <p class="forecast-scope"><span></span><strong>Real:</strong> ingresos derivados de los pedidos registrados y del precio disponible. <strong>Proyección:</strong> para los meses posteriores al último mes con pedidos, prolonga la media mensual observada del propio año. Es una referencia sencilla de ritmo, no la previsión ponderada de pedidos/beneficio del Resumen.</p>
           </article>
 
-          <div class="profit-layout">
+          <div id="strategyScenario" class="strategy-step-heading strategy-step-heading-actions">
+            <span>02</span>
+            <div>
+              <p class="eyebrow">SIMULADOR</p>
+              <h2>Cuantifica primero las mejoras de proceso.</h2>
+              <p>Introduce hipótesis explícitas y separa las cuatro palancas: margen por trabajo, compras/merma, capacidad adicional y errores/repeticiones.</p>
+            </div>
+            <button id="resetAssumptions" class="button secondary" type="button">Restablecer supuestos</button>
+          </div>
+
+          <div class="profit-layout strategy-step-panel">
             <article class="panel assumptions-panel">
-              <div class="panel-head"><div><p class="eyebrow">SUPUESTOS EDITABLES</p><h2>Escenario central</h2></div></div>
-              <div class="assumptions-form">
+              <div class="panel-head"><div><p class="eyebrow">SUPUESTOS EDITABLES</p><h2>Escenario de mejora</h2></div></div>
+              <div class="assumptions-form strategy-assumptions">
+                <p class="assumption-group-label">Margen actual</p>
                 <label>Trabajos al año<input id="assumptionOrders" type="number" min="0" step="1" value="0" /></label>
                 <label>Mejora media de margen por trabajo (€)<input id="assumptionPrice" type="number" min="0" step="1" value="0" /></label>
+
+                <p class="assumption-group-label">Eficiencia y compras</p>
                 <label>Ahorro anual en compras y merma (€)<input id="assumptionProcurement" type="number" min="0" step="50" value="0" /></label>
-                <label>Trabajos adicionales sin CNC<input id="assumptionExtraJobs" type="number" min="0" step="1" value="0" /></label>
-                <label>Margen de contribución por trabajo extra (€)<input id="assumptionContribution" type="number" min="0" step="5" value="0" /></label>
                 <label>Ahorro por errores, viajes y repeticiones (€)<input id="assumptionRework" type="number" min="0" step="50" value="0" /></label>
+
+                <p class="assumption-group-label">Capacidad adicional sin CNC</p>
+                <label>Trabajos adicionales al año<input id="assumptionExtraJobs" type="number" min="0" step="1" value="0" /></label>
+                <label>Margen de contribución por trabajo extra (€)<input id="assumptionContribution" type="number" min="0" step="5" value="0" /></label>
               </div>
-              <p class="form-note">Estos supuestos se guardan solo en este dispositivo. Registra los valores reales en el libro maestro para sustituir estimaciones por datos.</p>
+              <p class="form-note">Son hipótesis guardadas solo en este dispositivo. La utilidad del simulador está en comparar escenarios; los valores reales deben terminar en el libro maestro.</p>
             </article>
 
             <article class="panel profit-result">
-              <p class="eyebrow">RESULTADO ESTIMADO</p>
+              <p class="eyebrow">IMPACTO DEL ESCENARIO</p>
               <div class="result-number" id="annualBenefit">0 €</div>
-              <p class="result-label">beneficio operativo incremental anual, antes de impuestos</p>
+              <p class="result-label">mejora operativa anual estimada, antes de impuestos</p>
               <div class="profit-bars">
                 <div><span>Tarifa y mezcla</span><strong id="benefitPrice">0 €</strong><i><b id="benefitPriceBar"></b></i></div>
                 <div><span>Compras y merma</span><strong id="benefitProcurement">0 €</strong><i><b id="benefitProcurementBar"></b></i></div>
                 <div><span>Capacidad adicional</span><strong id="benefitCapacity">0 €</strong><i><b id="benefitCapacityBar"></b></i></div>
                 <div><span>Errores y viajes</span><strong id="benefitRework">0 €</strong><i><b id="benefitReworkBar"></b></i></div>
               </div>
-              <div class="ten-year"><span>Potencial acumulado en 10 años</span><strong id="tenYearBenefit">0 €</strong><small>Sin inflación ni impuestos</small></div>
+              <div class="ten-year"><span>Potencial acumulado en 10 años</span><strong id="tenYearBenefit">0 €</strong><small>Sin inflación ni impuestos · simple acumulación del escenario</small></div>
             </article>
           </div>
 
-          <div class="strategy-details">
-          <div class="strategy-section-heading">
+          <div id="strategyPlaybook" class="strategy-step-heading">
+            <span>03</span>
             <div>
-              <p class="eyebrow">DECISIONES POR VALIDAR</p>
-              <h2>Decisiones y estrategia de producción.</h2>
-              <p class="page-lead">Este es el espacio único para hipótesis, pilotos e inversiones futuras. No se confunden con el control operativo ni con los resultados ya conseguidos.</p>
+              <p class="eyebrow">ANTES DE INVERTIR</p>
+              <h2>Convierte cada idea en una prueba medible.</h2>
+              <p>La regla es simple: medir, probar con riesgo acotado y escalar solo cuando el resultado sea mejor que el proceso actual.</p>
             </div>
           </div>
 
-          <div class="strategy-grid">
-            <article class="panel strategy-intro">
-              <p class="eyebrow">PRINCIPIO RECTOR</p>
-              <h2>Liberar margen y capacidad antes de comprar una máquina.</h2>
-              <p>El objetivo es aumentar el beneficio y la libertad de decisión de la familia durante los próximos diez años. Cada propuesta debe demostrar su efecto en margen, horas, riesgo y caja.</p>
-              <div class="strategy-roadmap">
-                <div><span>01</span><p><strong>Medir</strong> coste, horas, repasos y entrega por pedido.</p></div>
-                <div><span>02</span><p><strong>Probar</strong> compras, cortes y plantillas repetibles con riesgo acotado.</p></div>
-                <div><span>03</span><p><strong>Invertir</strong> solo si el piloto mejora el resultado frente al proceso actual.</p></div>
-              </div>
-            </article>
+          <article class="panel strategy-intro strategy-step-panel">
+            <p class="eyebrow">PRINCIPIO RECTOR</p>
+            <h2>Liberar margen y capacidad antes de comprar una máquina.</h2>
+            <p>El objetivo es aumentar el beneficio y la libertad de decisión de la familia. Cada propuesta debe demostrar su efecto en margen, horas, riesgo y caja antes de convertirse en una inversión permanente.</p>
+            <div class="strategy-roadmap">
+              <div><span>01</span><p><strong>Medir</strong> coste, horas, repasos y entrega por pedido.</p></div>
+              <div><span>02</span><p><strong>Probar</strong> compras, cortes y plantillas repetibles con riesgo acotado.</p></div>
+              <div><span>03</span><p><strong>Escalar</strong> solo si el piloto mejora el resultado frente al proceso actual.</p></div>
+            </div>
+          </article>
 
-            <article class="panel action-panel">
-              <p class="eyebrow">ORDEN DE DECISIÓN</p>
-              <h2>Primero, margen. Después, máquina.</h2>
-              <ul>
-                <li><span>01</span> Registrar coste y horas por pedido.</li>
-                <li><span>02</span> Pilotar compras por lote y semielaborados.</li>
-                <li><span>03</span> Probar automatización sobre retales.</li>
-              </ul>
-              <a class="button primary" href="#strategyEstimates">Ver estimaciones <span>↓</span></a>
-            </article>
-          </div>
-
-          <div class="strategy-cards">
+          <div class="strategy-cards strategy-step-panel">
             <article class="panel strategy-card">
               <p class="eyebrow">COMPRAS PREDICTIVAS</p>
-              <h2>Comprar por familias de formato.</h2>
-              <p>Agrupar pedidos y negociar material por medidas repetidas. Validar antes la rotación, el ahorro unitario, el espacio y el riesgo de inmovilizar piedra.</p>
+              <h2>Agrupar por familias de formato</h2>
+              <p>Medir rotación y consumo antes de comprar por lote. El ahorro unitario solo importa si no se convierte en piedra inmovilizada.</p>
             </article>
             <article class="panel strategy-card">
               <p class="eyebrow">TRABAJO EN VALLE</p>
-              <h2>Preparar sin fabricar stock ciego.</h2>
-              <p>En semanas de menor carga, adelantar cortes estándar, pulidos y biblioteca de plantillas. Mantener trazabilidad del material y no terminar lápidas sin pedido.</p>
+              <h2>Preparar trabajo repetible</h2>
+              <p>Adelantar cortes estándar, pulidos y biblioteca de plantillas cuando baja la carga, manteniendo trazabilidad y evitando fabricar stock ciego.</p>
             </article>
             <article class="panel strategy-card">
               <p class="eyebrow">AUTOMATIZACIÓN</p>
-              <h2>Un piloto antes de una compra.</h2>
-              <p>Comparar tiempo, calidad, repaso y merma de trabajos manuales y automatizados. El padre puede mantener el grabado manual durante la prueba.</p>
+              <h2>Pilotar antes de comprar</h2>
+              <p>Comparar tiempo, calidad, repaso y merma entre el proceso manual y una alternativa automatizada sobre trabajos o retales controlados.</p>
             </article>
           </div>
 
-          <div class="strategy-grid strategy-decision-grid">
+          <div id="strategyCnc" class="strategy-step-heading">
+            <span>04</span>
+            <div>
+              <p class="eyebrow">INVERSIÓN</p>
+              <h2>Solo ahora: ¿qué tendría que aportar una CNC?</h2>
+              <p>El simulador no decide la compra. Define el umbral económico mínimo que después debe contrastarse con mantenimiento, financiación, formación, tiempos de preparación y riesgo.</p>
+            </div>
+          </div>
+
+          <div class="strategy-grid strategy-decision-grid strategy-step-panel">
             <article class="panel strategy-inputs">
-              <div class="panel-head"><div><p class="eyebrow">UMBRAL DE INVERSIÓN</p><h2>Variables de la CNC</h2></div></div>
+              <div class="panel-head"><div><p class="eyebrow">SUPUESTOS CNC</p><h2>Define el umbral</h2></div></div>
               <div class="assumptions-form">
                 <label>Trabajos adicionales/año atribuibles a CNC<input id="assumptionCncCapacity" type="number" min="0" step="1" value="0" /></label>
                 <label>Inversión a contrastar (€)<input id="assumptionCncInvestment" type="number" min="0" step="500" value="0" /></label>
                 <label>Plazo objetivo de retorno (años)<input id="assumptionCncPayback" type="number" min="0" step="1" value="0" /></label>
               </div>
-              <p class="form-note">Son hipótesis de decisión, no resultados reales. Contrástalas con proveedor, mantenimiento, financiación, formación, tiempos de preparación y tasa de repaso.</p>
+              <p class="form-note">Usa una contribución por trabajo prudente. Si el resultado solo funciona con supuestos agresivos, la inversión todavía no está justificada.</p>
             </article>
 
             <article class="panel cnc-panel">
               <div>
-                <p class="eyebrow">DECISIÓN DE INVERSIÓN</p>
-                <h2>La CNC debe superar un umbral económico.</h2>
-                <p>Define la inversión, el plazo objetivo y la contribución real por trabajo antes de comparar una máquina con las mejoras de proceso.</p>
+                <p class="eyebrow">LECTURA ECONÓMICA</p>
+                <h2>Compara capacidad aportada con el retorno exigido.</h2>
+                <p>La máquina debe generar suficiente contribución anual para alcanzar el plazo objetivo sin depender de hipótesis difíciles de sostener.</p>
               </div>
               <div class="cnc-math">
                 <div><span>Capacidad × <b id="cncContribution">0 €</b></span><strong id="cncBenefit">0 €</strong><small>contribución anual de capacidad</small></div>
                 <div><span>Objetivo de inversión</span><strong id="cncTarget">A definir</strong><small>beneficio anual necesario</small></div>
-                <div class="verdict"><span id="cncVerdict">Introduce supuestos</span><small>incluye mantenimiento, financiación y riesgo</small></div>
+                <div class="verdict"><span id="cncVerdict">Introduce supuestos</span><small>antes de mantenimiento, financiación y riesgo</small></div>
               </div>
             </article>
-          </div>
           </div>
         </section>
 
