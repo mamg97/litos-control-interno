@@ -42,7 +42,7 @@ See `BUSINESS_LOGIC.md`.
 
 ## Legacy Apps Script policy
 
-Legacy Apps Script source has been removed from the public repository. Historical rollback must use private backups or repository history only after privacy review.
+Legacy Apps Script source has been removed from the public repository. The sanitized public Git history must not be used to recover pre-migration Apps Script. Any rollback source must come from an explicitly privacy-reviewed private backup.
 
 Do not:
 
