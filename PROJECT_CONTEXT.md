@@ -44,7 +44,8 @@ Google Apps Script is no longer a production dependency.
 - M3+M4 intake/handwriting: 07:07, 11:07, 15:07 and 19:07 Europe/Madrid.
 - M2 Draft Sync: approximately every 15 minutes at :05, :20, :35 and :50.
 - M6 and M7 are bridged from successful scheduled Draft Sync executions.
-- M5 folder organizer: daily scheduled production run.
+- M5 folder organizer: 02:17 Europe/Madrid daily.
+- Workflows that need a wall-clock local time use GitHub Actions `schedule.timezone: Europe/Madrid`, so CET/CEST transitions are handled by GitHub.
 
 All schedules remain behind repository kill switches where applicable.
 
