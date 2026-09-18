@@ -17,4 +17,4 @@ Seguridad:
 - las ejecuciones programadas son fail-closed y solo escriben si `LITOS_ORGANIZE_KILL_SWITCH=false` existe como variable del repositorio;
 - si una ejecución de escritura falla, intenta devolver los archivos ya movidos a su carpeta anual y eliminar las carpetas creadas durante esa transacción.
 
-La autenticación reutiliza el secreto privado `GOOGLE_OAUTH_CLIENT_JSON`, que ya contiene permiso de Drive. No se añade ningún secreto nuevo.
+La autenticación reutiliza el secreto neutro `GOOGLE_OAUTH_USER_JSON` para Drive/Sheets. M5 no requiere acceso a Gmail ni ningún secreto específico de cliente.

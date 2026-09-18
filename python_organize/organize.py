@@ -10,7 +10,6 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
 SCOPES = [
-    "https://www.googleapis.com/auth/gmail.readonly",
     "https://www.googleapis.com/auth/drive",
     "https://www.googleapis.com/auth/spreadsheets",
 ]
@@ -52,14 +51,14 @@ def assert_write_safety() -> None:
 
 
 def build_drive():
-    raw = os.environ.get("GOOGLE_OAUTH_CLIENT_JSON", "").strip()
+    raw = os.environ.get("GOOGLE_OAUTH_USER_JSON", "").strip()
     if not raw:
-        raise RuntimeError("GOOGLE_OAUTH_CLIENT_JSON is missing")
+        raise RuntimeError("GOOGLE_OAUTH_USER_JSON is missing")
     info = json.loads(raw)
     required = {"client_id", "client_secret", "refresh_token"}
     missing = sorted(key for key in required if not str(info.get(key, "")).strip())
     if missing:
-        raise RuntimeError("GOOGLE_OAUTH_CLIENT_JSON missing fields: " + ", ".join(missing))
+        raise RuntimeError("GOOGLE_OAUTH_USER_JSON missing fields: " + ", ".join(missing))
     credentials = Credentials.from_authorized_user_info(info, scopes=SCOPES)
     return build("drive", "v3", credentials=credentials, cache_discovery=False)
 
