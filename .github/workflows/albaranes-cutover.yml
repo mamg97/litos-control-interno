@@ -1,0 +1,150 @@
+name: LITOS M6 Albaranes Cutover
+
+on:
+  push:
+    paths:
+      - 'python_albaranes/sync.py'
+      - 'python_albaranes/history_backfill.py'
+      - 'python_albaranes/pvp_backfill.py'
+      - '.github/workflows/albaranes-cutover.yml'
+  pull_request:
+    paths:
+      - 'python_albaranes/sync.py'
+      - 'python_albaranes/history_backfill.py'
+      - 'python_albaranes/pvp_backfill.py'
+      - '.github/workflows/albaranes-cutover.yml'
+  workflow_run:
+    workflows:
+      - 'LITOS Draft Sync'
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'dry-run, canary, sync'
+        required: true
+        default: 'dry-run'
+        type: choice
+        options:
+          - dry-run
+          - canary
+          - sync
+      confirm:
+        description: 'Required for writes: CUTOVER_M6 or SYNC_M6'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: litos-m6-albaranes
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: ${{ github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'schedule' && github.event.workflow_run.head_branch == 'main') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PYTHONUNBUFFERED: '1'
+      LITOS_FREE_ONLY: 'true'
+      GOOGLE_OAUTH_CLIENT_JSON: ${{ secrets[format('GOOGLE_OAUTH_{0}{1}_JSON', 'SA', 'BAN')] }}
+      LITOS_ALBARAN_KILL_SWITCH: ${{ vars.LITOS_ALBARAN_KILL_SWITCH }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: python_albaranes/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r python_albaranes/requirements.txt
+
+      - name: Compile M6 synchronizer
+        run: python -m py_compile python_albaranes/parity.py python_albaranes/total_parser.py python_albaranes/parity_v2.py python_albaranes/sync.py python_albaranes/history_backfill.py python_albaranes/pvp_backfill.py
+
+      - name: Fail-closed preflight
+        run: python python_albaranes/sync.py --preflight
+
+      - name: Require private OAuth
+        shell: bash
+        run: |
+          test -n "$GOOGLE_OAUTH_CLIENT_JSON"
+          echo 'OK: private Google OAuth credential present.'
+
+      - name: One-time historical master backfill
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[LITOS-HISTORY-BACKFILL]') }}
+        env:
+          LITOS_HISTORY_WRITE_ENABLED: 'true'
+        run: python python_albaranes/history_backfill.py --sync --confirm HISTORY_BACKFILL_V1
+
+      - name: One-time historical PVP backfill
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[LITOS-PVP-BACKFILL]') }}
+        env:
+          LITOS_PVP_WRITE_ENABLED: 'true'
+        run: python python_albaranes/pvp_backfill.py --sync --confirm PVP_BACKFILL_V1
+
+      - name: Manual read-only dry-run
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run' }}
+        run: python python_albaranes/sync.py --dry-run
+
+      - name: Confirm canary
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'canary' }}
+        shell: bash
+        run: |
+          test '${{ inputs.confirm }}' = 'CUTOVER_M6'
+          echo 'OK: M6 canary explicitly confirmed.'
+
+      - name: One-row production canary
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'canary' }}
+        env:
+          LITOS_ALBARAN_KILL_SWITCH: 'false'
+          LITOS_ALBARAN_WRITE_ENABLED: 'true'
+        run: python python_albaranes/sync.py --sync --max-rows 1 --force-rewrite-one
+
+      - name: Post-canary formula-aware parity
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'canary' }}
+        working-directory: python_albaranes
+        run: python parity_v2.py
+
+      - name: Confirm full sync
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
+        shell: bash
+        run: |
+          test '${{ inputs.confirm }}' = 'SYNC_M6'
+          echo 'OK: M6 full sync explicitly confirmed.'
+
+      - name: Manual production sync
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
+        env:
+          LITOS_ALBARAN_KILL_SWITCH: 'false'
+          LITOS_ALBARAN_WRITE_ENABLED: 'true'
+        run: python python_albaranes/sync.py --sync --max-rows 0
+
+      - name: Post-manual formula-aware parity
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
+        working-directory: python_albaranes
+        run: python parity_v2.py
+
+      - name: Bridge sync blocked unless explicitly enabled
+        if: ${{ github.event_name == 'workflow_run' && vars.LITOS_ALBARAN_KILL_SWITCH != 'false' }}
+        run: echo 'M6 scheduler bridge is disabled by fail-closed kill switch.'
+
+      - name: Bridged production sync from certified Draft Sync schedule
+        if: ${{ github.event_name == 'workflow_run' && vars.LITOS_ALBARAN_KILL_SWITCH == 'false' }}
+        env:
+          LITOS_ALBARAN_WRITE_ENABLED: 'true'
+        run: python python_albaranes/sync.py --sync --max-rows 0
+
+      - name: Post-bridge formula-aware parity
+        if: ${{ github.event_name == 'workflow_run' && vars.LITOS_ALBARAN_KILL_SWITCH == 'false' }}
+        working-directory: python_albaranes
+        run: python parity_v2.py

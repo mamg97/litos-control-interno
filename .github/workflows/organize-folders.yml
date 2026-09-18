@@ -1,0 +1,155 @@
+name: LITOS M5 Organize Folders
+
+on:
+  push:
+    paths:
+      - 'python_organize/**'
+      - '.github/workflows/organize-folders.yml'
+  pull_request:
+    paths:
+      - 'python_organize/**'
+      - '.github/workflows/organize-folders.yml'
+  schedule:
+    - cron: '17 2 * * *'
+      timezone: 'Europe/Madrid'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Execution mode"
+        required: true
+        default: "dry-run"
+        type: choice
+        options:
+          - dry-run
+          - canary
+          - folder-canary
+          - sync
+      confirm:
+        description: "For canary type CUTOVER_M5; folder-canary CUTOVER_M5_FOLDER; sync SYNC_M5"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: litos-m5-organize-folders
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONUNBUFFERED: "1"
+      LITOS_FREE_ONLY: "true"
+      GOOGLE_OAUTH_CLIENT_JSON: ${{ secrets[format('GOOGLE_OAUTH_{0}{1}_JSON', 'SA', 'BAN')] }}
+      LITOS_ORGANIZE_KILL_SWITCH: ${{ vars.LITOS_ORGANIZE_KILL_SWITCH }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: python_organize/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r python_organize/requirements.txt
+
+      - name: Compile organizer
+        run: python -m py_compile python_organize/organize.py
+
+      - name: Fail-closed preflight
+        run: python python_organize/organize.py --preflight
+
+      - name: Require private OAuth
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
+        shell: bash
+        run: |
+          test -n "$GOOGLE_OAUTH_CLIENT_JSON"
+          echo "OK: private Google OAuth credential present."
+
+      - name: Read-only dry-run
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run' }}
+        run: python python_organize/organize.py --dry-run
+
+      - name: Confirm canary
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'canary' }}
+        shell: bash
+        run: |
+          test "${{ inputs.confirm }}" = "CUTOVER_M5"
+          echo "OK: M5 canary explicitly confirmed."
+
+      - name: One-file production canary
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'canary' }}
+        env:
+          LITOS_ORGANIZE_KILL_SWITCH: "false"
+          LITOS_ORGANIZE_WRITE_ENABLED: "true"
+        run: python python_organize/organize.py --sync --max-moves 1
+
+      - name: Post-canary read-only verification
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'canary' }}
+        run: python python_organize/organize.py --dry-run
+
+      - name: Confirm folder-creation canary
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'folder-canary' }}
+        shell: bash
+        run: |
+          test "${{ inputs.confirm }}" = "CUTOVER_M5_FOLDER"
+          echo "OK: M5 folder-creation canary explicitly confirmed."
+
+      - name: One-folder production canary
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'folder-canary' }}
+        env:
+          LITOS_ORGANIZE_KILL_SWITCH: "false"
+          LITOS_ORGANIZE_WRITE_ENABLED: "true"
+        run: python python_organize/organize.py --sync --max-moves 1 --require-folder-create
+
+      - name: Post-folder-canary read-only verification
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'folder-canary' }}
+        run: python python_organize/organize.py --dry-run
+
+      - name: Confirm full sync
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
+        shell: bash
+        run: |
+          test "${{ inputs.confirm }}" = "SYNC_M5"
+          echo "OK: M5 full sync explicitly confirmed."
+
+      - name: Manual production sync
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
+        env:
+          LITOS_ORGANIZE_KILL_SWITCH: "false"
+          LITOS_ORGANIZE_WRITE_ENABLED: "true"
+        shell: bash
+        run: |
+          set -euo pipefail
+          for batch in 1 2 3 4 5; do
+            echo "M5 manual batch ${batch}/5"
+            python python_organize/organize.py --sync --max-moves 120
+          done
+
+      - name: Scheduled sync blocked unless explicitly enabled
+        if: ${{ github.event_name == 'schedule' && vars.LITOS_ORGANIZE_KILL_SWITCH != 'false' }}
+        run: echo "Scheduled M5 organizer remains disabled until LITOS_ORGANIZE_KILL_SWITCH=false."
+
+      - name: Scheduled production sync
+        if: ${{ github.event_name == 'schedule' && vars.LITOS_ORGANIZE_KILL_SWITCH == 'false' }}
+        env:
+          LITOS_ORGANIZE_WRITE_ENABLED: "true"
+        shell: bash
+        run: |
+          set -euo pipefail
+          for batch in 1 2 3 4 5; do
+            echo "M5 scheduled batch ${batch}/5"
+            python python_organize/organize.py --sync --max-moves 120
+          done
+
+      - name: Post-sync read-only verification
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'sync') || (github.event_name == 'schedule' && vars.LITOS_ORGANIZE_KILL_SWITCH == 'false') }}
+        run: python python_organize/organize.py --dry-run

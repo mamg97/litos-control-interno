@@ -1,0 +1,50 @@
+name: LITOS M6 Albaranes Parity V2
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'python_albaranes/total_parser.py'
+      - 'python_albaranes/parity_v2.py'
+      - '.github/workflows/albaranes-parity-v2.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  parity-v2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONUNBUFFERED: "1"
+      LITOS_FREE_ONLY: "true"
+      GOOGLE_OAUTH_CLIENT_JSON: ${{ secrets[format('GOOGLE_OAUTH_{0}{1}_JSON', 'SA', 'BAN')] }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: python_albaranes/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r python_albaranes/requirements.txt
+
+      - name: Compile parity V2
+        run: python -m py_compile python_albaranes/parity.py python_albaranes/total_parser.py python_albaranes/parity_v2.py
+
+      - name: Require private OAuth
+        shell: bash
+        run: |
+          test -n "$GOOGLE_OAUTH_CLIENT_JSON"
+          echo "OK: private Google OAuth credential present."
+
+      - name: Run formula-aware read-only parity
+        working-directory: python_albaranes
+        run: python parity_v2.py

@@ -1,0 +1,39 @@
+name: LITOS Draft Corporate Coverage Audit
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: python_drafts
+    env:
+      PYTHONUNBUFFERED: '1'
+      GOOGLE_OAUTH_USER_JSON: ${{ secrets.GOOGLE_OAUTH_USER_JSON }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: python_drafts/requirements.txt
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Compile audit
+        run: python -m py_compile corporate_audit.py
+      - name: Validate style contracts
+        run: |
+          python validate_corporate_style.py
+          python client_header.py
+      - name: Require private OAuth
+        run: test -n "$GOOGLE_OAUTH_USER_JSON"
+      - name: Audit current-quarter corporate draft coverage
+        run: python corporate_audit.py

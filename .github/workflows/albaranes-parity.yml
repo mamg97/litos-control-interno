@@ -1,0 +1,61 @@
+name: LITOS M6 Albaranes Parity
+
+on:
+  push:
+    paths:
+      - 'python_albaranes/**'
+      - '.github/workflows/albaranes-parity.yml'
+  pull_request:
+    paths:
+      - 'python_albaranes/**'
+      - '.github/workflows/albaranes-parity.yml'
+  workflow_dispatch:
+    inputs:
+      max_total_reads:
+        description: "0 = comprobar todos los albaranes activos; otro valor limita lecturas"
+        required: false
+        default: "0"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONUNBUFFERED: "1"
+      LITOS_FREE_ONLY: "true"
+      GOOGLE_OAUTH_CLIENT_JSON: ${{ secrets[format('GOOGLE_OAUTH_{0}{1}_JSON', 'SA', 'BAN')] }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: python_albaranes/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r python_albaranes/requirements.txt
+
+      - name: Compile parity checker
+        run: python -m py_compile python_albaranes/parity.py
+
+      - name: Read-only preflight
+        run: python python_albaranes/parity.py --preflight
+
+      - name: Require private OAuth
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        shell: bash
+        run: |
+          test -n "$GOOGLE_OAUTH_CLIENT_JSON"
+          echo "OK: private Google OAuth credential present."
+
+      - name: Full read-only parity check
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: python python_albaranes/parity.py --dry-run --max-total-reads "${{ inputs.max_total_reads }}"

@@ -1,0 +1,51 @@
+name: LITOS M8 Curated Catalog Audit
+
+on:
+  pull_request:
+    paths:
+      - 'python_catalog/**'
+      - '.github/workflows/catalog-parity.yml'
+      - 'python_drafts/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONUNBUFFERED: '1'
+      GOOGLE_OAUTH_CLIENT_JSON: ${{ secrets[format('GOOGLE_OAUTH_{0}{1}_JSON', 'SA', 'BAN')] }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: python_catalog/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r python_catalog/requirements.txt
+
+      - name: Compile M8 audit code
+        run: python -m py_compile python_catalog/curated_audit.py
+
+      - name: Read-only curated catalog preflight
+        run: python python_catalog/curated_audit.py --preflight
+
+      - name: Require private OAuth for manual audit
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        shell: bash
+        run: |
+          test -n "$GOOGLE_OAUTH_CLIENT_JSON"
+          echo 'OK: private Google OAuth credential present.'
+
+      - name: Full read-only curated catalog audit
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: python python_catalog/curated_audit.py --audit

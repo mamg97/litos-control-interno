@@ -1,0 +1,73 @@
+name: LITOS Client Intake
+
+on:
+  push:
+    paths:
+      - 'python_client_intake/**'
+      - '.github/workflows/client-intake.yml'
+  pull_request:
+    paths:
+      - 'python_client_intake/**'
+      - '.github/workflows/client-intake.yml'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Execution mode"
+        required: true
+        default: "preflight"
+        type: choice
+        options:
+          - preflight
+          - dry-run
+
+permissions:
+  contents: read
+
+concurrency:
+  group: litos-client-intake
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: python_client_intake
+    env:
+      PYTHONUNBUFFERED: "1"
+      LITOS_FREE_ONLY: "true"
+      LITOS_CLIENT_WRITE_ENABLED: "false"
+      LITOS_SPREADSHEET_ID: "1ZS-L0eJmfukNr0rmc8ZvC3UxdVKw7Rnggx5TlRydZ2Q"
+      LITOS_CLIENT_FOLDER_ID: "1eUAupqLzfBhkiEexWqpI3JtYReT8c9A_"
+      LITOS_CLIENT_YEAR: "2026"
+      LITOS_CLIENT_LOOKBACK_DAYS: "30"
+      GOOGLE_OAUTH_CLIENT_JSON: ${{ secrets.GOOGLE_OAUTH_CLIENT_JSON }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: python_client_intake/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Read-only preflight
+        run: python runner.py --preflight
+
+      - name: Require private Client secrets
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run' }}
+        shell: bash
+        run: |
+          test -n "$GOOGLE_OAUTH_CLIENT_JSON"
+          echo "OK: private Client credentials are present."
+
+      - name: Fresh Gmail/Drive/Sheets dry-run
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run' }}
+        run: python runner.py --dry-run
