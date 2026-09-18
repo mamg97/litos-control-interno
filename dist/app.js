@@ -768,7 +768,10 @@ function renderMetricStrip(years, selectedYear, granularity, metric) {
   const root = $("#summaryMetricTable");
   if (!root) return;
   root.replaceChildren();
-  root.style.setProperty("--period-count", String(periodsFor(selectedYear || new Date().getFullYear(), granularity).length));
+
+  const periods = periodsFor(selectedYear || new Date().getFullYear(), granularity);
+  const labels = periods.map(({ label }) => label);
+  root.style.setProperty("--period-count", String(periods.length));
 
   if (!years.length) {
     const empty = document.createElement("p");
@@ -778,7 +781,6 @@ function renderMetricStrip(years, selectedYear, granularity, metric) {
     return;
   }
 
-  const labels = periodsFor(selectedYear || years[0], granularity).map(({ label }) => label);
   const formatMetric = (value) => metric === "orders" ? formatInt.format(value) : chartValue(value, metric);
   const makeCell = (content, className = "") => {
     const cell = document.createElement("span");
@@ -786,6 +788,10 @@ function renderMetricStrip(years, selectedYear, granularity, metric) {
     cell.textContent = content;
     return cell;
   };
+
+  const desktop = document.createElement("div");
+  desktop.className = "history-desktop-view";
+
   const header = document.createElement("div");
   header.className = "history-matrix-row history-matrix-header";
   header.append(
@@ -794,13 +800,17 @@ function renderMetricStrip(years, selectedYear, granularity, metric) {
     makeCell("Total"),
     makeCell("Estimación", "history-estimate")
   );
-  root.append(header);
+  desktop.append(header);
+
+  const mobile = document.createElement("div");
+  mobile.className = "history-mobile-view";
 
   years.forEach((year) => {
     const actualSeries = performanceSeries(year, granularity);
     const displaySeries = forecastMetricSeries(year, granularity, metric);
     const actualTotal = actualSeries.reduce((sum, point) => sum + metricValue(point, metric), 0);
     const projection = annualMetricProjection(year, metric);
+
     const row = document.createElement("div");
     row.className = `history-matrix-row${year === Number(selectedYear) ? " selected" : ""}`;
     row.append(makeCell(String(year), "history-year"));
@@ -815,8 +825,61 @@ function renderMetricStrip(years, selectedYear, granularity, metric) {
       projection === null ? "—" : formatMetric(projection),
       projection === null ? "history-estimate" : "history-estimate history-estimated-value"
     ));
-    root.append(row);
+    desktop.append(row);
+
+    const card = document.createElement("article");
+    card.className = `history-mobile-year${year === Number(selectedYear) ? " selected" : ""}`;
+
+    const yearHead = document.createElement("div");
+    yearHead.className = "history-mobile-year-head";
+    yearHead.append(
+      makeCell(String(year), "history-mobile-year-label"),
+      makeCell(year === Number(selectedYear) ? "Año seleccionado" : "Histórico", "history-mobile-year-state")
+    );
+    card.append(yearHead);
+
+    const chunkSize = labels.length > 6 ? 6 : labels.length;
+    for (let start = 0; start < labels.length; start += chunkSize) {
+      const periodGrid = document.createElement("div");
+      periodGrid.className = "history-mobile-period-grid";
+      periodGrid.style.setProperty("--mobile-period-count", String(Math.min(chunkSize, labels.length - start)));
+
+      labels.slice(start, start + chunkSize).forEach((label, offset) => {
+        const point = displaySeries[start + offset];
+        const item = document.createElement("div");
+        item.className = `history-mobile-period${point?.estimated ? " estimated" : ""}`;
+        item.append(
+          makeCell(label, "history-mobile-period-label"),
+          makeCell(formatMetric(point?.value || 0), "history-mobile-period-value")
+        );
+        periodGrid.append(item);
+      });
+      card.append(periodGrid);
+    }
+
+    const totals = document.createElement("div");
+    totals.className = "history-mobile-totals";
+
+    const totalItem = document.createElement("div");
+    totalItem.className = "history-mobile-total";
+    totalItem.append(
+      makeCell("Total real", "history-mobile-period-label"),
+      makeCell(formatMetric(actualTotal), "history-mobile-summary-value")
+    );
+
+    const estimateItem = document.createElement("div");
+    estimateItem.className = `history-mobile-total estimate${projection === null ? "" : " estimated"}`;
+    estimateItem.append(
+      makeCell("Estimación", "history-mobile-period-label"),
+      makeCell(projection === null ? "—" : formatMetric(projection), "history-mobile-summary-value")
+    );
+
+    totals.append(totalItem, estimateItem);
+    card.append(totals);
+    mobile.append(card);
   });
+
+  root.append(desktop, mobile);
 }
 
 function drawFinancialSummaryChart(series) {
