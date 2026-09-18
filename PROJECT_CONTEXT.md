@@ -91,4 +91,6 @@ Therefore:
 - use neutral role names in comments, docs and UI copy;
 - public dashboard output must stay limited to the approved sanitized schema.
 
-Historical Git commit messages may contain legacy identifiers from before this privacy rule was formalized. Current code and future commits must not add new personal identifiers.
+The public Git history was rewritten to a privacy-safe neutral baseline on 2026-09-18. Current and future commits must not add personal identifiers.
+
+Any local clone created before that history rewrite must be re-synchronized or freshly cloned before it is allowed to push again. Do not merge or push an old local history back into the sanitized repository.
