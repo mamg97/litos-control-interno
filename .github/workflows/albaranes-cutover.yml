@@ -51,7 +51,7 @@ jobs:
     env:
       PYTHONUNBUFFERED: '1'
       LITOS_FREE_ONLY: 'true'
-      GOOGLE_OAUTH_CLIENT_JSON: ${{ secrets.GOOGLE_OAUTH_USER_JSON }}
+      GOOGLE_OAUTH_USER_JSON: ${{ secrets.GOOGLE_OAUTH_USER_JSON }}
       LITOS_ALBARAN_KILL_SWITCH: ${{ vars.LITOS_ALBARAN_KILL_SWITCH }}
 
     steps:
@@ -77,7 +77,7 @@ jobs:
       - name: Require private OAuth
         shell: bash
         run: |
-          test -n "$GOOGLE_OAUTH_CLIENT_JSON"
+          test -n "$GOOGLE_OAUTH_USER_JSON"
           echo 'OK: private Google OAuth credential present.'
 
       - name: One-time historical master backfill

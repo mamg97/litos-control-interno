@@ -22,7 +22,7 @@ El componente:
 
 La credencial privada de Drive/Sheets vive en GitHub Secrets como `GOOGLE_OAUTH_USER_JSON`.
 
-Por compatibilidad con el adaptador M6 certificado, el workflow la expone al proceso Python mediante la variable de entorno interna `GOOGLE_OAUTH_CLIENT_JSON`. Esto no implica un segundo secret ni debe recrearse ningún secret legacy.
+El adaptador M6 consume directamente `GOOGLE_OAUTH_USER_JSON` y solicita únicamente permisos de Drive/Sheets. M6 no requiere acceso a Gmail ni debe recrearse ningún secret legacy.
 
 ## Reglas de seguridad
 
