@@ -3,12 +3,10 @@ from __future__ import annotations
 # Privacy-safe public feed production baseline; public output remains sanitized.
 
 import argparse
-import hashlib
 import json
 import math
 import os
 import re
-import urllib.request
 from datetime import datetime, timezone
 from typing import Any
 
@@ -27,8 +25,6 @@ MASTER_ID = os.environ.get(
 PEDIDOS_SHEET = "Pedidos"
 GASTOS_SHEET = "Gastos"
 MOVEMENTS_SHEET = "Movimientos cliente"
-LEGACY_FEED_URL = ""
-
 FIELDS = {
     "id": "Pedido",
     "date": "Fecha para dashboard",
@@ -378,116 +374,25 @@ def build_payload(sheets) -> dict:
     }
 
 
-def canonical_business_payload(payload: dict) -> dict:
-    return {
-        "version": payload.get("version"),
-        "records": payload.get("records", []),
-        "expenses": payload.get("expenses", []),
-    }
-
-
-def canonical_bytes(payload: dict) -> bytes:
-    return json.dumps(
-        canonical_business_payload(payload),
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode("utf-8")
-
-
-def payload_hash(payload: dict) -> str:
-    return hashlib.sha256(canonical_bytes(payload)).hexdigest()
-
-
-def fetch_legacy_payload() -> dict:
-    request = urllib.request.Request(
-        LEGACY_FEED_URL,
-        headers={"User-Agent": "LITOS-M7-parity/1.0"},
-    )
-    with urllib.request.urlopen(request, timeout=60) as response:
-        raw = response.read().decode("utf-8")
-    payload = json.loads(raw)
-    if not isinstance(payload, dict) or not isinstance(payload.get("records"), list):
-        raise RuntimeError("Legacy Apps Script feed returned an invalid payload")
-    return payload
-
-
-def diff_summary(expected: dict, actual: dict) -> dict:
-    expected_records = expected.get("records", [])
-    actual_records = actual.get("records", [])
-    expected_expenses = expected.get("expenses", [])
-    actual_expenses = actual.get("expenses", [])
-
-    record_mismatch_rows = 0
-    record_mismatch_fields: set[str] = set()
-    for left, right in zip(expected_records, actual_records):
-        if left != right:
-            record_mismatch_rows += 1
-            for key in set(left) | set(right):
-                if left.get(key) != right.get(key):
-                    record_mismatch_fields.add(key)
-    record_mismatch_rows += abs(len(expected_records) - len(actual_records))
-
-    expense_mismatch_rows = sum(
-        1 for left, right in zip(expected_expenses, actual_expenses) if left != right
-    ) + abs(len(expected_expenses) - len(actual_expenses))
-
-    return {
-        "record_count_python": len(expected_records),
-        "record_count_legacy": len(actual_records),
-        "expense_count_python": len(expected_expenses),
-        "expense_count_legacy": len(actual_expenses),
-        "record_mismatch_rows": record_mismatch_rows,
-        "record_mismatch_fields": sorted(record_mismatch_fields),
-        "expense_mismatch_rows": expense_mismatch_rows,
-        "python_hash": payload_hash(expected),
-        "legacy_hash": payload_hash(actual),
-    }
-
-
 def preflight() -> dict:
     return {
         "mode": "M7_PUBLIC_FEED_PREFLIGHT",
         "phase": "M7",
         "master_configured": bool(MASTER_ID),
-        "legacy_feed_configured": LEGACY_FEED_URL.startswith("https://"),
         "write_operations": 0,
     }
-
-
-def parity() -> dict:
-    sheets = build_sheets_service()
-    generated = build_payload(sheets)
-    legacy = fetch_legacy_payload()
-    summary = diff_summary(generated, legacy)
-    parity_ok = canonical_business_payload(generated) == canonical_business_payload(legacy)
-    result = {
-        "mode": "M7_PUBLIC_FEED_READ_ONLY_PARITY",
-        "phase": "M7",
-        "parity_ok": parity_ok,
-        **summary,
-        "write_operations": 0,
-    }
-    if not parity_ok:
-        raise RuntimeError("M7 public-feed parity mismatch: " + json.dumps(result, ensure_ascii=False))
-    return result
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="LITOS M7 public feed parity")
-    mode = parser.add_mutually_exclusive_group(required=True)
-    mode.add_argument("--preflight", action="store_true")
-    mode.add_argument("--parity", action="store_true")
+    parser = argparse.ArgumentParser(description="LITOS M7 public feed preflight")
+    parser.add_argument("--preflight", action="store_true")
     args = parser.parse_args()
 
-    if args.preflight:
-        print("PUBLIC_FEED_PREFLIGHT_OK")
-        print(json.dumps(preflight(), ensure_ascii=False, sort_keys=True))
-        return
+    if not args.preflight:
+        parser.error("Use --preflight")
 
-    result = parity()
-    print("PUBLIC_FEED_PARITY_OK")
-    print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+    print("PUBLIC_FEED_PREFLIGHT_OK")
+    print(json.dumps(preflight(), ensure_ascii=False, sort_keys=True))
 
 
 if __name__ == "__main__":

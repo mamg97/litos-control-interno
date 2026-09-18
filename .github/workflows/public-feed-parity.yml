@@ -1,4 +1,5 @@
-name: LITOS M7 Public Feed Parity
+# Historical filename retained; this workflow now audits the current static feed only.
+name: LITOS M7 Public Feed Audit
 
 on:
   push:
@@ -15,7 +16,7 @@ permissions:
   contents: read
 
 jobs:
-  parity:
+  audit:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     env:
@@ -37,32 +38,43 @@ jobs:
       - name: Install dependencies
         run: pip install -r python_feed/requirements.txt
 
-      - name: Compile M7 generator
-        run: python -m py_compile python_feed/feed.py
+      - name: Compile M7 feed code
+        run: |
+          python -m py_compile python_feed/feed.py
+          python -m py_compile python_feed/export.py
 
       - name: Read-only preflight
         run: python python_feed/feed.py --preflight
 
-      - name: Require private OAuth for parity
+      - name: Require private OAuth for manual audit
         if: ${{ github.event_name == 'workflow_dispatch' }}
         shell: bash
         run: |
           test -n "$GOOGLE_OAUTH_USER_JSON"
           echo 'OK: private Google OAuth credential present.'
 
-      - name: Full read-only Apps Script parity
+      - name: Generate and validate current sanitized feed
         if: ${{ github.event_name == 'workflow_dispatch' }}
         shell: bash
         run: |
           set -euo pipefail
-          for attempt in 1 2 3; do
-            echo "M7 parity attempt ${attempt}/3"
-            if python python_feed/feed.py --parity; then
-              exit 0
-            fi
-            if [ "$attempt" -lt 3 ]; then
-              sleep $((attempt * 10))
-            fi
-          done
-          echo 'M7 parity failed after 3 attempts.' >&2
-          exit 1
+          python python_feed/export.py --output "$RUNNER_TEMP/litos-feed.json"
+          PYTHONPATH=python_feed python - "$RUNNER_TEMP/litos-feed.json" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          from export import assert_public_payload_safe
+
+          payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          assert payload.get("version") == 9
+          assert isinstance(payload.get("records"), list) and payload["records"]
+          assert isinstance(payload.get("expenses"), list)
+          assert isinstance(payload.get("movements"), list)
+          assert_public_payload_safe(payload)
+          print(
+              "M7_PUBLIC_FEED_AUDIT_OK "
+              f"records={len(payload['records'])} "
+              f"expenses={len(payload['expenses'])} "
+              f"movements={len(payload['movements'])}"
+          )
+          PY
