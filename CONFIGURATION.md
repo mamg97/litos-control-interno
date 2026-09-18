@@ -30,8 +30,10 @@ Known operational variables include:
 | Variable | Purpose |
 | --- | --- |
 | `LITOS_HANDWRITING_KILL_SWITCH` | Disable scheduled M4 handwriting writes when true. |
-| `LITOS_DRAFT_SYNC_KILL` | Disable scheduled M2 draft sync when true. |
+| `LITOS_DRAFT_SYNC_KILL` | Optional M2 draft kill switch. If present and `true`, scheduled Draft Sync is disabled; if absent or `false`, it runs. Creating it explicitly as `false` is recommended for configuration clarity. |
 | `LITOS_PUBLIC_FEED_KILL_SWITCH` | Disable bridged M7 publication when true. |
+| `LITOS_ALBARAN_KILL_SWITCH` | Fail-closed control for bridged M6 albarán synchronization; production uses `false`. |
+| `LITOS_ORGANIZE_KILL_SWITCH` | Fail-closed control for scheduled M5 folder organization; production uses `false`. |
 
 The M3 primary-client intake kill switch no longer belongs in GitHub Variables. It lives in the private Sheet configuration as `intake_kill_switch`.
 
