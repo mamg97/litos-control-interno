@@ -1,4 +1,5 @@
 name: LITOS M6 Albaranes Cutover
+# Corrected pass prefers differentiated delivery dates and can fall through to PDF.
 
 on:
   push:
