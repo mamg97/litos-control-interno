@@ -8,6 +8,7 @@ from __future__ import annotations
 # Historical phased cleanup trigger: 2022.
 # Focused repair phase: 2026 only.
 # Focused repair rerun: 2026 verification.
+# Final focused 2026 execution.
 # Historical phased cleanup trigger: 2021.
 # Historical phased cleanup trigger: 2020.
 # Stable rerun after recurring-bridge scope fix: 2025.
