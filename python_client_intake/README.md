@@ -30,3 +30,12 @@ The real client identity, sender address and invoice-header identity live outsid
 - Fail closed on missing or invalid private configuration.
 
 See `BUSINESS_LOGIC.md`, `PROJECT_CONTEXT.md` and `AGENTS.md` for persistent project rules.
+
+
+## Multi-order attachment batches
+
+The four-digit work ID is the canonical routing key.
+
+When one authorized email contains attachments for several work IDs, M3 partitions the message attachment by attachment and materializes each attachment only in the Drive folder whose name matches that work ID.
+
+If several explicit work IDs exist in the same email, an attachment without an explicit ID is treated as ambiguous and is not guessed into any order. Subject-based routing is only a fallback for ordinary single-order emails whose attachments do not carry an explicit ID.
