@@ -249,12 +249,9 @@ def delivery_date_in_segment(
     candidates: list[date] = []
     for row_index in range(start_row, end_row):
         row = rows[row_index]
-        normalized_row = [normalize(value) for value in row]
-        # "PEDIDO Nº ... FECHA ..." is the order/fiche date, not the delivery
-        # date. Only a differentiated FECHA/FECHA DE ENTREGA elsewhere in the
-        # definitive document may populate Fecha entrega albarán.
-        if any("pedido" in value for value in normalized_row):
-            continue
+        # In a validated definitive albarán, its FECHA field is the
+        # documentary delivery date. Internal work-ID and plausibility checks
+        # are applied before anything is written to the master.
         for col_index, value in enumerate(row):
             norm = normalize(value).rstrip(".:")
             if norm not in {"fecha", "fecha de entrega"}:
