@@ -69,12 +69,46 @@ def sender_address(value: str) -> str:
     return parseaddr(value or "")[1].strip().lower()
 
 
+ORDER_ID_RE = re.compile(r"(?:^|\D)(\d{4})(?:\D|$)")
+
+
+def explicit_order_id(value: object) -> str:
+    match = ORDER_ID_RE.search(str(value or ""))
+    return match.group(1) if match else ""
+
+
 def extract_order_id(subject: str, attachment_names: Iterable[str]) -> str:
     for value in [subject, *attachment_names]:
-        match = re.search(r"(?:^|\D)(\d{4})(?:\D|$)", str(value or ""))
-        if match:
-            return match.group(1)
+        order_id = explicit_order_id(value)
+        if order_id:
+            return order_id
     return ""
+
+
+def group_attachment_indexes_by_order(subject: str, attachment_names: Iterable[str]) -> tuple[dict[str, list[int]], list[int]]:
+    """Partition attachments using the explicit four-digit work ID as canonical key."""
+    names = list(attachment_names)
+    explicit = [explicit_order_id(name) for name in names]
+    explicit_ids = {order_id for order_id in explicit if order_id}
+    groups: dict[str, list[int]] = {}
+    unresolved: list[int] = []
+
+    if explicit_ids:
+        for index, order_id in enumerate(explicit):
+            if order_id:
+                groups.setdefault(order_id, []).append(index)
+            else:
+                unresolved.append(index)
+        if len(explicit_ids) == 1:
+            only = next(iter(explicit_ids))
+            groups.setdefault(only, []).extend(unresolved)
+            unresolved = []
+        return groups, unresolved
+
+    subject_id = explicit_order_id(subject)
+    if subject_id:
+        return {subject_id: list(range(len(names)))}, []
+    return {}, list(range(len(names)))
 
 
 def extension_from_mime(mime_type: str) -> str:
