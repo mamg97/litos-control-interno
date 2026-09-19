@@ -279,7 +279,7 @@ The work-history/traceability table is ordered from most recent to oldest using 
 
 The sort key is not `Fecha para dashboard`. The three source dates remain visible as separate concepts.
 
-Historical delivery-date enrichment must review definitive albaranes regardless of whether the real document is PDF, XLS, XLSX or XLSM. The internal four-digit work ID must match before a document date is accepted. If the written date is impossible relative to the order date or current date, preserve the conflict for review and leave `Fecha entrega albarán` blank so the table falls back to the next ordering source; never silently repair a documentary date.
+Historical delivery-date enrichment must review definitive albaranes regardless of whether the real document is PDF, XLS, XLSX or XLSM. The `FECHA` printed in the header next to `PEDIDO Nº` is the order/fiche date and must not populate `Fecha entrega albarán`. The delivery field is populated only from a differentiated delivery/footer date (`FECHA` / `FECHA DE ENTREGA`) in the definitive document; when both spreadsheet and rendered PDF exist, prefer the PDF because it commonly carries the completed footer date. The internal four-digit work ID must match before a document date is accepted. If the written date is impossible relative to the order date or current date, preserve the conflict for review and leave `Fecha entrega albarán` blank so the table falls back to the next ordering source; never silently repair a documentary date.
 
 ## 12. Real-cost precedence and supplier-expense register
 
