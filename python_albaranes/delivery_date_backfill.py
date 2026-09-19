@@ -6,6 +6,7 @@ from __future__ import annotations
 # Historical phased cleanup trigger: 2024.
 # Global historical differentiated-date refill after phased cleanup.
 # Historical PDF scan repair phase: 2025.
+# Historical PDF scan repair phase: 2025 retry 2.
 
 import argparse
 import io
