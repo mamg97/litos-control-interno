@@ -1,6 +1,6 @@
 # LITOS business logic
 
-Updated: 2026-09-18
+Updated: 2026-09-19
 
 This file records business semantics that must survive future code changes and conversation handoffs.
 
@@ -146,3 +146,86 @@ Summary-view forecasts apply only to the current open year.
 - Closed years show `—` in the `Estimación` column.
 - Quarterly display aggregates monthly actuals plus any monthly forecasts; forecasts are still computed month-by-month before aggregation.
 
+
+
+## 11. Periodic business-mailbox review and reconciliation
+
+Periodic review of the workshop's business mailbox(es) is part of normal LITOS operations. It complements the automated authorized-sender Gmail intake; it does not replace it.
+
+The review must not be limited to unread mail. Each control cycle should inspect the relevant period since the last verified checkpoint and cover both incoming mail and sent items.
+
+### Incoming business mail
+
+Look for operational documents and events that can change LITOS, especially:
+
+- supplier invoices, credit notes and corrected invoices;
+- supplier order confirmations or material-related documents when they affect cost/catalog data;
+- customer/account communications that change delivery, billing or settlement status;
+- any attachment that is the authoritative source for an amount, date, reference or material description.
+
+For an invoice or equivalent supplier document:
+
+1. identify the supplier role, document/invoice reference, document date and total amount from the attachment or authoritative message content;
+2. inspect the attachment when it contains more reliable detail than the email body;
+3. check whether the same document reference is already registered before creating any new expense/cost record;
+4. classify the cost using the existing LITOS expense/material semantics rather than inventing a new category ad hoc;
+5. retain a private source reference/link when the data model supports it;
+6. never publish supplier/private document contents in the public feed or repository.
+
+A new email is evidence of receipt, not automatic proof that a new accounting row is required: duplicate, corrected or already-registered documents must be reconciled first.
+
+### Sent items and delivered albaranes
+
+Sent mail is also an operational evidence source. Periodically inspect sent items for albaranes or other final documents delivered to the recurring external account/customer.
+
+For each sent albarán:
+
+1. identify the internal order/albarán number from the attachment itself whenever possible;
+2. match that number against the private master and the relevant Drive order folder;
+3. treat the validated attachment as evidence that the document was sent/delivered on that date;
+4. update delivery/document state only after the internal identifier matches;
+5. use any price/base/total only if it is validated under the PVP and reconciliation rules in this file;
+6. do not infer ownership, price or delivery solely from an attachment filename or email subject.
+
+Several albaranes may be attached to one outgoing email; each attachment must be reconciled independently.
+
+### Physical delivery with no email evidence
+
+Some albaranes may be delivered physically and therefore will not appear in sent mail.
+
+Those cases require explicit manual evidence before updating LITOS:
+
+- internal order/albarán number;
+- delivery date;
+- relevant amount if the document is being used as an accounting source;
+- note that the source was a physical handoff rather than email.
+
+Do not fabricate an email/source link for a physical delivery.
+
+### Reconciliation and idempotency
+
+Use this order when resolving mailbox information:
+
+1. email metadata identifies the event and date;
+2. attachment/document content establishes the authoritative reference and values;
+3. private master establishes current recorded state;
+4. private Drive files/folders provide supporting operational evidence;
+5. only then apply a fill/update according to the relevant business rule.
+
+Before writing anything, check for an existing row/document/reference so the same email, invoice or albarán cannot be registered twice.
+
+If evidence conflicts, do not guess. Leave the record for review and annotate the conflict in the private operational data when appropriate.
+
+### Handoff rule for agents and future conversations
+
+When an agent is asked to review recent workshop updates, it should actively consider the business mailbox as a source of truth for new supplier invoices and sent-document evidence, not only the order-intake Gmail flow.
+
+A mailbox review should report, at minimum:
+
+- new actionable incoming documents found;
+- whether each one is already represented in LITOS;
+- sent albaranes/documents found and their validated internal identifiers;
+- physical-delivery items still requiring manual data;
+- any conflict or missing evidence that prevents a safe update.
+
+Public documentation must describe this process using neutral roles only. Real mailbox addresses, personal names, customer identities, attachment names and private message contents must remain outside the public repository.
