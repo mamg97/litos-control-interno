@@ -33,6 +33,7 @@ HEADERS = {
     "invoice": "Archivo factura / albarán (XLSX)",
     "draft": "Factura borrador (XLSX)",
     "total": "Total sheet (€)",
+    "final": "Precio final (€)",
 }
 
 ORDER_ID_RE = re.compile(r"(?:^|[^0-9])(\d{4})(?:[^0-9]|$)")
