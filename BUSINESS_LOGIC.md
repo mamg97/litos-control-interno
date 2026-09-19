@@ -302,6 +302,17 @@ Historical delivery-date enrichment must review definitive albaranes regardless 
 The `FECHA` printed in the header next to `PEDIDO Nº` is the order/fiche date and must not populate `Fecha entrega albarán`. The delivery field is populated only from a differentiated delivery/footer date (`FECHA` / `FECHA DE ENTREGA`) in the definitive document; when both spreadsheet and rendered PDF exist, prefer the PDF because it commonly carries the completed footer date. The internal four-digit work ID must match before a document date is accepted. If the written date is impossible relative to the order date or current date, preserve the conflict for review and leave `Fecha entrega albarán` blank unless an explicit manual validation resolves the documentary error.
 
 
+### Delivery-date repair completed 2026-09-19
+
+A historical repair was required after detecting that the previous XLS/XLSX backfill could read the `FECHA` placed on the same header row as `PEDIDO Nº` and incorrectly store it as `Fecha entrega albarán`.
+
+The repair was executed in annual phases from 2026 backwards through 2020. Header-date copies were removed, the parser now skips the order header row, `*-nota.pdf` files are excluded from definitive-document classification, and native Google Sheets are supported as candidate albaranes. After the repair, a delivery date is retained only when it is differentiated from the order header and passes document-ID/date validation, or when it has been explicitly validated manually.
+
+Historical rows with no trustworthy differentiated delivery date remain blank by design. They must not be populated from `Fecha ficha`, email receipt, dashboard date or estadillo merely to avoid a blank value.
+
+The active albarán link must never point to the same resource as `Notas`, `Nota manuscrita` or attachment folders. Missing definitive documents are represented as `No disponible`, while drafts remain separately auditable.
+
+
 ## 12. Real-cost precedence and supplier-expense register
 
 LITOS must use real validated figures whenever they are available and retain estimates only where no authoritative real value exists.
