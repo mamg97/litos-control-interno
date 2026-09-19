@@ -52,6 +52,7 @@ class CandidateFile:
     name: str
     modified_time: str
     web_view_link: str
+    mime_type: str = ""
 
 
 @dataclass(frozen=True)
@@ -91,6 +92,10 @@ def is_draft(name: str) -> bool:
     return bool(p.DRAFT_RE.search(clean(name).lower()))
 
 
+def supported_candidate(file: CandidateFile) -> bool:
+    return extension(file.name) in SUPPORTED_EXTENSIONS or file.mime_type == p.GOOGLE_SHEETS_MIME
+
+
 def list_children(drive, folder_id: str) -> list[dict]:
     return p._list_children(drive, folder_id)
 
@@ -121,8 +126,9 @@ def scan_definitive_documents(drive) -> tuple[dict[str, list[CandidateFile]], Co
                 continue
 
             ext = extension(name)
-            extensions[ext or "<sin_extension>"] += 1
-            if ext not in SUPPORTED_EXTENSIONS:
+            is_native_sheet = mime == p.GOOGLE_SHEETS_MIME
+            extensions[ext or ("<google-sheet>" if is_native_sheet else "<sin_extension>")] += 1
+            if ext not in SUPPORTED_EXTENSIONS and not is_native_sheet:
                 continue
 
             order_id = match.group(1)
@@ -132,6 +138,7 @@ def scan_definitive_documents(drive) -> tuple[dict[str, list[CandidateFile]], Co
                     name=name,
                     modified_time=clean(item.get("modifiedTime")),
                     web_view_link=clean(item.get("webViewLink")),
+                    mime_type=mime,
                 )
             )
 
@@ -185,13 +192,14 @@ def get_file_meta(drive, file_id: str) -> CandidateFile | None:
     except Exception:
         return None
     name = clean(item.get("name"))
-    if not name or is_draft(name):
+    if not name or is_draft(name) or p.NOTE_RE.search(name.lower()):
         return None
     return CandidateFile(
         file_id=clean(item.get("id")),
         name=name,
         modified_time=clean(item.get("modifiedTime")),
         web_view_link=clean(item.get("webViewLink")),
+        mime_type=clean(item.get("mimeType")),
     )
 
 
@@ -344,13 +352,14 @@ def parse_file_worker(file: CandidateFile) -> tuple[str, dict[str, ParsedDocumen
 
 
 def parse_document_all(drive, file: CandidateFile) -> dict[str, ParsedDocument]:
-    content = p._download_file(drive, file.file_id)
+    content = p._download_file(drive, file.file_id, file.mime_type)
     ext = extension(file.name)
     if ext == ".pdf":
         return parse_pdf_all(content, file.name)
-    if ext in {".xls", ".xlsx", ".xlsm"}:
-        return parse_workbook_all(content, file.name)
-    raise RuntimeError("unsupported extension")
+    if ext in {".xls", ".xlsx", ".xlsm"} or file.mime_type == p.GOOGLE_SHEETS_MIME:
+        workbook_name = file.name if ext else file.name + ".xlsx"
+        return parse_workbook_all(content, workbook_name)
+    raise RuntimeError("unsupported document type")
 
 def read_catalog_candidates(sheets) -> dict[str, list[CandidateFile]]:
     result: dict[str, list[CandidateFile]] = defaultdict(list)
@@ -410,6 +419,7 @@ def read_catalog_candidates(sheets) -> dict[str, list[CandidateFile]]:
                     name=name,
                     modified_time="",
                     web_view_link=url,
+                    mime_type="",
                 )
             )
     return result
@@ -497,7 +507,7 @@ def build_plan(drive, sheets, *, target_year: int | None = None):
         if relevant_order_ids is not None and order_id not in relevant_order_ids:
             continue
         for file in files:
-            if extension(file.name) in SUPPORTED_EXTENSIONS and not is_draft(file.name):
+            if supported_candidate(file) and not is_draft(file.name):
                 unique_catalog_files.setdefault(file.file_id, file)
 
     workers = max(1, min(8, int(os.environ.get("LITOS_DELIVERY_READ_WORKERS", "8"))))
@@ -542,14 +552,14 @@ def build_plan(drive, sheets, *, target_year: int | None = None):
             if linked_id not in meta_cache:
                 meta_cache[linked_id] = get_file_meta(drive, linked_id)
             meta = meta_cache[linked_id]
-            if meta is not None and extension(meta.name) in SUPPORTED_EXTENSIONS:
+            if meta is not None and supported_candidate(meta):
                 candidates.append(meta)
 
         seen = {item.file_id for item in candidates}
         for meta in catalog_candidates.get(order_id, []):
             if meta.file_id in seen:
                 continue
-            if extension(meta.name) in SUPPORTED_EXTENSIONS and not is_draft(meta.name):
+            if supported_candidate(meta) and not is_draft(meta.name):
                 candidates.append(meta)
                 seen.add(meta.file_id)
 
