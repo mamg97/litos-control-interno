@@ -1,6 +1,7 @@
 name: LITOS Delivery Date Backfill · 2026
-# phase-1 semantics: prefer PDF footer delivery date; never use PEDIDO header FECHA
+# phase-1 semantics: validated definitive albaran FECHA is delivery date
 # annual phases use linked/catalog candidates; orphan scan is a separate final phase
+# rerun after canonical delivery-date rule
 
 on:
   push:
