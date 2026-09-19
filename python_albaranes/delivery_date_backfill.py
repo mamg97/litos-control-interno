@@ -222,9 +222,10 @@ def date_near_label(rows: list[list[Any]], row_index: int, col_index: int, datem
 
 
 def order_id_in_row(row: list[Any]) -> str:
+    legacy_labels = {"num", "numero", "número", "nº", "n°", "nro"}
     for col_index, value in enumerate(row):
-        norm = normalize(value)
-        if "pedido" not in norm:
+        norm = normalize(value).rstrip(".:")
+        if "pedido" not in norm and norm not in legacy_labels:
             continue
         direct = ORDER_RE.search(clean(value))
         if direct:
