@@ -37,6 +37,9 @@ HEADERS = {
 
 ORDER_ID_RE = re.compile(r"(?:^|[^0-9])(\d{4})(?:[^0-9]|$)")
 DRAFT_RE = re.compile(r"(?:^|[_ -])borrador(?:[_ .-]|$)", re.IGNORECASE)
+NOTE_RE = re.compile(r"(?:^|[_ -])nota(?:[_ .-]|$)", re.IGNORECASE)
+GOOGLE_SHEETS_MIME = "application/vnd.google-apps.spreadsheet"
+XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 DRIVE_ID_RE = re.compile(r"[-\w]{20,}")
 
 
@@ -46,6 +49,7 @@ class DriveFile:
     name: str
     modified_time: str
     web_view_link: str
+    mime_type: str = ""
 
 
 @dataclass(frozen=True)
@@ -169,10 +173,11 @@ def scan_albaranes(drive) -> dict[str, dict[str, DriveFile]]:
                 continue
 
             lower = name.lower()
-            if not re.search(r"\.(pdf|xlsx|xls|xlsm)$", lower):
+            is_native_sheet = mime == GOOGLE_SHEETS_MIME
+            if not is_native_sheet and not re.search(r"\.(pdf|xlsx|xls|xlsm)$", lower):
                 continue
             match = ORDER_ID_RE.search(name)
-            if not match:
+            if not match or NOTE_RE.search(lower):
                 continue
 
             order_id = match.group(1)
@@ -182,6 +187,7 @@ def scan_albaranes(drive) -> dict[str, dict[str, DriveFile]]:
                 name=name,
                 modified_time=str(item.get("modifiedTime", "")),
                 web_view_link=str(item.get("webViewLink", "")),
+                mime_type=mime,
             )
             entry = index.setdefault(order_id, {})
             existing = entry.get(kind)
@@ -272,7 +278,13 @@ def read_link_column(
     return out
 
 
-def _download_file(drive, file_id: str) -> bytes:
+def _download_file(drive, file_id: str, mime_type: str = "") -> bytes:
+    if mime_type == GOOGLE_SHEETS_MIME:
+        return (
+            drive.files()
+            .export_media(fileId=file_id, mimeType=XLSX_MIME)
+            .execute()
+        )
     return drive.files().get_media(fileId=file_id, supportsAllDrives=True).execute()
 
 
@@ -327,7 +339,7 @@ def _read_total_pdf(content: bytes) -> float | None:
     return None
 
 def read_total(drive, file: DriveFile) -> float | None:
-    content = _download_file(drive, file.file_id)
+    content = _download_file(drive, file.file_id, file.mime_type)
     lower = file.name.lower()
     if lower.endswith(".pdf"):
         return _read_total_pdf(content)
