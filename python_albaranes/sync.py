@@ -21,10 +21,11 @@ class RowPlan:
     invoice_update: bool
     draft_update: bool
     total_update: bool
+    final_price_update: bool
 
     @property
     def changed(self) -> bool:
-        return self.invoice_update or self.draft_update or self.total_update
+        return self.invoice_update or self.draft_update or self.total_update or self.final_price_update
 
 
 def _bool_env(name: str) -> bool:
@@ -107,6 +108,7 @@ def build_plan(*, links_only: bool = False) -> tuple[Any, Any, list[RowPlan], di
 
         expected_total: float | None = None
         total_update = False
+        final_price_update = False
         if not links_only and active is not None:
             try:
                 if active.file_id not in parsed_by_file:
@@ -124,6 +126,13 @@ def build_plan(*, links_only: bool = False) -> tuple[Any, Any, list[RowPlan], di
             # a previously validated total from the master.
             total_update = expected_total is not None and not _total_matches(current_total, expected_total)
 
+            # Precio final is a canonical business field consumed by M7.
+            # Populate it only from a definitive invoice/albarán, never from a draft.
+            if invoice is not None and expected_total is not None:
+                final_col = columns[p.HEADERS["final"]]
+                current_final = row[final_col] if final_col < len(row) else None
+                final_price_update = not _total_matches(current_final, expected_total)
+
         plans.append(
             RowPlan(
                 row_index_zero=row_index,
@@ -139,6 +148,7 @@ def build_plan(*, links_only: bool = False) -> tuple[Any, Any, list[RowPlan], di
                     draft_links[body_index], draft, "Abrir borrador"
                 ),
                 total_update=total_update,
+                final_price_update=final_price_update,
             )
         )
 
@@ -157,6 +167,7 @@ def build_plan(*, links_only: bool = False) -> tuple[Any, Any, list[RowPlan], di
         "invoice_updates": sum(1 for plan in plans if plan.invoice_update),
         "draft_updates": sum(1 for plan in plans if plan.draft_update),
         "total_updates": sum(1 for plan in plans if plan.total_update),
+        "final_price_updates": sum(1 for plan in plans if plan.final_price_update),
         "total_reads": len(parsed_by_file),
         "write_operations": 0,
     }
@@ -232,6 +243,24 @@ def _requests_for_plan(sheet_id: int, columns: dict[str, int], plan: RowPlan) ->
                 "userEnteredValue",
             )
         )
+    if plan.final_price_update and plan.expected_total is not None:
+        requests.append(
+            _update_cell_request(
+                sheet_id,
+                plan.row_index_zero,
+                columns[p.HEADERS["final"]],
+                {
+                    "userEnteredValue": {"numberValue": float(plan.expected_total)},
+                    "userEnteredFormat": {
+                        "numberFormat": {
+                            "type": "NUMBER",
+                            "pattern": '#,##0.00 [$€-es-ES]',
+                        }
+                    },
+                },
+                "userEnteredValue,userEnteredFormat.numberFormat",
+            )
+        )
     return requests
 
 
@@ -252,6 +281,7 @@ def _force_canary_plan(plans: list[RowPlan]) -> RowPlan | None:
                 invoice_update=True,
                 draft_update=True,
                 total_update=True,
+                final_price_update=plan.invoice is not None,
             )
     return None
 
