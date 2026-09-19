@@ -26,6 +26,8 @@ import io
 import json
 import os
 import threading
+import zipfile
+import xml.etree.ElementTree as ET
 import re
 from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -65,6 +67,8 @@ ORDER_RE = re.compile(r"(?<!\d)(\d{4})(?!\d)")
 PDF_ORDER_RE = re.compile(r"(?i)pedido\s*(?:n[º°o.]*)?\s*(\d{4})(?!\d)")
 MACHINE_DELIVERY_MARKER = "Fecha entrega albarán recuperada del documento definitivo"
 ACTIVE_WRITE_PHASE_YEAR = 2026
+
+DRAWING_DATE_RE = re.compile(r"(?<!\d)(\d{1,2}[./-]\d{1,2}[./-]\d{2,4})(?!\d)")
 
 PDF_DELIVERY_RE = re.compile(
     r"(?im)^\s*fecha(?:\s+de\s+entrega)?\s*[.:]*\s*(?:\r?\n\s*)?"
@@ -301,17 +305,52 @@ def order_id_in_row(row: list[Any]) -> str:
     return ""
 
 
+def openxml_drawing_dates(content: bytes) -> list[date]:
+    """Extract dates rendered inside XLSX/XLSM drawing/text-box XML.
+
+    Workshop albaranes often place the definitive delivery date in a bordered
+    text box above the PEDIDO row. openpyxl cell iteration cannot see that text.
+    """
+    dates: list[date] = []
+    try:
+        with zipfile.ZipFile(io.BytesIO(content)) as archive:
+            names = [
+                name for name in archive.namelist()
+                if name.startswith("xl/drawings/")
+                or name.startswith("xl/comments")
+                or name.startswith("xl/threadedComments")
+            ]
+            for name in names:
+                try:
+                    root = ET.fromstring(archive.read(name))
+                except Exception:
+                    continue
+                text = "\n".join(clean(node.text) for node in root.iter() if clean(node.text))
+                for raw in DRAWING_DATE_RE.findall(text):
+                    parsed = as_date(raw)
+                    if parsed is not None:
+                        dates.append(parsed)
+    except Exception:
+        return []
+    return dates
+
+
 def delivery_date_in_segment(
     rows: list[list[Any]],
     start_row: int,
     end_row: int,
     datemode: int | None,
+    *,
+    lower_bound: int = 0,
 ) -> date | None:
     candidates: list[date] = []
-    # The row that identifies the order is the albarán header. Its FECHA is
-    # the source/order date, not the differentiated delivery date. Only scan
-    # subsequent rows for a delivery/footer FECHA.
-    for row_index in range(start_row + 1, end_row):
+    # The FECHA on the PEDIDO row is the order/source date and must be ignored.
+    # The definitive albarán date can be either above that row (boxed header)
+    # or below it (footer), so inspect a bounded pre-header window as well.
+    scan_start = max(lower_bound, start_row - 8)
+    for row_index in range(scan_start, end_row):
+        if row_index == start_row:
+            continue
         row = rows[row_index]
         for col_index, value in enumerate(row):
             norm = normalize(value).rstrip(".:")
@@ -326,6 +365,7 @@ def parse_workbook_all(content: bytes, name: str) -> dict[str, ParsedDocument]:
     lower = name.lower()
     matrices = matrix_xls(content) if lower.endswith(".xls") and not lower.endswith(".xlsx") else matrix_openxml(content)
     result: dict[str, ParsedDocument] = {}
+    drawing_dates = [] if lower.endswith(".xls") and not lower.endswith(".xlsx") else openxml_drawing_dates(content)
 
     for rows, datemode in matrices:
         starts: list[tuple[int, str]] = []
@@ -336,7 +376,22 @@ def parse_workbook_all(content: bytes, name: str) -> dict[str, ParsedDocument]:
 
         for index, (start_row, order_id) in enumerate(starts):
             end_row = starts[index + 1][0] if index + 1 < len(starts) else len(rows)
-            raw = delivery_date_in_segment(rows, start_row, end_row, datemode)
+            lower_bound = starts[index - 1][0] + 1 if index > 0 else 0
+            raw = delivery_date_in_segment(
+                rows,
+                start_row,
+                end_row,
+                datemode,
+                lower_bound=lower_bound,
+            )
+
+            # XLSX/XLSM text boxes are not exposed as cell values. For the
+            # normal one-order workshop workbook, accept the last rendered
+            # drawing date as fallback; later plausibility checks still verify
+            # it against order/estadillo dates.
+            if raw is None and len(starts) == 1 and drawing_dates:
+                raw = drawing_dates[-1]
+
             # If the same ID appears more than once, prefer the last block with
             # an actual delivery date; otherwise preserve the latest occurrence.
             parsed = ParsedDocument(
@@ -398,13 +453,29 @@ def parse_file_worker(file: CandidateFile) -> tuple[str, dict[str, ParsedDocumen
 
 
 def parse_document_all(drive, file: CandidateFile) -> dict[str, ParsedDocument]:
-    content = p._download_file(drive, file.file_id, file.mime_type)
     ext = extension(file.name)
+
+    if file.mime_type == p.GOOGLE_SHEETS_MIME:
+        # Rendered PDF preserves floating text boxes used by the workshop
+        # template for the definitive albarán date.
+        try:
+            rendered = drive.files().export_media(
+                fileId=file.file_id,
+                mimeType="application/pdf",
+            ).execute()
+            parsed_pdf = parse_pdf_all(rendered, file.name + ".pdf")
+            if any(item.delivery_date is not None for item in parsed_pdf.values()):
+                return parsed_pdf
+        except Exception:
+            pass
+        content = p._download_file(drive, file.file_id, file.mime_type)
+        return parse_workbook_all(content, file.name + ".xlsx")
+
+    content = p._download_file(drive, file.file_id, file.mime_type)
     if ext == ".pdf":
         return parse_pdf_all(content, file.name)
-    if ext in {".xls", ".xlsx", ".xlsm"} or file.mime_type == p.GOOGLE_SHEETS_MIME:
-        workbook_name = file.name if ext else file.name + ".xlsx"
-        return parse_workbook_all(content, workbook_name)
+    if ext in {".xls", ".xlsx", ".xlsm"}:
+        return parse_workbook_all(content, file.name)
     raise RuntimeError("unsupported document type")
 
 def read_catalog_candidates(sheets) -> dict[str, list[CandidateFile]]:
