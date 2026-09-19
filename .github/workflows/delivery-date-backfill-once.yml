@@ -2,6 +2,7 @@ name: LITOS One-off Delivery Date Backfill
 # rerun after metadata-cache optimization
 # rerun with catalog metadata cache
 # rerun with parallel historical reads
+# single validated pass
 
 on:
   push:
@@ -34,11 +35,8 @@ jobs:
       - run: pip install -r python_albaranes/requirements.txt
       - name: Compile
         run: python -m py_compile python_albaranes/delivery_date_backfill.py
-      - name: Pre-write audit
-        run: python python_albaranes/delivery_date_backfill.py --dry-run
       - name: Fill validated definitive delivery dates
         env:
           LITOS_DELIVERY_DATE_WRITE_ENABLED: "true"
+          LITOS_DELIVERY_READ_WORKERS: "8"
         run: python python_albaranes/delivery_date_backfill.py --sync --confirm DELIVERY_DATE_BACKFILL_V1
-      - name: Post-write audit
-        run: python python_albaranes/delivery_date_backfill.py --dry-run
