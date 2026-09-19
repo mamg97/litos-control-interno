@@ -30,6 +30,8 @@ SUPPORTED_EXTENSIONS = {".pdf", ".xls", ".xlsx", ".xlsm"}
 RAW_CATALOG_SHEETS = ("Catálogo albaranes · bruto", "Catálogo albaranes 2023-2026 · bruto")
 ORDER_RE = re.compile(r"(?<!\d)(\d{4})(?!\d)")
 PDF_ORDER_RE = re.compile(r"(?i)pedido\s*(?:n[º°o.]*)?\s*(\d{4})(?!\d)")
+MACHINE_DELIVERY_MARKER = "Fecha entrega albarán recuperada del documento definitivo"
+
 PDF_DELIVERY_RE = re.compile(
     r"(?im)^\s*fecha(?:\s+de\s+entrega)?\s*[.:]*\s*(?:\r?\n\s*)?"
     r"(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\b"
@@ -243,6 +245,12 @@ def delivery_date_in_segment(
     candidates: list[date] = []
     for row_index in range(start_row, end_row):
         row = rows[row_index]
+        normalized_row = [normalize(value) for value in row]
+        # The header contains the order/fiche date: "PEDIDO Nº ... FECHA ...".
+        # It is not the documentary delivery date and must never populate the
+        # new field, even when it happens to equal the real delivery day.
+        if any("pedido" in value for value in normalized_row):
+            continue
         for col_index, value in enumerate(row):
             norm = normalize(value).rstrip(".:")
             if norm not in {"fecha", "fecha de entrega"}:
@@ -251,7 +259,6 @@ def delivery_date_in_segment(
             if candidate is not None:
                 candidates.append(candidate)
     return candidates[-1] if candidates else None
-
 
 def parse_workbook_all(content: bytes, name: str) -> dict[str, ParsedDocument]:
     lower = name.lower()
@@ -417,6 +424,21 @@ def append_observation(current: Any, note: str) -> str:
     return note if not base else base + " · " + note
 
 
+
+def strip_machine_delivery_notes(current: Any) -> str:
+    parts = [
+        part.strip()
+        for part in clean(current).split(" · ")
+        if part.strip()
+    ]
+    kept = [
+        part for part in parts
+        if not part.startswith(MACHINE_DELIVERY_MARKER)
+        and not part.startswith("Fecha entrega albarán corregida tras revisión")
+        and not part.startswith("Fecha entrega albarán retirada tras revisión")
+    ]
+    return " · ".join(kept)
+
 def build_plan(drive, sheets):
     rows, header_index, columns = read_master(sheets)
     body_rows = max(0, len(rows) - header_index - 1)
@@ -470,10 +492,13 @@ def build_plan(drive, sheets):
             continue
 
         current = row[columns[DELIVERY_HEADER]] if columns[DELIVERY_HEADER] < len(row) else ""
-        if clean(current):
-            stats["already_filled"] += 1
+        current_obs = row[columns[OBSERVATION_HEADER]] if columns[OBSERVATION_HEADER] < len(row) else ""
+        machine_managed = MACHINE_DELIVERY_MARKER in clean(current_obs)
+        if clean(current) and not machine_managed:
+            stats["already_filled_manual_or_validated"] += 1
             continue
 
+        current_date = as_date(current)
         order_date_raw = row[columns[ORDER_DATE_HEADER]] if columns[ORDER_DATE_HEADER] < len(row) else None
         order_date = as_date(order_date_raw)
 
@@ -502,6 +527,18 @@ def build_plan(drive, sheets):
 
         if not candidates:
             stats["no_definitive_document"] += 1
+            if machine_managed:
+                base_obs = strip_machine_delivery_notes(current_obs)
+                note = "Fecha entrega albarán retirada tras revisión: no se localizó documento definitivo validable"
+                plans.append({
+                    "row_index_zero": row_index,
+                    "order_id": order_id,
+                    "delivery_date": None,
+                    "clear_delivery": True,
+                    "observation": append_observation(base_obs, note),
+                    "conflict_only": False,
+                })
+                stats["machine_dates_cleared"] += 1
             continue
 
         stats["rows_with_candidate"] += 1
@@ -550,8 +587,24 @@ def build_plan(drive, sheets):
 
         if accepted is None:
             stats["rows_unresolved"] += 1
-            if row_conflicts:
-                current_obs = row[columns[OBSERVATION_HEADER]] if columns[OBSERVATION_HEADER] < len(row) else ""
+            if machine_managed:
+                base_obs = strip_machine_delivery_notes(current_obs)
+                reason = (
+                    "; ".join(sorted(set(row_conflicts)))
+                    if row_conflicts
+                    else "el documento definitivo no contiene una fecha de entrega diferenciada de la fecha del pedido"
+                )
+                note = "Fecha entrega albarán retirada tras revisión: " + reason
+                plans.append({
+                    "row_index_zero": row_index,
+                    "order_id": order_id,
+                    "delivery_date": None,
+                    "clear_delivery": True,
+                    "observation": append_observation(base_obs, note),
+                    "conflict_only": False,
+                })
+                stats["machine_dates_cleared"] += 1
+            elif row_conflicts:
                 note = "Fecha entrega albarán no aplicada: " + "; ".join(sorted(set(row_conflicts)))
                 updated_obs = append_observation(current_obs, note)
                 if updated_obs != clean(current_obs):
@@ -559,25 +612,29 @@ def build_plan(drive, sheets):
                         "row_index_zero": row_index,
                         "order_id": order_id,
                         "delivery_date": None,
+                        "clear_delivery": False,
                         "observation": updated_obs,
                         "conflict_only": True,
                     })
             continue
 
         candidate, parsed = accepted
-        current_obs = row[columns[OBSERVATION_HEADER]] if columns[OBSERVATION_HEADER] < len(row) else ""
+        base_obs = strip_machine_delivery_notes(current_obs) if machine_managed else clean(current_obs)
         note = (
             "Fecha entrega albarán recuperada del documento definitivo "
-            f"({extension(candidate.name).lstrip('.') or 'archivo'}; ID interno validado)"
+            f"({extension(candidate.name).lstrip('.') or 'archivo'}; ID interno validado; fecha de cabecera PEDIDO excluida)"
         )
         plans.append({
             "row_index_zero": row_index,
             "order_id": order_id,
             "delivery_date": parsed.delivery_date,
-            "observation": append_observation(current_obs, note),
+            "clear_delivery": False,
+            "observation": append_observation(base_obs, note),
             "conflict_only": False,
         })
         stats["dates_backfillable"] += 1
+        if machine_managed and current_date != parsed.delivery_date:
+            stats["machine_dates_corrected"] += 1
 
     summary = {
         "mode": "DELIVERY_DATE_BACKFILL_PLAN",
@@ -628,7 +685,17 @@ def sync(confirm: str):
     requests: list[dict] = []
 
     for plan in plans:
-        if plan["delivery_date"] is not None:
+        if plan.get("clear_delivery"):
+            requests.append(
+                update_request(
+                    sid,
+                    plan["row_index_zero"],
+                    columns[DELIVERY_HEADER],
+                    {},
+                    "userEnteredValue",
+                )
+            )
+        elif plan["delivery_date"] is not None:
             requests.append(
                 update_request(
                     sid,
