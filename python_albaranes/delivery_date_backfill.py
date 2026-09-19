@@ -4,6 +4,7 @@ from __future__ import annotations
 # Historical phased cleanup trigger: 2025.
 # Historical phased cleanup trigger: 2025 retry.
 # Historical phased cleanup trigger: 2024.
+# Global historical differentiated-date refill after phased cleanup.
 
 import argparse
 import io
