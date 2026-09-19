@@ -15,6 +15,7 @@ Important date concepts are distinct:
 - `Fecha recepción (email)`: when the authorized intake email was received.
 - `Fecha ficha`: order/work-sheet date from the source document.
 - `Fecha entrega (estadillo)`: date the work was delivered/posted to the private running account.
+- `Fecha entrega albarán`: delivery date written in the validated definitive albarán/document itself. It is documentary evidence and must remain separate from the running-account date.
 - `Fecha para dashboard`: canonical reporting date consumed by the website. If empty, feed code falls back to delivery, receipt, then fiche date.
 
 Do not collapse these into a single date.
@@ -266,6 +267,19 @@ A mailbox review should report, at minimum:
 
 Public documentation must describe this process using neutral roles only. Real mailbox addresses, personal names, customer identities, attachment names and private message contents must remain outside the public repository.
 
+
+
+### Traceability table ordering
+
+The work-history/traceability table is ordered from most recent to oldest using this exact precedence per row:
+
+1. validated `Fecha entrega albarán`;
+2. otherwise `Fecha recepción (email)`;
+3. otherwise `Fecha ficha` from the source order/note.
+
+The sort key is not `Fecha para dashboard`. The three source dates remain visible as separate concepts.
+
+Historical delivery-date enrichment must review definitive albaranes regardless of whether the real document is PDF, XLS, XLSX or XLSM. The internal four-digit work ID must match before a document date is accepted. If the written date is impossible relative to the order date or current date, preserve the conflict for review and leave `Fecha entrega albarán` blank so the table falls back to the next ordering source; never silently repair a documentary date.
 
 ## 12. Real-cost precedence and supplier-expense register
 
