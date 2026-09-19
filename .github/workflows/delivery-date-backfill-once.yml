@@ -1,4 +1,5 @@
 name: LITOS Delivery Date Backfill · 2026
+# phase-1 semantics: definitive document FECHA is delivery date
 
 on:
   push:
