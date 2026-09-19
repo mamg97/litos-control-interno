@@ -22,15 +22,20 @@ Do not collapse these into a single date.
 
 ### Operational trace ordering
 
-The work trace/history table is ordered for follow-up, not purely chronologically:
+The work trace/history table is ordered for operational follow-up, not purely chronologically:
 
-1. group rows by operational/order year, from the most recent year to the oldest;
-2. within each year, rows with no `Fecha entrega albarán` come first;
-3. within that undelivered/unresolved block, sort by `Fecha recepción (email)` descending;
+1. group rows by operational/order year-month, from the most recent month to the oldest;
+2. within each month, rows with no `Fecha entrega albarán` come first;
+3. within that unresolved block, sort by `Fecha recepción (email)` descending;
 4. if receipt date is missing, fall back to `Fecha ficha` descending;
-5. after the unresolved rows of that same year, rows with `Fecha entrega albarán` are sorted from most recent delivery to oldest.
+5. after the unresolved rows of that same month, rows with `Fecha entrega albarán` are sorted from most recent delivery to oldest;
+6. only after the whole month is exhausted does the trace continue with the previous month.
 
-The year grouping is resolved from order-entry evidence first (receipt email, then source/order date), with dashboard/delivery dates only as historical fallbacks. This ordering is independent from the economic/statistical reporting date.
+The year-month grouping is resolved from order-entry evidence first (receipt email, then source/order date), with dashboard/delivery dates only as historical fallbacks.
+
+A row with no `Fecha entrega albarán` whose order-entry month has already finished must be visually flagged for manual document review. The absence of a delivery date after the month closes is treated as an operational warning that the definitive document may be missing or unreconciled.
+
+This ordering is independent from the economic/statistical reporting date.
 
 
 ## 2. Private running account / estadillo
