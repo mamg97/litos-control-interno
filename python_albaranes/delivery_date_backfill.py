@@ -5,6 +5,7 @@ from __future__ import annotations
 # Historical phased cleanup trigger: 2025 retry.
 # Historical phased cleanup trigger: 2024.
 # Global historical differentiated-date refill after phased cleanup.
+# Historical phased cleanup trigger: 2022.
 # Historical PDF scan repair phase: 2025.
 # Historical PDF scan repair phase: 2025 retry 2.
 # Historical PDF scan repair phase: 2025 retry 3.
