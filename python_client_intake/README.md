@@ -39,3 +39,10 @@ The four-digit work ID is the canonical routing key.
 When one authorized email contains attachments for several work IDs, M3 partitions the message attachment by attachment and materializes each attachment only in the Drive folder whose name matches that work ID.
 
 If several explicit work IDs exist in the same email, an attachment without an explicit ID is treated as ambiguous and is not guessed into any order. Subject-based routing is only a fallback for ordinary single-order emails whose attachments do not carry an explicit ID.
+
+
+## Sent definitive-document archive
+
+On production M3 cycles, the workshop Gmail Sent folder is also checked for attachments that carry an explicit four-digit work ID.
+
+These sent attachments are routed only to an already-existing work ID and archived in that work's Drive folder. Sent-mail processing never creates a new order and never changes the original receipt date. It provides documentary traceability for definitive delivery documents; financial reconciliation remains governed by `BUSINESS_LOGIC.md`.
