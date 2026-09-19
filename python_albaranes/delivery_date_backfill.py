@@ -249,66 +249,65 @@ def delivery_date_in_segment(
     return candidates[-1] if candidates else None
 
 
-def parse_workbook(content: bytes, name: str, target_order: str) -> ParsedDocument:
+def parse_workbook_all(content: bytes, name: str) -> dict[str, ParsedDocument]:
     lower = name.lower()
     matrices = matrix_xls(content) if lower.endswith(".xls") and not lower.endswith(".xlsx") else matrix_openxml(content)
+    result: dict[str, ParsedDocument] = {}
 
-    discovered_orders: list[str] = []
     for rows, datemode in matrices:
         starts: list[tuple[int, str]] = []
         for row_index, row in enumerate(rows):
             order_id = order_id_in_row(row)
             if order_id:
                 starts.append((row_index, order_id))
-                discovered_orders.append(order_id)
 
         for index, (start_row, order_id) in enumerate(starts):
-            if order_id != target_order:
-                continue
             end_row = starts[index + 1][0] if index + 1 < len(starts) else len(rows)
             raw = delivery_date_in_segment(rows, start_row, end_row, datemode)
-            return ParsedDocument(
+            # If the same ID appears more than once, prefer the last block with
+            # an actual delivery date; otherwise preserve the latest occurrence.
+            parsed = ParsedDocument(
                 internal_order=order_id,
                 delivery_date=raw,
                 raw_delivery_date=raw,
                 parser="spreadsheet",
             )
+            if order_id not in result or raw is not None:
+                result[order_id] = parsed
 
-    # Fail closed when the target ID cannot be found inside the workbook.
-    internal = discovered_orders[0] if len(set(discovered_orders)) == 1 else ""
-    return ParsedDocument(
-        internal_order=internal,
-        delivery_date=None,
-        raw_delivery_date=None,
-        parser="spreadsheet",
-    )
+    return result
 
 
-def parse_pdf(content: bytes, target_order: str) -> ParsedDocument:
+def parse_pdf_all(content: bytes, name: str) -> dict[str, ParsedDocument]:
     reader = PdfReader(io.BytesIO(content))
     text = "\n".join(page.extract_text() or "" for page in reader.pages)
     order_match = PDF_ORDER_RE.search(text)
+    filename_match = p.ORDER_ID_RE.search(name)
     internal = order_match.group(1) if order_match else ""
+    routing_id = internal or (filename_match.group(1) if filename_match else "")
     dates = [as_date(value) for value in PDF_DELIVERY_RE.findall(text)]
     dates = [value for value in dates if value is not None]
     raw = dates[-1] if dates else None
-    return ParsedDocument(
-        internal_order=internal,
-        delivery_date=raw if not internal or internal == target_order else None,
-        raw_delivery_date=raw,
-        parser="pdf",
-    )
+    if not routing_id:
+        return {}
+    return {
+        routing_id: ParsedDocument(
+            internal_order=internal,
+            delivery_date=raw,
+            raw_delivery_date=raw,
+            parser="pdf",
+        )
+    }
 
 
-def parse_document(drive, file: CandidateFile, target_order: str) -> ParsedDocument:
+def parse_document_all(drive, file: CandidateFile) -> dict[str, ParsedDocument]:
     content = p._download_file(drive, file.file_id)
     ext = extension(file.name)
     if ext == ".pdf":
-        return parse_pdf(content, target_order)
+        return parse_pdf_all(content, file.name)
     if ext in {".xls", ".xlsx", ".xlsm"}:
-        return parse_workbook(content, file.name, target_order)
+        return parse_workbook_all(content, file.name)
     raise RuntimeError("unsupported extension")
-
 
 def read_catalog_file_ids(sheets) -> dict[str, list[str]]:
     result: dict[str, list[str]] = defaultdict(list)
@@ -373,7 +372,7 @@ def build_plan(drive, sheets):
         scanned, ext_counts = {}, Counter()
     catalog_file_ids = read_catalog_file_ids(sheets)
 
-    cache: dict[tuple[str, str], ParsedDocument | Exception] = {}
+    cache: dict[str, dict[str, ParsedDocument] | Exception] = {}
     plans: list[dict[str, Any]] = []
     stats: Counter[str] = Counter()
     conflicts: Counter[str] = Counter()
@@ -425,21 +424,27 @@ def build_plan(drive, sheets):
 
         for candidate in candidates:
             stats[f"candidate_ext_{extension(candidate.name) or 'none'}"] += 1
-            cache_key = (candidate.file_id, order_id)
-            parsed_or_exc = cache.get(cache_key)
-            if parsed_or_exc is None:
+            parsed_map_or_exc = cache.get(candidate.file_id)
+            if parsed_map_or_exc is None:
                 try:
-                    parsed_or_exc = parse_document(drive, candidate, order_id)
-                    cache[cache_key] = parsed_or_exc
+                    parsed_map_or_exc = parse_document_all(drive, candidate)
+                    cache[candidate.file_id] = parsed_map_or_exc
                     stats["documents_parsed"] += 1
                 except Exception as exc:
-                    parsed_or_exc = exc
-                    cache[cache_key] = exc
+                    parsed_map_or_exc = exc
+                    cache[candidate.file_id] = exc
                     stats["parse_errors"] += 1
 
-            if isinstance(parsed_or_exc, Exception):
+            if isinstance(parsed_map_or_exc, Exception):
                 continue
-            parsed = parsed_or_exc
+            parsed = parsed_map_or_exc.get(order_id)
+            if parsed is None:
+                if parsed_map_or_exc:
+                    conflicts["internal_id_mismatch"] += 1
+                    row_conflicts.append("ID interno no coincide/no aparece en el documento")
+                else:
+                    stats["documents_without_internal_order"] += 1
+                continue
             if parsed.internal_order and parsed.internal_order != order_id:
                 conflicts["internal_id_mismatch"] += 1
                 row_conflicts.append("ID interno no coincide")
