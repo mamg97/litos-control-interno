@@ -64,6 +64,7 @@ RAW_CATALOG_SHEETS = ("Catálogo albaranes · bruto", "Catálogo albaranes 2023-
 ORDER_RE = re.compile(r"(?<!\d)(\d{4})(?!\d)")
 PDF_ORDER_RE = re.compile(r"(?i)pedido\s*(?:n[º°o.]*)?\s*(\d{4})(?!\d)")
 MACHINE_DELIVERY_MARKER = "Fecha entrega albarán recuperada del documento definitivo"
+ACTIVE_WRITE_PHASE_YEAR = 2026
 
 PDF_DELIVERY_RE = re.compile(
     r"(?im)^\s*fecha(?:\s+de\s+entrega)?\s*[.:]*\s*(?:\r?\n\s*)?"
@@ -795,8 +796,14 @@ def update_request(sheet_id_value: int, row_zero: int, col_zero: int, cell: dict
 
 def sync(confirm: str, *, target_year: int | None = None):
     assert_write_allowed(confirm)
+    allow_historical = bool_env("LITOS_ALLOW_HISTORICAL_DELIVERY_REPAIR")
+    effective_year = target_year if target_year is not None else ACTIVE_WRITE_PHASE_YEAR
+    if effective_year != ACTIVE_WRITE_PHASE_YEAR and not allow_historical:
+        raise RuntimeError(
+            f"Historical delivery-date writes are paused; active phase is {ACTIVE_WRITE_PHASE_YEAR}"
+        )
     drive, sheets = p.build_services()
-    _rows, _header_index, columns, plans, before = build_plan(drive, sheets, target_year=target_year)
+    _rows, _header_index, columns, plans, before = build_plan(drive, sheets, target_year=effective_year)
     sid = sheet_id(sheets)
     requests: list[dict] = []
 
@@ -842,7 +849,7 @@ def sync(confirm: str, *, target_year: int | None = None):
 
     result = {
         "mode": "DELIVERY_DATE_BACKFILL_SYNC",
-        "target_year": target_year,
+        "target_year": effective_year,
         "planned_rows_before_sync": before["planned_rows"],
         "dates_backfillable_before_sync": before.get("dates_backfillable", 0),
         "rows_written": len(plans),
