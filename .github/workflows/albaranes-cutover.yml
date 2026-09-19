@@ -86,7 +86,7 @@ jobs:
           echo 'OK: private Google OAuth credential present.'
 
       - name: Delivery-date read-only audit
-        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        if: ${{ (github.event_name == 'push' && !contains(github.event.head_commit.message, '[LITOS-DELIVERY-YEAR-')) || github.event_name == 'workflow_dispatch' }}
         env:
           LITOS_DELIVERY_SCAN_UNLINKED: 'true'
         run: python python_albaranes/delivery_date_backfill.py --dry-run
@@ -112,7 +112,9 @@ jobs:
             2020|2021|2022|2023|2024|2025|2026) ;;
             *) echo "Invalid or missing phased delivery year"; exit 1 ;;
           esac
+          python python_albaranes/delivery_date_backfill.py --dry-run --year "$year"
           python python_albaranes/delivery_date_backfill.py --sync --year "$year" --confirm DELIVERY_DATE_BACKFILL_V1
+          python python_albaranes/delivery_date_backfill.py --dry-run --year "$year"
 
       - name: One-time historical master backfill
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[LITOS-HISTORY-BACKFILL]') }}
