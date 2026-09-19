@@ -252,6 +252,40 @@ def list_candidate_messages(gmail, allowed_sender: str) -> list[dict]:
     return messages
 
 
+def list_sent_messages(gmail) -> list[dict]:
+    query = f"in:sent newer_than:{LOOKBACK_DAYS}d"
+    threads: list[dict] = []
+    page_token = None
+    while True:
+        response = (
+            gmail.users()
+            .threads()
+            .list(userId="me", q=query, maxResults=100, pageToken=page_token)
+            .execute()
+        )
+        threads.extend(response.get("threads", []))
+        page_token = response.get("nextPageToken")
+        if not page_token or len(threads) >= 100:
+            break
+
+    messages: list[dict] = []
+    for thread in threads[:100]:
+        detail = (
+            gmail.users()
+            .threads()
+            .get(
+                userId="me",
+                id=thread["id"],
+                format="metadata",
+                metadataHeaders=["From", "Subject", "Content-Disposition"],
+            )
+            .execute()
+        )
+        messages.extend(detail.get("messages", []))
+    messages.sort(key=lambda message: int(message.get("internalDate", "0") or 0))
+    return messages
+
+
 def _drive_list(drive, *, query: str, fields: str) -> list[dict]:
     items: list[dict] = []
     page_token = None
