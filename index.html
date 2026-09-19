@@ -142,6 +142,20 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
 .estadillo-ledger-table td:nth-child(1), .estadillo-ledger-table td:nth-child(3), .estadillo-ledger-table td:nth-child(n+5) { font-family: "DM Mono", monospace; white-space: nowrap; }
 .estadillo-ledger-table td:nth-child(n+5) { text-align: right; }
 .estadillo-ledger-table tr:last-child td { border-bottom: 0; }
+.supplier-expense-panel { margin-top: 1rem; padding: 1.25rem; }
+.supplier-expense-wrap { margin-top: .85rem; overflow-x: auto; border: 1px solid #e1ecea; border-radius: 10px; }
+.supplier-expense-table { width: 100%; min-width: 760px; border-collapse: collapse; font-size: .75rem; }
+.supplier-expense-table th { padding: .58rem .68rem; border-bottom: 1px solid var(--line); background: #f8fbfa; color: var(--ink-soft); font-family: "DM Mono", monospace; font-size: .62rem; font-weight: 600; letter-spacing: .05em; text-align: left; text-transform: uppercase; }
+.supplier-expense-table td { padding: .62rem .68rem; border-bottom: 1px solid #edf2f1; color: #345457; vertical-align: top; }
+.supplier-expense-table td:first-child, .supplier-expense-table td:nth-child(4), .supplier-expense-table td:last-child { font-family: "DM Mono", monospace; white-space: nowrap; }
+.supplier-expense-table td:last-child { text-align: right; font-weight: 800; }
+.supplier-expense-table tr:last-child td { border-bottom: 0; }
+.supplier-status { font-size: .68rem; font-weight: 800; }
+.supplier-status.active { color: #26734d; }
+.supplier-status.pending { color: #9a6418; }
+.cost-source { display: block; margin-top: .2rem; font-family: "DM Mono", monospace; font-size: .56rem; font-weight: 800; text-transform: uppercase; }
+.cost-source.actual { color: #26734d; }
+.cost-source.estimated { color: #9a6418; }
 .estadillo-balance-note { color: var(--ink-soft); font-size: .72rem; line-height: 1.5; }
 .finance-inputs, .cost-register, .finance-register-note { padding: 1.45rem; }.finance-inputs .panel-head { margin-bottom: .2rem; }.finance-form { display: grid; grid-template-columns: 1fr 1fr; gap: .85rem; margin-top: 1rem; }.finance-form label { display: grid; gap: .35rem; color: var(--ink-soft); font-size: .72rem; font-weight: 700; }.finance-form input { min-height: 38px; padding: .45rem .6rem; border: 1px solid #cfe0de; border-radius: 8px; background: white; color: var(--ink); font-size: .82rem; outline-color: var(--teal); }.cost-register { background: #fffdf8; }.cost-register h2 { margin-bottom: .9rem; }.cost-list { display: grid; gap: .1rem; }.cost-list div { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: .8rem; padding: .65rem 0; border-bottom: 1px solid #eee8d9; color: #607274; font-size: .74rem; line-height: 1.35; }.cost-list strong, .cost-register-total strong { color: #6e4d19; font-family: "DM Mono", monospace; font-size: .76rem; white-space: nowrap; }.cost-register-total { display: flex; justify-content: space-between; gap: 1rem; margin-top: .8rem; padding-top: .8rem; border-top: 1px solid #e4d8be; color: #735b32; font-size: .78rem; font-weight: 800; }.finance-register-note { display: grid; grid-template-columns: minmax(230px,.65fr) minmax(0,1.35fr); column-gap: 1.5rem; align-items: start; margin-top: 1rem; background: #f5f8f7; }.finance-register-note .eyebrow { grid-column: 1 / -1; }.finance-register-note h2 { margin-bottom: 0; font-size: 1.1rem; }.finance-register-note p:not(.eyebrow) { margin: 0; color: var(--ink-soft); font-size: .79rem; line-height: 1.65; }
 
@@ -502,7 +516,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
           <div class="finance-kpis">
             <article><span>Pedidos del periodo</span><strong id="financeOrders">—</strong><small id="financePeriod">Datos operativos pendientes</small></article>
             <article><span>Ingresos de pedidos</span><strong id="financeRevenue">—</strong><small>estadillo cuando consta · estimación si falta</small></article>
-            <article><span>Gasto documentado / estimado</span><strong id="financeCosts">—</strong><small>materia prima y consumibles</small></article>
+            <article><span>Coste de trabajos / gastos</span><strong id="financeCosts">—</strong><small>real vinculado cuando existe · estimación si falta</small></article>
             <article><span>Margen disponible</span><strong id="financeMargin">—</strong><small>antes de gastos pendientes e impuestos</small></article>
           </div>
 
@@ -542,6 +556,20 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
             </div>
           </article>
 
+          <article class="panel supplier-expense-panel">
+            <div class="panel-head">
+              <div><p class="eyebrow">PROVEEDORES · GASTO REAL</p><h2>Facturas y compras registradas</h2></div>
+              <span class="chart-note" id="supplierExpensesTotal">Cargando facturas…</span>
+            </div>
+            <p class="estadillo-balance-note">Esta tabla muestra el gasto documental real de proveedores. Una factura vinculada a un trabajo sustituye su coste estimado; una compra de stock o una factura aún sin vincular se conserva aquí sin duplicarla en el coste de los pedidos.</p>
+            <div class="supplier-expense-wrap">
+              <table class="supplier-expense-table">
+                <thead><tr><th>Fecha</th><th>Proveedor</th><th>Concepto</th><th>Referencia</th><th>Estado</th><th>Importe</th></tr></thead>
+                <tbody id="supplierExpensesBody"><tr><td colspan="6" class="empty-state">Cargando facturas de proveedores…</td></tr></tbody>
+              </table>
+            </div>
+          </article>
+
           <div class="finance-layout">
             <article class="panel cost-register">
               <p class="eyebrow">GASTOS YA CONOCIDOS</p>
@@ -562,7 +590,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
           <article class="panel finance-register-note">
             <p class="eyebrow">SIGUIENTE PASO DE CONTROL</p>
             <h2>Convertir cada partida pendiente en un apunte contable trazable.</h2>
-            <p>Electricidad, agua y residuos e internet ya están registrados por mes en el libro maestro, diferenciando factura, prorrateo y estimación. Quedan por incorporar letras, transporte, mano de obra, impuestos y compras reales de piedra y consumibles.</p>
+            <p>Electricidad, agua y residuos e internet ya están registrados por mes en el libro maestro, diferenciando factura, prorrateo y estimación. Las compras reales de proveedor ya se registran y se muestran por separado. Quedan por completar letras, transporte, mano de obra, impuestos y la vinculación progresiva de compras de stock con su consumo real.</p>
           </article>
         </section>
 
@@ -586,7 +614,7 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
                   <tr><td><strong>Agua y residuos</strong><small>Acciona</small></td><td>Portal de Acciona; las notificaciones no sustituyen a la factura descargada.</td><td>Gastos · agua y residuos</td><td>Incluir solo los suministros del taller. Las facturas trimestrales se reparten entre sus tres meses de servicio.</td><td><span class="source-status active">Importado</span><small>22 facturas trimestrales prorrateadas</small></td></tr>
                   <tr><td><strong>Internet</strong><small>O2</small></td><td>Buzón de facturación A · facturas O2</td><td>Gastos · internet</td><td>Guardar fecha de emisión, periodo e importe; cualquier hueco histórico queda señalado como estimación.</td><td><span class="source-status active">Importado</span><small>6 facturas reales + meses históricos estimados</small></td></tr>
                   <tr><td><strong>Letras</strong><small>Bronce / inox</small></td><td>Buzón de facturación A · proveedor de letras</td><td>Facturas · letras</td><td>Vincular, cuando sea posible, al ID del trabajo y separar bronce de acero inoxidable.</td><td><span class="source-status pending">Pendiente</span><small>Importación de correo</small></td></tr>
-                  <tr><td><strong>Piedra</strong><small>Compra estimada</small></td><td>Pedidos + tabla de costes por m² y proveedor</td><td>Estimación de materia prima</td><td>Aplicar 10 % de merma. «Suyo» en reforma es piedra existente; «Suyo» en pedido nuevo y blanco Macael son aportación del cliente</td><td><span class="source-status active">Estimador activo</span><small>Reconciliar después con factura de compra</small></td></tr>
+                  <tr><td><strong>Piedra</strong><small>Real cuando existe · estimada si falta</small></td><td>Facturas de proveedor + pedidos + tabla de costes por m²</td><td>Coste directo/material</td><td>El coste directo real validado tiene prioridad. Si no existe, se estima por superficie y coste de compra; las compras de stock no se imputan a un pedido sin evidencia.</td><td><span class="source-status active">Conciliación activa</span><small>Real &gt; estimado &gt; sin dato</small></td></tr>
                   <tr><td><strong>Consumibles</strong><small>Goma, abrasivos y acabado</small></td><td>Estimación anual conocida + facturas y control de existencias</td><td>Gastos · consumibles</td><td>Contrastar la base anual con compras reales y ajustar cantidades al cierre de cada año.</td><td><span class="source-status staged">Base inicial</span><small>Registro financiero pendiente</small></td></tr>
                 </tbody>
               </table>

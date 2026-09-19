@@ -310,6 +310,7 @@ function mapPublicRows(records) {
     "Importe trabajo / Debe (€)": record.amount ?? "",
     "Precio final (€)": record.finalPrice ?? record.pvp ?? "",
     "Coste material est. (€)": record.materialCost ?? "",
+    "Coste directo real (€)": record.directCostActual ?? "",
     "Estado pedido": text(record.status),
     Modelo: text(record.model),
     Material: text(record.material),
@@ -341,7 +342,7 @@ function mapPublicExpenses(records) {
     const month = text(record.month);
     const category = text(record.category);
     const amount = parseNumber(record.amount);
-    return { month, category, amount, nature: text(record.nature) || "Sin clasificar" };
+    return { month, category, amount, nature: text(record.nature) || "Sin clasificar", source: text(record.source), invoiceDate: text(record.invoiceDate), reference: text(record.reference) };
   }).filter((record) => /^\d{4}-(0[1-9]|1[0-2])$/.test(record.month) && record.category && record.amount !== null);
 }
 
@@ -1230,14 +1231,23 @@ function renderTraceTable({ bodySelector, countSelector, searchSelector }) {
       cell.textContent = value;
       row.append(cell);
     });
-    [
-    recordedFinalPrice(order),
-    estimatedMaterialCostFor(order)
-  ].forEach((amount) => {
-    const cell = document.createElement("td");
-    cell.textContent = amount === null ? "—" : formatMoney(amount);
-    row.append(cell);
-  });
+    const finalPrice = recordedFinalPrice(order);
+    const priceCell = document.createElement("td");
+    priceCell.textContent = finalPrice === null ? "—" : formatMoney(finalPrice);
+    row.append(priceCell);
+
+    const cost = jobCostFor(order);
+    const costCell = document.createElement("td");
+    if (cost.value === null) {
+      costCell.textContent = "—";
+    } else {
+      costCell.textContent = formatMoney(cost.value);
+      const source = document.createElement("small");
+      source.className = cost.actual ? "cost-source actual" : "cost-source estimated";
+      source.textContent = cost.actual ? "real" : "estimado";
+      costCell.append(source);
+    }
+    row.append(costCell);
   const invoiceUrl = order["Archivo factura / albarán (XLSX)"];
   const draftInvoiceUrl = order["Factura borrador (XLSX)"];
   [
@@ -1370,8 +1380,13 @@ function importedExpenseLabel(category, ledger) {
   return parts.join(" · ");
 }
 
+function isSupplierExpense(expense) {
+  return normalize(expense?.nature).startsWith("factura proveedor");
+}
+
 function monthlyLedgerAmount(year, months, category) {
   return state.expenses
+    .filter((expense) => !isSupplierExpense(expense))
     .filter((expense) => expense.category === category && expense.month.startsWith(`${year}-`))
     .filter((expense) => months.includes(Number(expense.month.slice(5, 7)) - 1))
     .reduce((total, expense) => total + expense.amount, 0);
@@ -1388,18 +1403,31 @@ function estimatedMaterialCostFor(row) {
   return (width * height / 10000) * 1.1 * rate;
 }
 
+function actualDirectCostFor(row) {
+  return optionalNumberAt(row, "Coste directo real (€)");
+}
+
+function jobCostFor(row) {
+  const actual = actualDirectCostFor(row);
+  return actual !== null ? { value: actual, actual: true } : { value: estimatedMaterialCostFor(row), actual: false };
+}
+
 function estimateMaterial(rows) {
   let amount = 0;
   let covered = 0;
   let withMeasure = 0;
+  let actualCount = 0;
+  let estimatedCount = 0;
   rows.forEach((row) => {
     if (sizeDetailsFor(row)) withMeasure += 1;
-    const cost = estimatedMaterialCostFor(row);
-    if (cost === null) return;
+    const cost = jobCostFor(row);
+    if (cost.value === null) return;
     covered += 1;
-    amount += cost;
+    amount += cost.value;
+    if (cost.actual) actualCount += 1;
+    else estimatedCount += 1;
   });
-  return { amount, covered, withMeasure };
+  return { amount, covered, withMeasure, actualCount, estimatedCount };
 }
 
 function calculateFinance(rows, year = null) {
@@ -1432,7 +1460,7 @@ function calculateFinance(rows, year = null) {
   const costs = material.amount + consumables + manual.reduce((total, entry) => total + entry.value, 0);
   const margin = revenue - costs;
   const outputs = [
-    { label: "Materia prima estimada", value: material.amount, tone: "material" },
+    { label: "Coste directo / material", value: material.amount, tone: "material" },
     { label: "Abrasivos y lijas", value: KNOWN_CONSUMABLES.abrasives, tone: "consumables" },
     { label: "Plantillas", value: KNOWN_CONSUMABLES.templates, tone: "consumables" },
     { label: "Pintura, silicona y masilla", value: KNOWN_CONSUMABLES.finishing, tone: "consumables" },
@@ -1593,6 +1621,55 @@ function ledgerDescription(finance) {
   return `Libro maestro: ${factured} meses respaldados por factura o prorrateo y ${estimated} meses estimados por media. Los campos de luz, agua y residuos e internet se bloquean para evitar doble contabilización.`;
 }
 
+function supplierExpensesForYear(year) {
+  return expenseRowsForYear(year)
+    .filter(isSupplierExpense)
+    .sort((left, right) => String(right.invoiceDate || right.month).localeCompare(String(left.invoiceDate || left.month)));
+}
+
+function renderSupplierExpenses(year) {
+  const body = $("#supplierExpensesBody");
+  const total = $("#supplierExpensesTotal");
+  if (!body) return;
+  body.replaceChildren();
+  const rows = supplierExpensesForYear(year);
+  if (!rows.length) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 6;
+    td.className = "empty-state";
+    td.textContent = "No hay facturas de proveedores registradas para este año.";
+    tr.append(td);
+    body.append(tr);
+    if (total) total.textContent = "0 € registrados";
+    return;
+  }
+  rows.forEach((expense) => {
+    const tr = document.createElement("tr");
+    const nature = normalize(expense.nature);
+    const status = nature.includes("pendiente") ? "Pendiente de vincular" : nature.includes("stock") ? "Compra de stock" : "Vinculado a trabajo";
+    const values = [
+      formatOperationalDate(expense.invoiceDate || `${expense.month}-01`),
+      expense.source || "Proveedor",
+      expense.category.replace(/^Compra proveedor ·\s*/i, ""),
+      expense.reference || "—",
+      status,
+      formatMoney(expense.amount)
+    ];
+    values.forEach((value, index) => {
+      const td = document.createElement("td");
+      td.textContent = value;
+      if (index === 4) td.className = normalize(status).includes("pendiente") ? "supplier-status pending" : "supplier-status active";
+      tr.append(td);
+    });
+    body.append(tr);
+  });
+  if (total) {
+    const amount = rows.reduce((sum, expense) => sum + expense.amount, 0);
+    total.textContent = `${formatMoney(amount)} · ${rows.length} ${rows.length === 1 ? "factura" : "facturas"}`;
+  }
+}
+
 function renderFinance() {
   const rows = financeRows();
   const year = Number($("#financeYear")?.value) || new Date().getFullYear();
@@ -1606,14 +1683,15 @@ function renderFinance() {
   $("#financeMargin").textContent = state.connected ? formatMoney(margin) : "—";
   $("#financeConsumables").textContent = formatMoney(consumables);
   $("#materialEstimateNote").textContent = state.connected
-    ? `${formatMoney(material.amount)} calculados sobre ${material.covered} de ${material.withMeasure} fichas con medida completa y material identificable. Incluye 10 % de merma; material aportado y reforma se contabilizan a 0 € de compra.`
+    ? `${formatMoney(material.amount)} de coste directo/material sobre ${material.covered} trabajos cubiertos: ${material.actualCount} con coste real y ${material.estimatedCount} estimados. El coste real sustituye siempre a la estimación; las estimaciones conservan 10 % de merma.`
     : "La estimación de materia prima se calculará al recibir los pedidos del año.";
   $("#financeFlowStatus").textContent = state.connected
     ? `${rows.length} trabajos · ${finance.recordedIncomeRows} importes de estadillo · ${finance.ledger.rows.length ? "gastos maestro" : "gastos pendientes"} · año ${$("#financeYear").value}`
     : "Actualizando pedidos";
   renderEstadilloLedger(year);
+  renderSupplierExpenses(year);
   drawFinancialSummaryChart(performanceSeries(year, granularity));
-  $("#financeChartScope").textContent = `Resultado ${granularity === "quarter" ? "por trimestre" : "por mes"}: ingresos del estadillo cuando constan, materia prima estimada y gastos del libro maestro. El beneficio es ingresos menos gastos.`;
+  $("#financeChartScope").textContent = `Resultado ${granularity === "quarter" ? "por trimestre" : "por mes"}: ingresos reales cuando constan, coste directo real por trabajo cuando está vinculado y estimación solo donde falta. Las compras de stock se muestran aparte y no se duplican en el coste de los pedidos.`;
   renderFinanceSankey(finance, sankeyIncomeByModel(rows, finance));
   syncImportedSupplyInputs(finance);
   const ledgerNote = $("#financeLedgerNote");
