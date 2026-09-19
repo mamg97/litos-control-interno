@@ -373,6 +373,7 @@ def build_plan(drive, sheets):
     catalog_file_ids = read_catalog_file_ids(sheets)
 
     cache: dict[str, dict[str, ParsedDocument] | Exception] = {}
+    meta_cache: dict[str, CandidateFile | None] = {}
     plans: list[dict[str, Any]] = []
     stats: Counter[str] = Counter()
     conflicts: Counter[str] = Counter()
@@ -396,7 +397,9 @@ def build_plan(drive, sheets):
         linked = invoice_links[body_index] if body_index < len(invoice_links) else p.LinkCell("", "")
         linked_id = p._extract_drive_id(linked.url)
         if linked_id:
-            meta = get_file_meta(drive, linked_id)
+            if linked_id not in meta_cache:
+                meta_cache[linked_id] = get_file_meta(drive, linked_id)
+            meta = meta_cache[linked_id]
             if meta is not None and extension(meta.name) in SUPPORTED_EXTENSIONS:
                 candidates.append(meta)
 
@@ -404,7 +407,9 @@ def build_plan(drive, sheets):
         for file_id in catalog_file_ids.get(order_id, []):
             if file_id in seen:
                 continue
-            meta = get_file_meta(drive, file_id)
+            if file_id not in meta_cache:
+                meta_cache[file_id] = get_file_meta(drive, file_id)
+            meta = meta_cache[file_id]
             if meta is not None and extension(meta.name) in SUPPORTED_EXTENSIONS and not is_draft(meta.name):
                 candidates.append(meta)
                 seen.add(meta.file_id)
