@@ -8,14 +8,14 @@ on:
       - 'python_albaranes/pvp_backfill.py'
       - 'python_albaranes/delivery_date_backfill.py'
       - 'python_albaranes/requirements.txt'
-      - 'python_albaranes/delivery_date_backfill.py'
-      - 'python_albaranes/requirements.txt'
       - '.github/workflows/albaranes-cutover.yml'
   pull_request:
     paths:
       - 'python_albaranes/sync.py'
       - 'python_albaranes/history_backfill.py'
       - 'python_albaranes/pvp_backfill.py'
+      - 'python_albaranes/delivery_date_backfill.py'
+      - 'python_albaranes/requirements.txt'
       - '.github/workflows/albaranes-cutover.yml'
   workflow_run:
     workflows:
