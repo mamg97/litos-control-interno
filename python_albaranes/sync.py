@@ -120,7 +120,9 @@ def build_plan(*, links_only: bool = False) -> tuple[Any, Any, list[RowPlan], di
 
             total_col = columns[p.HEADERS["total"]]
             current_total = row[total_col] if total_col < len(row) else None
-            total_update = not _total_matches(current_total, expected_total)
+            # Fail closed: an unparseable definitive document must never erase
+            # a previously validated total from the master.
+            total_update = expected_total is not None and not _total_matches(current_total, expected_total)
 
         plans.append(
             RowPlan(
