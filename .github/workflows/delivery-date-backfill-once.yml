@@ -1,5 +1,5 @@
 name: LITOS Delivery Date Backfill · 2026
-# phase-1 semantics: definitive document FECHA is delivery date
+# phase-1 semantics: prefer PDF footer delivery date; never use PEDIDO header FECHA
 # annual phases use linked/catalog candidates; orphan scan is a separate final phase
 
 on:
