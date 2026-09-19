@@ -3,6 +3,7 @@ name: LITOS One-off Delivery Date Backfill
 # rerun with catalog metadata cache
 # rerun with parallel historical reads
 # single validated pass
+# corrective pass excluding order-header dates
 
 on:
   push:
