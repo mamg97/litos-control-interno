@@ -1169,22 +1169,23 @@ function isInProduction(row, now = new Date()) {
 
 function traceRows() {
   return [...state.rows].sort((a, b) => {
-    const deliveryA = parseDate(a["Fecha entrega albarán"]);
-    const deliveryB = parseDate(b["Fecha entrega albarán"]);
+    const aDelivery = parseDate(a["Fecha entrega albarán"]);
+    const bDelivery = parseDate(b["Fecha entrega albarán"]);
 
-    // Pending/no-delivery-date jobs must stay at the top so they are visible
-    // for operational follow-up. Within that pending block, use receipt email
-    // and then the order/note date as fallbacks.
-    if (!deliveryA && deliveryB) return -1;
-    if (deliveryA && !deliveryB) return 1;
+    // Operational priority: jobs without a definitive delivery date first.
+    if (!aDelivery && bDelivery) return -1;
+    if (aDelivery && !bDelivery) return 1;
 
-    if (!deliveryA && !deliveryB) {
-      const fallbackA = parseDate(a["Fecha recepción (email)"] || a["Fecha ficha"])?.valueOf() || 0;
-      const fallbackB = parseDate(b["Fecha recepción (email)"] || b["Fecha ficha"])?.valueOf() || 0;
-      return fallbackB - fallbackA || text(b.Pedido).localeCompare(text(a.Pedido), "es", { numeric: true });
+    // Pending delivery-date rows: newest receipt email first, then source note.
+    if (!aDelivery && !bDelivery) {
+      const aFallback = parseDate(a["Fecha recepción (email)"] || a["Fecha ficha"])?.valueOf() || 0;
+      const bFallback = parseDate(b["Fecha recepción (email)"] || b["Fecha ficha"])?.valueOf() || 0;
+      return bFallback - aFallback
+        || text(b.Pedido).localeCompare(text(a.Pedido), "es", { numeric: true });
     }
 
-    return deliveryB.valueOf() - deliveryA.valueOf()
+    // Rows with a validated delivery date: most recent delivery first.
+    return bDelivery.valueOf() - aDelivery.valueOf()
       || text(b.Pedido).localeCompare(text(a.Pedido), "es", { numeric: true });
   });
 }
@@ -1223,7 +1224,7 @@ function renderTraceTable({ bodySelector, countSelector, searchSelector }) {
   const rows = allRows.filter((order) => matchesTraceQuery(order, query));
   if (count) count.textContent = query
     ? `${formatInt.format(rows.length)} de ${formatInt.format(allRows.length)} trabajos`
-    : `${formatInt.format(allRows.length)} trabajos · entrega → recepción → pedido`;
+    : `${formatInt.format(allRows.length)} trabajos · sin fecha de entrega primero · después entrega más reciente`;
   if (!rows.length) {
     const row = document.createElement("tr");
     const cell = document.createElement("td");
