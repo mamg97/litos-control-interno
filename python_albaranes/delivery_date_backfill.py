@@ -249,12 +249,9 @@ def delivery_date_in_segment(
     candidates: list[date] = []
     for row_index in range(start_row, end_row):
         row = rows[row_index]
-        normalized_row = [normalize(value) for value in row]
-        # The header contains the order/fiche date: "PEDIDO Nº ... FECHA ...".
-        # It is not the documentary delivery date and must never populate the
-        # new field, even when it happens to equal the real delivery day.
-        if any("pedido" in value for value in normalized_row):
-            continue
+        # In a validated definitive albarán, the document's FECHA is the
+        # documentary delivery date even when it shares the header with PEDIDO.
+        # Plausibility and internal work-ID checks are applied later.
         for col_index, value in enumerate(row):
             norm = normalize(value).rstrip(".:")
             if norm not in {"fecha", "fecha de entrega"}:
@@ -621,7 +618,7 @@ def build_plan(drive, sheets, *, target_year: int | None = None):
                 reason = (
                     "; ".join(sorted(set(row_conflicts)))
                     if row_conflicts
-                    else "el documento definitivo no contiene una fecha de entrega diferenciada de la fecha del pedido"
+                    else "el documento definitivo no contiene una fecha documental utilizable"
                 )
                 note = "Fecha entrega albarán retirada tras revisión: " + reason
                 plans.append({
@@ -648,10 +645,10 @@ def build_plan(drive, sheets, *, target_year: int | None = None):
             continue
 
         candidate, parsed = accepted
-        base_obs = strip_machine_delivery_notes(current_obs) if machine_managed else clean(current_obs)
+        base_obs = strip_machine_delivery_notes(current_obs)
         note = (
             "Fecha entrega albarán recuperada del documento definitivo "
-            f"({extension(candidate.name).lstrip('.') or 'archivo'}; ID interno validado; fecha de cabecera PEDIDO excluida)"
+            f"({extension(candidate.name).lstrip('.') or 'archivo'}; ID interno validado; FECHA documental del albarán)"
         )
         plans.append({
             "row_index_zero": row_index,
