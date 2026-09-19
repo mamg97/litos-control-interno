@@ -735,6 +735,10 @@ def build_plan(drive, sheets, *, target_year: int | None = None):
             continue
 
         candidate, parsed = accepted
+        if machine_managed and current_date == parsed.delivery_date:
+            stats["already_current_machine_date"] += 1
+            continue
+
         base_obs = strip_machine_delivery_notes(current_obs)
         note = (
             "Fecha entrega albarán recuperada del documento definitivo "
