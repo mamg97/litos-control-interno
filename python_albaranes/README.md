@@ -36,3 +36,10 @@ El adaptador M6 consume directamente `GOOGLE_OAUTH_USER_JSON` y solicita únicam
 ## Estado legacy
 
 No reinstalar el antiguo trigger de Apps Script ni volver a desplegarlo como ruta normal. Cualquier rollback a Apps Script requiere una decisión deliberada y documentada.
+
+
+## Definitive delivery date
+
+M6 also maintains `Fecha entrega albarán`, the delivery date written in the validated definitive document. The historical backfill supports PDF, XLS, XLSX and XLSM and validates the internal work ID before accepting the date.
+
+This field is documentary and is not the same as `Fecha entrega (estadillo)`. Impossible or internally conflicting dates are left unresolved and annotated rather than guessed.
