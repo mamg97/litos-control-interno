@@ -74,6 +74,16 @@ jobs:
         run: |
           python -m py_compile python_client_intake/intake_sync.py python_client_intake/intake_sync_safe.py python_client_intake/canary_gate.py python_handwriting/sync.py python_handwriting/sync_safe.py
 
+      - name: M3 partitioning self-check
+        working-directory: python_client_intake
+        run: |
+          python - <<'PY'
+          from intake_readonly import group_attachment_indexes_by_order
+          groups, unresolved = group_attachment_indexes_by_order('batch', ['1001 a.pdf', '1002 b.pdf'])
+          assert sorted(groups) == ['1001', '1002']
+          assert unresolved == []
+          print('M3_PARTITION_OK')
+          PY
       - name: Read-only preflights
         run: |
           (cd python_client_intake && python runner.py --preflight)
