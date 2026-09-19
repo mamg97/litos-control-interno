@@ -1167,20 +1167,41 @@ function isInProduction(row, now = new Date()) {
   return receipt >= start && receipt < end && !hasInvoice && !delivered;
 }
 
+function traceYear(order) {
+  const date = orderEntryDate(order)
+    || parseDate(order["Fecha para dashboard"])
+    || parseDate(order["Fecha entrega albarán"]);
+  return date ? date.getFullYear() : 0;
+}
+
 function traceRows() {
   return [...state.rows].sort((a, b) => {
+    const yearA = traceYear(a);
+    const yearB = traceYear(b);
+
+    // First group by operational/order year, newest year first.
+    if (yearA !== yearB) return yearB - yearA;
+
     const aDelivery = parseDate(a["Fecha entrega albarán"]);
     const bDelivery = parseDate(b["Fecha entrega albarán"]);
 
-    // Operational priority: jobs without a definitive delivery date first.
+    // Within each year, unresolved/no-delivery-date jobs come first.
     if (!aDelivery && bDelivery) return -1;
     if (aDelivery && !bDelivery) return 1;
 
     // Pending delivery-date rows: newest receipt email first, then source note.
     if (!aDelivery && !bDelivery) {
-      const aFallback = parseDate(a["Fecha recepción (email)"] || a["Fecha ficha"])?.valueOf() || 0;
-      const bFallback = parseDate(b["Fecha recepción (email)"] || b["Fecha ficha"])?.valueOf() || 0;
-      return bFallback - aFallback
+      const aReceipt = parseDate(a["Fecha recepción (email)"]);
+      const bReceipt = parseDate(b["Fecha recepción (email)"]);
+      if (aReceipt || bReceipt) {
+        const aValue = aReceipt?.valueOf() || 0;
+        const bValue = bReceipt?.valueOf() || 0;
+        if (aValue !== bValue) return bValue - aValue;
+      }
+
+      const aOrder = parseDate(a["Fecha ficha"])?.valueOf() || 0;
+      const bOrder = parseDate(b["Fecha ficha"])?.valueOf() || 0;
+      return bOrder - aOrder
         || text(b.Pedido).localeCompare(text(a.Pedido), "es", { numeric: true });
     }
 
@@ -1224,7 +1245,7 @@ function renderTraceTable({ bodySelector, countSelector, searchSelector }) {
   const rows = allRows.filter((order) => matchesTraceQuery(order, query));
   if (count) count.textContent = query
     ? `${formatInt.format(rows.length)} de ${formatInt.format(allRows.length)} trabajos`
-    : `${formatInt.format(allRows.length)} trabajos · sin fecha de entrega primero · después entrega más reciente`;
+    : `${formatInt.format(allRows.length)} trabajos · año más reciente primero · dentro de cada año, pendientes antes que entregados`;
   if (!rows.length) {
     const row = document.createElement("tr");
     const cell = document.createElement("td");
