@@ -1,9 +1,4 @@
-name: LITOS One-off Delivery Date Backfill
-# rerun after metadata-cache optimization
-# rerun with catalog metadata cache
-# rerun with parallel historical reads
-# single validated pass
-# corrective pass excluding order-header dates
+name: LITOS Delivery Date Backfill · 2026
 
 on:
   push:
@@ -14,16 +9,18 @@ permissions:
   contents: read
 
 concurrency:
-  group: litos-delivery-date-backfill-once
+  group: litos-delivery-date-backfill-2026
   cancel-in-progress: true
 
 jobs:
   backfill:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 10
     env:
       PYTHONUNBUFFERED: "1"
       LITOS_FREE_ONLY: "true"
+      LITOS_DELIVERY_SCAN_UNLINKED: "true"
+      LITOS_DELIVERY_READ_WORKERS: "8"
       GOOGLE_OAUTH_USER_JSON: ${{ secrets.GOOGLE_OAUTH_USER_JSON }}
 
     steps:
@@ -36,8 +33,11 @@ jobs:
       - run: pip install -r python_albaranes/requirements.txt
       - name: Compile
         run: python -m py_compile python_albaranes/delivery_date_backfill.py
-      - name: Fill validated definitive delivery dates
+      - name: Phase 1 pre-write audit · 2026
+        run: python python_albaranes/delivery_date_backfill.py --dry-run --year 2026
+      - name: Phase 1 write · 2026
         env:
           LITOS_DELIVERY_DATE_WRITE_ENABLED: "true"
-          LITOS_DELIVERY_READ_WORKERS: "8"
-        run: python python_albaranes/delivery_date_backfill.py --sync --confirm DELIVERY_DATE_BACKFILL_V1
+        run: python python_albaranes/delivery_date_backfill.py --sync --year 2026 --confirm DELIVERY_DATE_BACKFILL_V1
+      - name: Phase 1 post-write audit · 2026
+        run: python python_albaranes/delivery_date_backfill.py --dry-run --year 2026
