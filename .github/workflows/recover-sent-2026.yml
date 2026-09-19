@@ -1,4 +1,5 @@
 name: LITOS 2026 Sent Recovery + Delivery Reconcile
+# Targeted unresolved-ID retry.
 
 on:
   push:
