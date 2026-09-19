@@ -4,6 +4,7 @@ name: LITOS M7 Pages Cutover
 # Updating this workflow intentionally forces a fresh sanitized feed build from the private master.
 # Trace refresh: year-month ordering + overdue document review flag.
 # Final gap-review refresh after validated delivery dates.
+# Refresh after M6 link sanitation and operational-month trace fix.
 
 on:
   pull_request:
