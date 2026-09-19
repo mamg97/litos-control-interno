@@ -1,0 +1,51 @@
+name: LITOS Delivery Date Repair · Historical Phases
+
+on:
+  push:
+    paths:
+      - '.github/workflows/delivery-date-historical-repair.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: litos-delivery-date-historical-repair
+  cancel-in-progress: false
+
+jobs:
+  repair-historical:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PYTHONUNBUFFERED: "1"
+      LITOS_FREE_ONLY: "true"
+      LITOS_DELIVERY_READ_WORKERS: "8"
+      LITOS_DELIVERY_SCAN_UNLINKED: "true"
+      LITOS_ALLOW_HISTORICAL_DELIVERY_REPAIR: "true"
+      GOOGLE_OAUTH_USER_JSON: ${{ secrets.GOOGLE_OAUTH_USER_JSON }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: python_albaranes/requirements.txt
+
+      - run: pip install -r python_albaranes/requirements.txt
+
+      - name: Compile
+        run: python -m py_compile python_albaranes/delivery_date_backfill.py
+
+      - name: Historical repair phases · 2025 to 2020
+        env:
+          LITOS_DELIVERY_DATE_WRITE_ENABLED: "true"
+        shell: bash
+        run: |
+          set -euo pipefail
+          for year in 2025 2024 2023 2022 2021 2020; do
+            echo "===== LITOS historical delivery-date phase $year ====="
+            python python_albaranes/delivery_date_backfill.py --sync --year "$year" --confirm DELIVERY_DATE_BACKFILL_V1
+          done
