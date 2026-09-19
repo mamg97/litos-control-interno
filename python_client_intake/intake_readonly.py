@@ -305,6 +305,7 @@ def build_read_only_plan(services, allowed_sender: str | None = None) -> dict:
     candidates: list[dict] = []
     order_folder_cache: dict[str, dict | None] = {}
     folder_files_cache: dict[str, list[dict]] = {}
+    ambiguous_attachments = 0
 
     for message in messages:
         headers = (message.get("payload") or {}).get("headers") or []
@@ -317,61 +318,67 @@ def build_read_only_plan(services, allowed_sender: str | None = None) -> dict:
         fingerprint = _message_fingerprint(message)
 
         if local_date.year != YEAR:
-            action = "blocked_wrong_year"
-            order_id = ""
-            details = {}
-        elif sender_address(shown_from) != allowed_sender:
-            action = "blocked_wrong_sender"
-            order_id = ""
-            details = {}
-        else:
-            order_id = extract_order_id(subject, names)
-            if not order_id:
-                action = "blocked_no_order_id"
-                details = {}
-            else:
-                expected_names = [
-                    stored_attachment_name(order_id, attachment, index)
-                    for index, attachment in enumerate(attachments)
-                ]
-                note_name, image_names = classify_names(order_id, expected_names)
-                row = snapshot.row_by_id.get(order_id)
+            counts["blocked_wrong_year"] += 1
+            continue
+        if sender_address(shown_from) != allowed_sender:
+            counts["blocked_wrong_sender"] += 1
+            continue
 
-                if order_id not in order_folder_cache:
-                    order_folder_cache[order_id] = find_order_folder(services.drive, order_id)
-                folder = order_folder_cache[order_id]
-                existing_names: set[str] = set()
-                if folder:
-                    folder_id = folder["id"]
-                    if folder_id not in folder_files_cache:
-                        folder_files_cache[folder_id] = list_folder_files(services.drive, folder_id)
-                    existing_names = {clean(item.get("name")) for item in folder_files_cache[folder_id]}
+        groups, unresolved = group_attachment_indexes_by_order(subject, names)
+        ambiguous_attachments += len(unresolved)
+        if not groups:
+            counts["blocked_no_order_id"] += 1
+            continue
 
-                missing_files = [name for name in expected_names if name not in existing_names]
-                missing_fields: list[str] = []
-                if row is not None:
-                    for header in (
-                        HEADERS["receipt_date"],
-                        HEADERS["receipt_origin"],
-                        HEADERS["read_status"],
-                    ):
+        for order_id, indexes in sorted(groups.items()):
+            grouped = [attachments[index] for index in indexes]
+            expected_names = [
+                stored_attachment_name(order_id, attachment, index)
+                for index, attachment in enumerate(grouped)
+            ]
+            note_name, image_names = classify_names(order_id, expected_names)
+            row = snapshot.row_by_id.get(order_id)
+
+            if order_id not in order_folder_cache:
+                order_folder_cache[order_id] = find_order_folder(services.drive, order_id)
+            folder = order_folder_cache[order_id]
+            existing_names: set[str] = set()
+            if folder:
+                folder_id = folder["id"]
+                if folder_id not in folder_files_cache:
+                    folder_files_cache[folder_id] = list_folder_files(services.drive, folder_id)
+                existing_names = {clean(item.get("name")) for item in folder_files_cache[folder_id]}
+
+            missing_files = [name for name in expected_names if name not in existing_names]
+            missing_fields: list[str] = []
+            if row is not None:
+                for header in (
+                    HEADERS["receipt_date"],
+                    HEADERS["receipt_origin"],
+                    HEADERS["read_status"],
+                ):
+                    if not row_value(snapshot, row, header):
+                        missing_fields.append(header)
+                if note_name:
+                    for header in (HEADERS["source_file"], HEADERS["note"]):
                         if not row_value(snapshot, row, header):
                             missing_fields.append(header)
-                    if note_name:
-                        for header in (HEADERS["source_file"], HEADERS["note"]):
-                            if not row_value(snapshot, row, header):
-                                missing_fields.append(header)
-                    if image_names and not row_value(snapshot, row, HEADERS["attachments"]):
-                        missing_fields.append(HEADERS["attachments"])
+                if image_names and not row_value(snapshot, row, HEADERS["attachments"]):
+                    missing_fields.append(HEADERS["attachments"])
 
-                if row is None:
-                    action = "would_create_order"
-                elif missing_files or missing_fields or folder is None:
-                    action = "would_update_order"
-                else:
-                    action = "already_materialized"
+            if row is None:
+                action = "would_create_order"
+            elif missing_files or missing_fields or folder is None:
+                action = "would_update_order"
+            else:
+                action = "already_materialized"
 
-                details = {
+            counts[action] += 1
+            candidates.append(
+                {
+                    "fingerprint": f"{fingerprint}-{order_id}",
+                    "order_id": order_id,
+                    "action": action,
                     "attachments": len(expected_names),
                     "missing_files": len(missing_files),
                     "missing_fields": len(missing_fields),
@@ -380,16 +387,7 @@ def build_read_only_plan(services, allowed_sender: str | None = None) -> dict:
                     "has_note": bool(note_name),
                     "image_count": len(image_names),
                 }
-
-        counts[action] += 1
-        candidates.append(
-            {
-                "fingerprint": fingerprint,
-                "order_id": order_id,
-                "action": action,
-                **details,
-            }
-        )
+            )
 
     mutable = counts["would_create_order"] + counts["would_update_order"]
     return {
@@ -397,6 +395,8 @@ def build_read_only_plan(services, allowed_sender: str | None = None) -> dict:
         "year": YEAR,
         "lookback_days": LOOKBACK_DAYS,
         "messages_scanned": len(messages),
+        "order_groups_scanned": len(candidates),
+        "ambiguous_attachments": ambiguous_attachments,
         "orders_in_sheet": len(snapshot.row_by_id),
         "actions": dict(sorted(counts.items())),
         "mutable": mutable,
@@ -406,7 +406,6 @@ def build_read_only_plan(services, allowed_sender: str | None = None) -> dict:
         "write_operations": 0,
     }
 
-
 def public_summary(plan: dict) -> dict:
     """Return a log-safe summary: no sender, subject, filename, Gmail id or Drive id."""
     return {
@@ -414,6 +413,8 @@ def public_summary(plan: dict) -> dict:
         "year": plan["year"],
         "lookback_days": plan["lookback_days"],
         "messages_scanned": plan["messages_scanned"],
+        "order_groups_scanned": plan.get("order_groups_scanned", 0),
+        "ambiguous_attachments": plan.get("ambiguous_attachments", 0),
         "orders_in_sheet": plan["orders_in_sheet"],
         "actions": plan["actions"],
         "mutable": plan["mutable"],
