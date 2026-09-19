@@ -271,11 +271,12 @@ Public documentation must describe this process using neutral roles only. Real m
 
 ### Traceability table ordering
 
-The work-history/traceability table is ordered from most recent to oldest using this exact precedence per row:
+The work-history/traceability table surfaces unresolved delivery dates first.
 
-1. validated `Fecha entrega albarán`;
-2. otherwise `Fecha recepción (email)`;
-3. otherwise `Fecha ficha` from the source order/note.
+1. Rows without validated `Fecha entrega albarán` come first.
+2. Within that pending group, sort by `Fecha recepción (email)` descending.
+3. If receipt email date is missing, fall back to `Fecha ficha` from the source order/note, also descending.
+4. After the pending group, rows with validated `Fecha entrega albarán` are sorted by that delivery date descending.
 
 The sort key is not `Fecha para dashboard`. The three source dates remain visible as separate concepts.
 
