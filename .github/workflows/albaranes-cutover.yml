@@ -44,8 +44,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: litos-m6-albaranes
-  cancel-in-progress: false
+  group: litos-m6-${{ github.event_name == 'push' && 'audit' || 'production' }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
   run:
