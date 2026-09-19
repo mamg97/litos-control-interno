@@ -499,7 +499,9 @@ def strip_machine_delivery_notes(current: Any) -> str:
     return " · ".join(kept)
 
 def row_year(row: list[Any], columns: dict[str, int]) -> int | None:
-    for header in (ORDER_DATE_HEADER, RECEIPT_DATE_HEADER, DASHBOARD_DATE_HEADER):
+    # Phase year follows operational/archive evidence first. This avoids
+    # excluding rows whose source-note year was stale or mistyped.
+    for header in (STAT_DELIVERY_HEADER, RECEIPT_DATE_HEADER, DASHBOARD_DATE_HEADER, ORDER_DATE_HEADER):
         index = columns.get(header)
         if index is None or index >= len(row):
             continue
@@ -545,6 +547,15 @@ def build_plan(drive, sheets, *, target_year: int | None = None):
 
     unique_catalog_files: dict[str, CandidateFile] = {}
     for order_id, files in catalog_candidates.items():
+        if relevant_order_ids is not None and order_id not in relevant_order_ids:
+            continue
+        for file in files:
+            if supported_candidate(file) and not is_draft(file.name):
+                unique_catalog_files.setdefault(file.file_id, file)
+
+    # Historical PDFs discovered from the annual archive are also preparsed
+    # in parallel; otherwise hundreds of PDF downloads happen serially later.
+    for order_id, files in scanned.items():
         if relevant_order_ids is not None and order_id not in relevant_order_ids:
             continue
         for file in files:
