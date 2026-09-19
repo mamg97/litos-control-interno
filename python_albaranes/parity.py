@@ -14,6 +14,7 @@ from typing import Any
 
 import openpyxl
 import xlrd
+from pypdf import PdfReader
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
@@ -168,7 +169,7 @@ def scan_albaranes(drive) -> dict[str, dict[str, DriveFile]]:
                 continue
 
             lower = name.lower()
-            if not re.search(r"\.(xlsx|xls|xlsm)$", lower):
+            if not re.search(r"\.(pdf|xlsx|xls|xlsm)$", lower):
                 continue
             match = ORDER_ID_RE.search(name)
             if not match:
@@ -311,9 +312,25 @@ def _read_total_xls(content: bytes) -> float | None:
         workbook.release_resources()
 
 
+
+def _read_total_pdf(content: bytes) -> float | None:
+    reader = PdfReader(io.BytesIO(content))
+    text = "\n".join(page.extract_text() or "" for page in reader.pages)
+    matches = re.findall(
+        r"(?im)^\s*total\s+(-?\d[\d.]*?(?:,\d{1,2}|\.\d{1,2})?)\s*€?\s*$",
+        text,
+    )
+    for raw in reversed(matches):
+        number = _number(raw)
+        if number is not None and number > 0:
+            return round(number, 2)
+    return None
+
 def read_total(drive, file: DriveFile) -> float | None:
     content = _download_file(drive, file.file_id)
     lower = file.name.lower()
+    if lower.endswith(".pdf"):
+        return _read_total_pdf(content)
     if lower.endswith(".xls") and not lower.endswith(".xlsx"):
         return _read_total_xls(content)
     return _read_total_openxml(content)
