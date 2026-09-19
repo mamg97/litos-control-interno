@@ -248,11 +248,11 @@ def delivery_date_in_segment(
     datemode: int | None,
 ) -> date | None:
     candidates: list[date] = []
-    for row_index in range(start_row, end_row):
+    # The row that identifies the order is the albarán header. Its FECHA is
+    # the source/order date, not the differentiated delivery date. Only scan
+    # subsequent rows for a delivery/footer FECHA.
+    for row_index in range(start_row + 1, end_row):
         row = rows[row_index]
-        # In a validated definitive albarán, its FECHA field is the
-        # documentary delivery date. Internal work-ID and plausibility checks
-        # are applied before anything is written to the master.
         for col_index, value in enumerate(row):
             norm = normalize(value).rstrip(".:")
             if norm not in {"fecha", "fecha de entrega"}:
