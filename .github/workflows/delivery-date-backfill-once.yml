@@ -1,5 +1,5 @@
-name: LITOS Delivery Date Backfill · 2025
-# phase-2 semantics: validated definitive albaran FECHA is delivery date
+name: LITOS Delivery Date Backfill · 2024
+# phase-3 semantics: validated definitive albaran FECHA is delivery date
 # annual phases use linked/catalog candidates; orphan scan is a separate final phase
 # rerun after canonical delivery-date rule
 
@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: litos-delivery-date-backfill-2025
+  group: litos-delivery-date-backfill-2024
   cancel-in-progress: true
 
 jobs:
@@ -35,11 +35,11 @@ jobs:
       - run: pip install -r python_albaranes/requirements.txt
       - name: Compile
         run: python -m py_compile python_albaranes/delivery_date_backfill.py
-      - name: Phase 2 pre-write audit · 2025
-        run: python python_albaranes/delivery_date_backfill.py --dry-run --year 2025
-      - name: Phase 2 write · 2025
+      - name: Phase 3 pre-write audit · 2024
+        run: python python_albaranes/delivery_date_backfill.py --dry-run --year 2024
+      - name: Phase 3 write · 2024
         env:
           LITOS_DELIVERY_DATE_WRITE_ENABLED: "true"
-        run: python python_albaranes/delivery_date_backfill.py --sync --year 2025 --confirm DELIVERY_DATE_BACKFILL_V1
-      - name: Phase 2 post-write audit · 2025
-        run: python python_albaranes/delivery_date_backfill.py --dry-run --year 2025
+        run: python python_albaranes/delivery_date_backfill.py --sync --year 2024 --confirm DELIVERY_DATE_BACKFILL_V1
+      - name: Phase 3 post-write audit · 2024
+        run: python python_albaranes/delivery_date_backfill.py --dry-run --year 2024
