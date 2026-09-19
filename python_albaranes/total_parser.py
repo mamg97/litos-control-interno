@@ -9,6 +9,7 @@ from typing import Any
 
 import openpyxl
 import xlrd
+from pypdf import PdfReader
 from openpyxl.utils.cell import range_boundaries
 
 SUM_RANGE_RE = re.compile(
@@ -270,8 +271,24 @@ def read_total_xls(content: bytes) -> float | None:
         workbook.release_resources()
 
 
+
+def read_total_pdf(content: bytes) -> float | None:
+    reader = PdfReader(io.BytesIO(content))
+    text = "\n".join(page.extract_text() or "" for page in reader.pages)
+    matches = re.findall(
+        r"(?im)^\s*total\s+(-?\d[\d.]*?(?:,\d{1,2}|\.\d{1,2})?)\s*€?\s*$",
+        text,
+    )
+    for raw in reversed(matches):
+        value = _currency(_decimal(raw))
+        if value is not None:
+            return value
+    return None
+
 def read_total_from_bytes(file_name: str, content: bytes) -> float | None:
     lower = file_name.lower()
+    if lower.endswith(".pdf"):
+        return read_total_pdf(content)
     if lower.endswith(".xls") and not lower.endswith(".xlsx"):
         return read_total_xls(content)
     return read_total_openxml(content)
