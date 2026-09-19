@@ -6,6 +6,7 @@ from __future__ import annotations
 # Historical phased cleanup trigger: 2024.
 # Global historical differentiated-date refill after phased cleanup.
 # Historical phased cleanup trigger: 2022.
+# Focused repair phase: 2026 only.
 # Historical phased cleanup trigger: 2021.
 # Historical phased cleanup trigger: 2020.
 # Stable rerun after recurring-bridge scope fix: 2025.
