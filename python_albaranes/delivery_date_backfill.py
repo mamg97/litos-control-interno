@@ -366,7 +366,11 @@ def build_plan(drive, sheets):
         first_body_row,
         body_rows,
     )
-    scanned, ext_counts = scan_definitive_documents(drive)
+    scan_unlinked = bool_env("LITOS_DELIVERY_SCAN_UNLINKED")
+    if scan_unlinked:
+        scanned, ext_counts = scan_definitive_documents(drive)
+    else:
+        scanned, ext_counts = {}, Counter()
     catalog_file_ids = read_catalog_file_ids(sheets)
 
     cache: dict[tuple[str, str], ParsedDocument | Exception] = {}
@@ -487,6 +491,7 @@ def build_plan(drive, sheets):
     summary = {
         "mode": "DELIVERY_DATE_BACKFILL_PLAN",
         "supported_extensions": sorted(SUPPORTED_EXTENSIONS),
+        "unlinked_recursive_scan": scan_unlinked,
         "drive_candidate_extensions": dict(sorted(ext_counts.items())),
         "conflicts": dict(sorted(conflicts.items())),
         **dict(sorted(stats.items())),
