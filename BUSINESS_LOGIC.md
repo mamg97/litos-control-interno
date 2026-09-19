@@ -24,12 +24,13 @@ Do not collapse these into a single date.
 
 The work trace/history table is ordered for follow-up, not purely chronologically:
 
-1. rows with no `Fecha entrega albarán` come first;
-2. within that undelivered/unresolved block, sort by `Fecha recepción (email)` descending;
-3. if receipt date is missing, fall back to `Fecha ficha` descending;
-4. after all rows without a delivery date, rows with `Fecha entrega albarán` are sorted from most recent delivery to oldest.
+1. group rows by operational/order year, from the most recent year to the oldest;
+2. within each year, rows with no `Fecha entrega albarán` come first;
+3. within that undelivered/unresolved block, sort by `Fecha recepción (email)` descending;
+4. if receipt date is missing, fall back to `Fecha ficha` descending;
+5. after the unresolved rows of that same year, rows with `Fecha entrega albarán` are sorted from most recent delivery to oldest.
 
-This ordering is independent from the economic/statistical reporting date.
+The year grouping is resolved from order-entry evidence first (receipt email, then source/order date), with dashboard/delivery dates only as historical fallbacks. This ordering is independent from the economic/statistical reporting date.
 
 
 ## 2. Private running account / estadillo
