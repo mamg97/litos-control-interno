@@ -108,7 +108,7 @@ jobs:
               }],
           }
           payload = sanitize_public_payload(raw)
-          assert payload["version"] == 11
+          assert payload["version"] == 12
           assert payload["movements"][0]["balance"] == -1733
           record = payload["records"][0]
           assert record["invoiceFile"].startswith("https://drive.google.com/")
@@ -135,7 +135,7 @@ jobs:
         run: |
           set -euo pipefail
           cat > "$RUNNER_TEMP/m7-synthetic-feed.json" <<'JSON'
-          {"version":11,"records":[{"id":"TEST","invoiceFile":"https://drive.google.com/file/d/TEST/view","invoiceDraftFile":"https://docs.google.com/spreadsheets/d/DRAFT/edit","corelFile":"","noteFile":"","attachmentFile":""}],"expenses":[],"movements":[{"year":2026,"date":"2026-09-01","sourceDate":"1/9/2026","type":"ENTREGA A CUENTA","ref":"—","line":null,"concept":"—","debit":null,"credit":1000,"balance":-1733}],"generatedAt":"2026-09-17T00:00:00Z"}
+          {"version":12,"records":[{"id":"TEST","invoiceFile":"https://drive.google.com/file/d/TEST/view","invoiceDraftFile":"https://docs.google.com/spreadsheets/d/DRAFT/edit","corelFile":"","noteFile":"","attachmentFile":""}],"expenses":[],"movements":[{"year":2026,"date":"2026-09-01","sourceDate":"1/9/2026","type":"ENTREGA A CUENTA","ref":"—","line":null,"concept":"—","debit":null,"credit":1000,"balance":-1733}],"generatedAt":"2026-09-17T00:00:00Z"}
           JSON
           python python_feed/build_pages.py --output "$RUNNER_TEMP/m7-site" --feed "$RUNNER_TEMP/m7-synthetic-feed.json"
           test -s "$RUNNER_TEMP/m7-site/index.html"
@@ -228,7 +228,7 @@ jobs:
           from export import DOCUMENT_LINK_KEYS, assert_public_payload_safe
 
           payload = json.loads(Path('_site/data/feed.json').read_text(encoding='utf-8'))
-          assert payload.get('version') == 11
+          assert payload.get('version') == 12
           assert isinstance(payload.get('records'), list) and payload['records']
           assert isinstance(payload.get('expenses'), list)
           assert isinstance(payload.get('movements'), list) and payload['movements']
