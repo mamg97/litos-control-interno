@@ -23,6 +23,8 @@ from history_backfill import as_date, excel_serial, normalize
 
 DELIVERY_HEADER = "Fecha entrega albarán"
 ORDER_DATE_HEADER = "Fecha ficha"
+RECEIPT_DATE_HEADER = "Fecha recepción (email)"
+DASHBOARD_DATE_HEADER = "Fecha para dashboard"
 OBSERVATION_HEADER = "Observación de conciliación"
 INVOICE_HEADER = "Archivo factura / albarán (XLSX)"
 
@@ -151,6 +153,8 @@ def read_master(sheets):
     required = {
         p.HEADERS["id"],
         ORDER_DATE_HEADER,
+        RECEIPT_DATE_HEADER,
+        DASHBOARD_DATE_HEADER,
         OBSERVATION_HEADER,
         INVOICE_HEADER,
         DELIVERY_HEADER,
@@ -439,7 +443,18 @@ def strip_machine_delivery_notes(current: Any) -> str:
     ]
     return " · ".join(kept)
 
-def build_plan(drive, sheets):
+def row_year(row: list[Any], columns: dict[str, int]) -> int | None:
+    for header in (ORDER_DATE_HEADER, RECEIPT_DATE_HEADER, DASHBOARD_DATE_HEADER):
+        index = columns.get(header)
+        if index is None or index >= len(row):
+            continue
+        value = as_date(row[index])
+        if value is not None:
+            return value.year
+    return None
+
+
+def build_plan(drive, sheets, *, target_year: int | None = None):
     rows, header_index, columns = read_master(sheets)
     body_rows = max(0, len(rows) - header_index - 1)
     first_body_row = header_index + 2
@@ -463,8 +478,20 @@ def build_plan(drive, sheets):
     # Historical catalogs contain hundreds of definitive files. Read them in
     # parallel with separate Drive clients per worker, but keep all writes
     # single-threaded and deferred until after the complete plan is validated.
+    relevant_order_ids: set[str] | None = None
+    if target_year is not None:
+        relevant_order_ids = set()
+        for row_index in range(header_index + 1, len(rows)):
+            row = rows[row_index]
+            id_col = columns[p.HEADERS["id"]]
+            order_id = clean(row[id_col]) if id_col < len(row) else ""
+            if re.fullmatch(r"\d{4}", order_id) and row_year(row, columns) == target_year:
+                relevant_order_ids.add(order_id)
+
     unique_catalog_files: dict[str, CandidateFile] = {}
-    for files in catalog_candidates.values():
+    for order_id, files in catalog_candidates.items():
+        if relevant_order_ids is not None and order_id not in relevant_order_ids:
+            continue
         for file in files:
             if extension(file.name) in SUPPORTED_EXTENSIONS and not is_draft(file.name):
                 unique_catalog_files.setdefault(file.file_id, file)
@@ -489,6 +516,8 @@ def build_plan(drive, sheets):
         id_col = columns[p.HEADERS["id"]]
         order_id = clean(row[id_col]) if id_col < len(row) else ""
         if not re.fullmatch(r"\d{4}", order_id):
+            continue
+        if target_year is not None and row_year(row, columns) != target_year:
             continue
 
         current = row[columns[DELIVERY_HEADER]] if columns[DELIVERY_HEADER] < len(row) else ""
@@ -638,6 +667,7 @@ def build_plan(drive, sheets):
 
     summary = {
         "mode": "DELIVERY_DATE_BACKFILL_PLAN",
+        "target_year": target_year,
         "supported_extensions": sorted(SUPPORTED_EXTENSIONS),
         "unlinked_recursive_scan": scan_unlinked,
         "drive_candidate_extensions": dict(sorted(ext_counts.items())),
@@ -677,10 +707,10 @@ def update_request(sheet_id_value: int, row_zero: int, col_zero: int, cell: dict
     }
 
 
-def sync(confirm: str):
+def sync(confirm: str, *, target_year: int | None = None):
     assert_write_allowed(confirm)
     drive, sheets = p.build_services()
-    _rows, _header_index, columns, plans, before = build_plan(drive, sheets)
+    _rows, _header_index, columns, plans, before = build_plan(drive, sheets, target_year=target_year)
     sid = sheet_id(sheets)
     requests: list[dict] = []
 
@@ -726,6 +756,7 @@ def sync(confirm: str):
 
     result = {
         "mode": "DELIVERY_DATE_BACKFILL_SYNC",
+        "target_year": target_year,
         "planned_rows_before_sync": before["planned_rows"],
         "dates_backfillable_before_sync": before.get("dates_backfillable", 0),
         "rows_written": len(plans),
@@ -742,16 +773,17 @@ def main() -> int:
     mode.add_argument("--dry-run", action="store_true")
     mode.add_argument("--sync", action="store_true")
     parser.add_argument("--confirm", default="")
+    parser.add_argument("--year", type=int, default=None)
     args = parser.parse_args()
 
     drive, sheets = p.build_services()
     if args.dry_run:
-        _rows, _header_index, _columns, _plans, summary = build_plan(drive, sheets)
+        _rows, _header_index, _columns, _plans, summary = build_plan(drive, sheets, target_year=args.year)
         print("DELIVERY_DATE_BACKFILL_DRY_RUN_OK")
         print(json.dumps(summary, sort_keys=True))
         return 0
 
-    sync(args.confirm)
+    sync(args.confirm, target_year=args.year)
     return 0
 
 
