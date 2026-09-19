@@ -306,6 +306,7 @@ function mapPublicRows(records) {
     "Fecha ficha": text(record.orderDate),
     "Fecha recepción (email)": text(record.receiptDate),
     "Fecha entrega (estadillo)": text(record.deliveredDate),
+    "Fecha entrega albarán": text(record.deliveryDocumentDate),
     "Fecha para dashboard": text(record.date),
     "Importe trabajo / Debe (€)": record.amount ?? "",
     "Precio final (€)": record.finalPrice ?? record.pvp ?? "",
@@ -1136,9 +1137,9 @@ function formatOperationalDate(value) {
 }
 
 function traceDate(order) {
-  // The traceability view follows actual receipt chronology. Older records
-  // inherit the fiche date, so they remain consistently ordered.
-  return parseDate(order["Fecha recepción (email)"] || order["Fecha ficha"] || order["Fecha para dashboard"]);
+  // Operational traceability is ordered by definitive delivery first, then
+  // receipt email, then the date written on the source order/note.
+  return parseDate(order["Fecha entrega albarán"] || order["Fecha recepción (email)"] || order["Fecha ficha"]);
 }
 
 function currentQuarterBounds(now = new Date()) {
@@ -1178,6 +1179,7 @@ function matchesTraceQuery(order, query) {
   return !query || normalize([
     order.Pedido,
     order["Fecha para dashboard"],
+    order["Fecha entrega albarán"],
     order["Fecha recepción (email)"],
     order["Fecha ficha"],
     familyFor(order.Modelo),
@@ -1194,7 +1196,7 @@ function renderTraceTable({ bodySelector, countSelector, searchSelector }) {
   if (!state.connected) {
     const row = document.createElement("tr");
     const cell = document.createElement("td");
-    cell.colSpan = 12;
+    cell.colSpan = 13;
     cell.className = "empty-state";
     cell.textContent = "Cargando datos operativos…";
     row.append(cell);
@@ -1207,11 +1209,11 @@ function renderTraceTable({ bodySelector, countSelector, searchSelector }) {
   const rows = allRows.filter((order) => matchesTraceQuery(order, query));
   if (count) count.textContent = query
     ? `${formatInt.format(rows.length)} de ${formatInt.format(allRows.length)} trabajos`
-    : `${formatInt.format(allRows.length)} trabajos · recepción real`;
+    : `${formatInt.format(allRows.length)} trabajos · entrega → recepción → pedido`;
   if (!rows.length) {
     const row = document.createElement("tr");
     const cell = document.createElement("td");
-    cell.colSpan = 12;
+    cell.colSpan = 13;
     cell.className = "empty-state";
     cell.textContent = "No hay trabajos que coincidan con la búsqueda.";
     row.append(cell);
@@ -1222,6 +1224,7 @@ function renderTraceTable({ bodySelector, countSelector, searchSelector }) {
     const row = document.createElement("tr");
     [
       order.Pedido,
+      formatOperationalDate(order["Fecha entrega albarán"]),
       formatOperationalDate(order["Fecha recepción (email)"]),
       formatOperationalDate(order["Fecha ficha"]),
       familyFor(order.Modelo),
