@@ -3,6 +3,7 @@ from __future__ import annotations
 # 2026 workbook-header cleanup rerun.
 # Historical phased cleanup trigger: 2025.
 # Historical phased cleanup trigger: 2025 retry.
+# Historical phased cleanup trigger: 2024.
 
 import argparse
 import io
