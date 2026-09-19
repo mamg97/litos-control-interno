@@ -104,7 +104,7 @@ def sanitize_public_payload(payload: dict[str, Any]) -> dict[str, Any]:
         sanitized_movements.append({key: raw_movement.get(key) for key in MOVEMENT_KEYS})
 
     sanitized = {
-        "version": 11,
+        "version": 12,
         "generatedAt": payload.get("generatedAt"),
         "records": sanitized_records,
         "expenses": sanitized_expenses,
