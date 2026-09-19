@@ -98,6 +98,22 @@ jobs:
           LITOS_DELIVERY_SCAN_UNLINKED: 'true'
         run: python python_albaranes/delivery_date_backfill.py --sync --confirm DELIVERY_DATE_BACKFILL_V1
 
+      - name: Phased delivery-date backfill by year
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[LITOS-DELIVERY-YEAR-') }}
+        env:
+          LITOS_DELIVERY_DATE_WRITE_ENABLED: 'true'
+          LITOS_DELIVERY_SCAN_UNLINKED: 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          msg='${{ github.event.head_commit.message }}'
+          year="$(printf '%s' "$msg" | sed -n 's/.*\[LITOS-DELIVERY-YEAR-\(20[0-9][0-9]\)\].*/\1/p')"
+          case "$year" in
+            2020|2021|2022|2023|2024|2025|2026) ;;
+            *) echo "Invalid or missing phased delivery year"; exit 1 ;;
+          esac
+          python python_albaranes/delivery_date_backfill.py --sync --year "$year" --confirm DELIVERY_DATE_BACKFILL_V1
+
       - name: One-time historical master backfill
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[LITOS-HISTORY-BACKFILL]') }}
         env:
