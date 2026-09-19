@@ -126,9 +126,7 @@ jobs:
           set -euo pipefail
           for year in 2025 2024 2023 2022 2021 2020; do
             echo "===== LITOS delivery repair phase $year ====="
-            python python_albaranes/delivery_date_backfill.py --dry-run --year "$year"
             python python_albaranes/delivery_date_backfill.py --sync --year "$year" --confirm DELIVERY_DATE_BACKFILL_V1
-            python python_albaranes/delivery_date_backfill.py --dry-run --year "$year"
           done
 
       - name: One-time historical master backfill
