@@ -145,10 +145,11 @@ def build_plan():
             invalid_reason = ""
 
         current_obs = row[columns[OBS_HEADER]] if columns[OBS_HEADER] < len(row) else ""
+        manual_validated_override = "ALBARÁN VALIDADO MANUALMENTE" in clean(current_obs)
         current_final = row[columns[FINAL_HEADER]] if columns[FINAL_HEADER] < len(row) else None
         current_total = row[columns[TOTAL_HEADER]] if columns[TOTAL_HEADER] < len(row) else None
 
-        if not internal:
+        if not internal and not manual_validated_override:
             stats["internal_id_missing"] += 1
             plans.append({
                 "row": row_index,
@@ -159,7 +160,7 @@ def build_plan():
             stats["invalid_link_clears"] += 1
             continue
 
-        if internal != order_id:
+        if internal and internal != order_id and not manual_validated_override:
             stats["internal_id_mismatch"] += 1
             plans.append({
                 "row": row_index,
@@ -173,6 +174,9 @@ def build_plan():
         if total is None:
             stats["total_missing"] += 1
             continue
+
+        if manual_validated_override and internal != order_id:
+            stats["manual_validated_overrides"] = stats.get("manual_validated_overrides", 0) + 1
 
         stats["valid_documents"] += 1
         update_price = not same_money(current_final, total)
