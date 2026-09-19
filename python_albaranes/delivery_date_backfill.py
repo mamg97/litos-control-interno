@@ -8,6 +8,7 @@ from __future__ import annotations
 # Historical phased cleanup trigger: 2022.
 # Historical phased cleanup trigger: 2021.
 # Historical phased cleanup trigger: 2020.
+# Stable rerun after recurring-bridge scope fix: 2025.
 # Historical PDF scan repair phase: 2025.
 # Historical PDF scan repair phase: 2025 retry 2.
 # Historical PDF scan repair phase: 2025 retry 3.
