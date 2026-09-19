@@ -1,6 +1,7 @@
 name: LITOS Delivery Date Backfill · 2022
 # phase-5 semantics: validated definitive albaran FECHA is delivery date
 # annual phases use linked/catalog candidates; orphan scan is a separate final phase
+# legacy NUM/Nº templates supported
 # rerun after canonical delivery-date rule
 
 on:
