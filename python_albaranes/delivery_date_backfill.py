@@ -223,16 +223,20 @@ def parse_workbook(content: bytes, name: str) -> ParsedDocument:
                 if not norm:
                     continue
                 if not internal_order and "pedido" in norm:
-                    for candidate in row[col_index + 1 : col_index + 8]:
-                        match = ORDER_RE.search(clean(candidate))
-                        if match:
-                            internal_order = match.group(1)
-                            break
-                        if isinstance(candidate, (int, float)) and not isinstance(candidate, bool):
-                            number = int(candidate)
-                            if 1000 <= number <= 9999:
-                                internal_order = str(number)
+                    direct = ORDER_RE.search(clean(value))
+                    if direct:
+                        internal_order = direct.group(1)
+                    else:
+                        for candidate in row[col_index + 1 : col_index + 8]:
+                            match = ORDER_RE.search(clean(candidate))
+                            if match:
+                                internal_order = match.group(1)
                                 break
+                            if isinstance(candidate, (int, float)) and not isinstance(candidate, bool):
+                                number = int(candidate)
+                                if 1000 <= number <= 9999:
+                                    internal_order = str(number)
+                                    break
 
                 if norm in {"fecha", "fecha de entrega"}:
                     candidate = date_near_label(rows, row_index, col_index, datemode)
