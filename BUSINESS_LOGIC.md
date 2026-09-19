@@ -15,10 +15,22 @@ Important date concepts are distinct:
 - `Fecha recepción (email)`: when the authorized intake email was received.
 - `Fecha ficha`: order/work-sheet date from the source document.
 - `Fecha entrega (estadillo)`: date the work was delivered/posted to the private running account.
-- `Fecha entrega albarán`: delivery date written in the validated definitive albarán/document itself. It is documentary evidence and must remain separate from the running-account date.
+- `Fecha entrega albarán`: the `FECHA` written in the validated definitive albarán/document itself. Once the work ID is validated, this documentary date is treated as the delivery date. It must remain separate from the running-account date; impossible/conflicting dates stay unresolved for review.
 - `Fecha para dashboard`: canonical reporting date consumed by the website. If empty, feed code falls back to delivery, receipt, then fiche date.
 
 Do not collapse these into a single date.
+
+### Operational trace ordering
+
+The work trace/history table is ordered for follow-up, not purely chronologically:
+
+1. rows with no `Fecha entrega albarán` come first;
+2. within that undelivered/unresolved block, sort by `Fecha recepción (email)` descending;
+3. if receipt date is missing, fall back to `Fecha ficha` descending;
+4. after all rows without a delivery date, rows with `Fecha entrega albarán` are sorted from most recent delivery to oldest.
+
+This ordering is independent from the economic/statistical reporting date.
+
 
 ## 2. Private running account / estadillo
 
