@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+# 2026 workbook-header cleanup rerun.
+
 import argparse
 import io
 import json
