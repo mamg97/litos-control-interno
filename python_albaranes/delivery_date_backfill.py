@@ -4,8 +4,10 @@ import argparse
 import io
 import json
 import os
+import threading
 import re
 from collections import Counter, defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from typing import Any
@@ -13,6 +15,8 @@ from typing import Any
 import openpyxl
 import xlrd
 from pypdf import PdfReader
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
 
 import parity as p
 from history_backfill import as_date, excel_serial, normalize
@@ -300,6 +304,30 @@ def parse_pdf_all(content: bytes, name: str) -> dict[str, ParsedDocument]:
     }
 
 
+_THREAD_LOCAL = threading.local()
+
+
+def worker_drive_service():
+    service = getattr(_THREAD_LOCAL, "drive", None)
+    if service is not None:
+        return service
+    raw = os.environ.get("GOOGLE_OAUTH_USER_JSON", "").strip()
+    if not raw:
+        raise RuntimeError("GOOGLE_OAUTH_USER_JSON is missing")
+    info = json.loads(raw)
+    credentials = Credentials.from_authorized_user_info(info, scopes=p.SCOPES)
+    service = build("drive", "v3", credentials=credentials, cache_discovery=False)
+    _THREAD_LOCAL.drive = service
+    return service
+
+
+def parse_file_worker(file: CandidateFile) -> tuple[str, dict[str, ParsedDocument] | Exception]:
+    try:
+        return file.file_id, parse_document_all(worker_drive_service(), file)
+    except Exception as exc:
+        return file.file_id, exc
+
+
 def parse_document_all(drive, file: CandidateFile) -> dict[str, ParsedDocument]:
     content = p._download_file(drive, file.file_id)
     ext = extension(file.name)
@@ -409,8 +437,30 @@ def build_plan(drive, sheets):
     cache: dict[str, dict[str, ParsedDocument] | Exception] = {}
     meta_cache: dict[str, CandidateFile | None] = {}
     plans: list[dict[str, Any]] = []
+
+    # Historical catalogs contain hundreds of definitive files. Read them in
+    # parallel with separate Drive clients per worker, but keep all writes
+    # single-threaded and deferred until after the complete plan is validated.
+    unique_catalog_files: dict[str, CandidateFile] = {}
+    for files in catalog_candidates.values():
+        for file in files:
+            if extension(file.name) in SUPPORTED_EXTENSIONS and not is_draft(file.name):
+                unique_catalog_files.setdefault(file.file_id, file)
+
+    workers = max(1, min(8, int(os.environ.get("LITOS_DELIVERY_READ_WORKERS", "8"))))
+    if unique_catalog_files:
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            futures = [
+                executor.submit(parse_file_worker, file)
+                for file in unique_catalog_files.values()
+            ]
+            for future in as_completed(futures):
+                file_id, parsed_or_exc = future.result()
+                cache[file_id] = parsed_or_exc
     stats: Counter[str] = Counter()
     conflicts: Counter[str] = Counter()
+    stats["catalog_files_preparsed"] = len(unique_catalog_files)
+    stats["catalog_parse_errors"] = sum(1 for value in cache.values() if isinstance(value, Exception))
 
     for body_index, row_index in enumerate(range(header_index + 1, len(rows))):
         row = rows[row_index]
