@@ -28,6 +28,7 @@ import parity as p
 from history_backfill import as_date, excel_serial, normalize
 
 DELIVERY_HEADER = "Fecha entrega albarán"
+STAT_DELIVERY_HEADER = "Fecha entrega (estadillo)"
 ORDER_DATE_HEADER = "Fecha ficha"
 RECEIPT_DATE_HEADER = "Fecha recepción (email)"
 DASHBOARD_DATE_HEADER = "Fecha para dashboard"
@@ -35,6 +36,15 @@ OBSERVATION_HEADER = "Observación de conciliación"
 INVOICE_HEADER = "Archivo factura / albarán (XLSX)"
 
 SUPPORTED_EXTENSIONS = {".pdf", ".xls", ".xlsx", ".xlsm"}
+YEAR_ROOT_FOLDER_IDS = {
+    2020: "1UMgVG8IvZSJkCSxxrumXoBLxKaN6h7BK",
+    2021: "1MitrqxWNS-ympuhRfoYr-fvMzbJCvyH1",
+    2022: "1jT8Mlq4aeLvL4pWcChUFlTPHK0xe_Ynq",
+    2023: "1d94eLfw6EOf0N9YOyJubpz1u4pCr_wsq",
+    2024: "1TD0z7lRXkDOx47-dq4ig5vmDGUDC3BH7",
+    2025: "1yicoADtD85yEWZ9Qevcn0mzhRqcYiXQU",
+    2026: p.ROOT_FOLDER_ID,
+}
 RAW_CATALOG_SHEETS = ("Catálogo albaranes · bruto", "Catálogo albaranes 2023-2026 · bruto")
 ORDER_RE = re.compile(r"(?<!\d)(\d{4})(?!\d)")
 PDF_ORDER_RE = re.compile(r"(?i)pedido\s*(?:n[º°o.]*)?\s*(\d{4})(?!\d)")
@@ -100,38 +110,56 @@ def list_children(drive, folder_id: str) -> list[dict]:
     return p._list_children(drive, folder_id)
 
 
-def scan_definitive_documents(drive) -> tuple[dict[str, list[CandidateFile]], Counter[str]]:
+def scan_definitive_documents(
+    drive,
+    *,
+    target_year: int | None = None,
+) -> tuple[dict[str, list[CandidateFile]], Counter[str]]:
     index: dict[str, list[CandidateFile]] = defaultdict(list)
     extensions: Counter[str] = Counter()
     visited: set[str] = set()
-    stack = [p.ROOT_FOLDER_ID]
+
+    if target_year is not None:
+        root_id = YEAR_ROOT_FOLDER_IDS.get(target_year)
+        if not root_id:
+            return index, extensions
+        stack: list[tuple[str, str]] = [(root_id, "")]
+    else:
+        stack = [(folder_id, "") for folder_id in YEAR_ROOT_FOLDER_IDS.values()]
 
     while stack:
-        folder_id = stack.pop()
+        folder_id, inherited_order_id = stack.pop()
         if folder_id in visited:
             continue
         visited.add(folder_id)
+
         for item in list_children(drive, folder_id):
             item_id = clean(item.get("id"))
             name = clean(item.get("name"))
             mime = clean(item.get("mimeType"))
+
             if mime == "application/vnd.google-apps.folder":
                 if item_id == p.SYSTEM_FOLDER_ID or name == "_sistema":
                     continue
-                stack.append(item_id)
+                folder_order = inherited_order_id
+                if re.fullmatch(r"\d{4}", name):
+                    folder_order = name
+                stack.append((item_id, folder_order))
                 continue
 
-            match = p.ORDER_ID_RE.search(name)
-            if not match or is_draft(name) or p.NOTE_RE.search(name.lower()):
+            if is_draft(name) or p.NOTE_RE.search(name.lower()):
                 continue
 
             ext = extension(name)
-            is_native_sheet = mime == p.GOOGLE_SHEETS_MIME
-            extensions[ext or ("<google-sheet>" if is_native_sheet else "<sin_extension>")] += 1
-            if ext not in SUPPORTED_EXTENSIONS and not is_native_sheet:
+            extensions[ext or "<sin_extension>"] += 1
+            if ext not in SUPPORTED_EXTENSIONS:
                 continue
 
-            order_id = match.group(1)
+            match = p.ORDER_ID_RE.search(name)
+            order_id = match.group(1) if match else inherited_order_id
+            if not order_id or not re.fullmatch(r"\d{4}", order_id):
+                continue
+
             index[order_id].append(
                 CandidateFile(
                     file_id=item_id,
@@ -143,43 +171,9 @@ def scan_definitive_documents(drive) -> tuple[dict[str, list[CandidateFile]], Co
             )
 
     for files in index.values():
-        files.sort(key=lambda item: item.modified_time, reverse=True)
+        files.sort(key=lambda item: (extension(item.name) != ".pdf", item.modified_time or ""))
+
     return index, extensions
-
-
-def read_master(sheets):
-    response = sheets.spreadsheets().values().get(
-        spreadsheetId=p.MASTER_ID,
-        range=f"'{p.SHEET_NAME}'",
-        valueRenderOption="UNFORMATTED_VALUE",
-        dateTimeRenderOption="FORMATTED_STRING",
-    ).execute()
-    rows = response.get("values", [])
-    header_index = next(
-        (i for i, row in enumerate(rows) if any(clean(cell) == p.HEADERS["id"] for cell in row)),
-        -1,
-    )
-    if header_index < 0:
-        raise RuntimeError("Master header not found")
-    headers = [clean(cell) for cell in rows[header_index]]
-    columns = {header: i for i, header in enumerate(headers) if header}
-    required = {
-        p.HEADERS["id"],
-        ORDER_DATE_HEADER,
-        RECEIPT_DATE_HEADER,
-        DASHBOARD_DATE_HEADER,
-        OBSERVATION_HEADER,
-        INVOICE_HEADER,
-        DELIVERY_HEADER,
-    }
-    missing = sorted(required - set(columns))
-    if missing:
-        raise RuntimeError("Master header contract changed: " + ", ".join(missing))
-    return rows, header_index, columns
-
-
-def link_column(sheets, column_index: int, first_body_row: int, body_rows: int):
-    return p.read_link_column(sheets, column_index, first_body_row, body_rows)
 
 
 def get_file_meta(drive, file_id: str) -> CandidateFile | None:
@@ -424,13 +418,22 @@ def read_catalog_candidates(sheets) -> dict[str, list[CandidateFile]]:
             )
     return result
 
-def plausible_delivery(candidate: date | None, order_date: date | None) -> bool:
+def plausible_delivery(
+    candidate: date | None,
+    order_date: date | None,
+    stat_delivery_date: date | None = None,
+) -> bool:
     if candidate is None:
         return False
     today = datetime.now().date()
     if candidate < date(2000, 1, 1) or candidate > today + timedelta(days=1):
         return False
     if order_date is not None and candidate < order_date:
+        return False
+    # The documentary albarán date cannot occur after a delivery already
+    # recorded in the customer ledger. Fail closed instead of accepting
+    # a later header/order date from a stale or reused document.
+    if stat_delivery_date is not None and candidate > stat_delivery_date:
         return False
     return True
 
@@ -480,7 +483,7 @@ def build_plan(drive, sheets, *, target_year: int | None = None):
     )
     scan_unlinked = bool_env("LITOS_DELIVERY_SCAN_UNLINKED")
     if scan_unlinked:
-        scanned, ext_counts = scan_definitive_documents(drive)
+        scanned, ext_counts = scan_definitive_documents(drive, target_year=target_year)
     else:
         scanned, ext_counts = {}, Counter()
     catalog_candidates = read_catalog_candidates(sheets)
@@ -544,6 +547,8 @@ def build_plan(drive, sheets, *, target_year: int | None = None):
         current_date = as_date(current)
         order_date_raw = row[columns[ORDER_DATE_HEADER]] if columns[ORDER_DATE_HEADER] < len(row) else None
         order_date = as_date(order_date_raw)
+        stat_delivery_raw = row[columns[STAT_DELIVERY_HEADER]] if columns.get(STAT_DELIVERY_HEADER, -1) >= 0 and columns[STAT_DELIVERY_HEADER] < len(row) else None
+        stat_delivery_date = as_date(stat_delivery_raw)
 
         candidates: list[CandidateFile] = []
         linked = invoice_links[body_index] if body_index < len(invoice_links) else p.LinkCell("", "")
@@ -623,12 +628,12 @@ def build_plan(drive, sheets, *, target_year: int | None = None):
             if parsed.raw_delivery_date is None:
                 stats["documents_without_delivery_date"] += 1
                 continue
-            if not plausible_delivery(parsed.delivery_date, order_date):
+            if not plausible_delivery(parsed.delivery_date, order_date, stat_delivery_date):
                 conflicts["implausible_delivery_date"] += 1
-                row_conflicts.append(
-                    "fecha de entrega documental incompatible "
-                    + parsed.raw_delivery_date.isoformat()
-                )
+                detail = "fecha de entrega documental incompatible " + parsed.raw_delivery_date.isoformat()
+                if stat_delivery_date is not None and parsed.delivery_date and parsed.delivery_date > stat_delivery_date:
+                    detail += " (posterior al estadillo " + stat_delivery_date.isoformat() + ")"
+                row_conflicts.append(detail)
                 continue
             accepted = (candidate, parsed)
             break
