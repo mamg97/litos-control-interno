@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths:
+      - 'python_albaranes/parity.py'
       - 'python_albaranes/total_parser.py'
       - 'python_albaranes/parity_v2.py'
       - '.github/workflows/albaranes-parity-v2.yml'
