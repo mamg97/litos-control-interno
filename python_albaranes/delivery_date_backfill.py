@@ -23,6 +23,7 @@ OBSERVATION_HEADER = "Observación de conciliación"
 INVOICE_HEADER = "Archivo factura / albarán (XLSX)"
 
 SUPPORTED_EXTENSIONS = {".pdf", ".xls", ".xlsx", ".xlsm"}
+RAW_CATALOG_SHEETS = ("Catálogo albaranes · bruto", "Catálogo albaranes 2023-2026 · bruto")
 ORDER_RE = re.compile(r"(?<!\d)(\d{4})(?!\d)")
 PDF_ORDER_RE = re.compile(r"(?i)pedido\s*(?:n[º°o.]*)?\s*(\d{4})(?!\d)")
 PDF_DELIVERY_RE = re.compile(
@@ -210,72 +211,132 @@ def date_near_label(rows: list[list[Any]], row_index: int, col_index: int, datem
     return None
 
 
-def parse_workbook(content: bytes, name: str) -> ParsedDocument:
+def order_id_in_row(row: list[Any]) -> str:
+    for col_index, value in enumerate(row):
+        norm = normalize(value)
+        if "pedido" not in norm:
+            continue
+        direct = ORDER_RE.search(clean(value))
+        if direct:
+            return direct.group(1)
+        for candidate in row[col_index + 1 : col_index + 8]:
+            match = ORDER_RE.search(clean(candidate))
+            if match:
+                return match.group(1)
+            if isinstance(candidate, (int, float)) and not isinstance(candidate, bool):
+                number = int(candidate)
+                if 1000 <= number <= 9999:
+                    return str(number)
+    return ""
+
+
+def delivery_date_in_segment(
+    rows: list[list[Any]],
+    start_row: int,
+    end_row: int,
+    datemode: int | None,
+) -> date | None:
+    candidates: list[date] = []
+    for row_index in range(start_row, end_row):
+        row = rows[row_index]
+        for col_index, value in enumerate(row):
+            norm = normalize(value).rstrip(".:")
+            if norm not in {"fecha", "fecha de entrega"}:
+                continue
+            candidate = date_near_label(rows, row_index, col_index, datemode)
+            if candidate is not None:
+                candidates.append(candidate)
+    return candidates[-1] if candidates else None
+
+
+def parse_workbook(content: bytes, name: str, target_order: str) -> ParsedDocument:
     lower = name.lower()
     matrices = matrix_xls(content) if lower.endswith(".xls") and not lower.endswith(".xlsx") else matrix_openxml(content)
-    internal_order = ""
-    date_candidates: list[date] = []
 
+    discovered_orders: list[str] = []
     for rows, datemode in matrices:
+        starts: list[tuple[int, str]] = []
         for row_index, row in enumerate(rows):
-            for col_index, value in enumerate(row):
-                norm = normalize(value).rstrip(".:")
-                if not norm:
-                    continue
-                if not internal_order and "pedido" in norm:
-                    direct = ORDER_RE.search(clean(value))
-                    if direct:
-                        internal_order = direct.group(1)
-                    else:
-                        for candidate in row[col_index + 1 : col_index + 8]:
-                            match = ORDER_RE.search(clean(candidate))
-                            if match:
-                                internal_order = match.group(1)
-                                break
-                            if isinstance(candidate, (int, float)) and not isinstance(candidate, bool):
-                                number = int(candidate)
-                                if 1000 <= number <= 9999:
-                                    internal_order = str(number)
-                                    break
+            order_id = order_id_in_row(row)
+            if order_id:
+                starts.append((row_index, order_id))
+                discovered_orders.append(order_id)
 
-                if norm in {"fecha", "fecha de entrega"}:
-                    candidate = date_near_label(rows, row_index, col_index, datemode)
-                    if candidate is not None:
-                        date_candidates.append(candidate)
+        for index, (start_row, order_id) in enumerate(starts):
+            if order_id != target_order:
+                continue
+            end_row = starts[index + 1][0] if index + 1 < len(starts) else len(rows)
+            raw = delivery_date_in_segment(rows, start_row, end_row, datemode)
+            return ParsedDocument(
+                internal_order=order_id,
+                delivery_date=raw,
+                raw_delivery_date=raw,
+                parser="spreadsheet",
+            )
 
-    raw = date_candidates[-1] if date_candidates else None
+    # Fail closed when the target ID cannot be found inside the workbook.
+    internal = discovered_orders[0] if len(set(discovered_orders)) == 1 else ""
     return ParsedDocument(
-        internal_order=internal_order,
-        delivery_date=raw,
-        raw_delivery_date=raw,
+        internal_order=internal,
+        delivery_date=None,
+        raw_delivery_date=None,
         parser="spreadsheet",
     )
 
 
-def parse_pdf(content: bytes) -> ParsedDocument:
+def parse_pdf(content: bytes, target_order: str) -> ParsedDocument:
     reader = PdfReader(io.BytesIO(content))
     text = "\n".join(page.extract_text() or "" for page in reader.pages)
     order_match = PDF_ORDER_RE.search(text)
+    internal = order_match.group(1) if order_match else ""
     dates = [as_date(value) for value in PDF_DELIVERY_RE.findall(text)]
     dates = [value for value in dates if value is not None]
     raw = dates[-1] if dates else None
     return ParsedDocument(
-        internal_order=order_match.group(1) if order_match else "",
-        delivery_date=raw,
+        internal_order=internal,
+        delivery_date=raw if not internal or internal == target_order else None,
         raw_delivery_date=raw,
         parser="pdf",
     )
 
 
-def parse_document(drive, file: CandidateFile) -> ParsedDocument:
+def parse_document(drive, file: CandidateFile, target_order: str) -> ParsedDocument:
     content = p._download_file(drive, file.file_id)
     ext = extension(file.name)
     if ext == ".pdf":
-        return parse_pdf(content)
+        return parse_pdf(content, target_order)
     if ext in {".xls", ".xlsx", ".xlsm"}:
-        return parse_workbook(content, file.name)
+        return parse_workbook(content, file.name, target_order)
     raise RuntimeError("unsupported extension")
 
+
+def read_catalog_file_ids(sheets) -> dict[str, list[str]]:
+    result: dict[str, list[str]] = defaultdict(list)
+    seen: dict[str, set[str]] = defaultdict(set)
+    for sheet_name in RAW_CATALOG_SHEETS:
+        try:
+            values = sheets.spreadsheets().values().get(
+                spreadsheetId=p.MASTER_ID,
+                range=f"'{sheet_name}'!A:F",
+                valueRenderOption="FORMATTED_VALUE",
+            ).execute().get("values", [])
+        except Exception:
+            continue
+        if not values:
+            continue
+        headers = [clean(value) for value in values[0]]
+        columns = {header: index for index, header in enumerate(headers)}
+        if "File ID" not in columns or "Pedido" not in columns:
+            continue
+        for row in values[1:]:
+            file_id = clean(row[columns["File ID"]]) if columns["File ID"] < len(row) else ""
+            order_id = clean(row[columns["Pedido"]]) if columns["Pedido"] < len(row) else ""
+            if not file_id or not re.fullmatch(r"\d{4}", order_id):
+                continue
+            if file_id not in seen[order_id]:
+                seen[order_id].add(file_id)
+                result[order_id].append(file_id)
+    return result
 
 def plausible_delivery(candidate: date | None, order_date: date | None) -> bool:
     if candidate is None:
@@ -306,8 +367,9 @@ def build_plan(drive, sheets):
         body_rows,
     )
     scanned, ext_counts = scan_definitive_documents(drive)
+    catalog_file_ids = read_catalog_file_ids(sheets)
 
-    cache: dict[str, ParsedDocument | Exception] = {}
+    cache: dict[tuple[str, str], ParsedDocument | Exception] = {}
     plans: list[dict[str, Any]] = []
     stats: Counter[str] = Counter()
     conflicts: Counter[str] = Counter()
@@ -336,6 +398,14 @@ def build_plan(drive, sheets):
                 candidates.append(meta)
 
         seen = {item.file_id for item in candidates}
+        for file_id in catalog_file_ids.get(order_id, []):
+            if file_id in seen:
+                continue
+            meta = get_file_meta(drive, file_id)
+            if meta is not None and extension(meta.name) in SUPPORTED_EXTENSIONS and not is_draft(meta.name):
+                candidates.append(meta)
+                seen.add(meta.file_id)
+
         for item in scanned.get(order_id, []):
             if item.file_id not in seen:
                 candidates.append(item)
@@ -351,15 +421,16 @@ def build_plan(drive, sheets):
 
         for candidate in candidates:
             stats[f"candidate_ext_{extension(candidate.name) or 'none'}"] += 1
-            parsed_or_exc = cache.get(candidate.file_id)
+            cache_key = (candidate.file_id, order_id)
+            parsed_or_exc = cache.get(cache_key)
             if parsed_or_exc is None:
                 try:
-                    parsed_or_exc = parse_document(drive, candidate)
-                    cache[candidate.file_id] = parsed_or_exc
+                    parsed_or_exc = parse_document(drive, candidate, order_id)
+                    cache[cache_key] = parsed_or_exc
                     stats["documents_parsed"] += 1
                 except Exception as exc:
                     parsed_or_exc = exc
-                    cache[candidate.file_id] = exc
+                    cache[cache_key] = exc
                     stats["parse_errors"] += 1
 
             if isinstance(parsed_or_exc, Exception):
