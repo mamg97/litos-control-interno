@@ -41,6 +41,7 @@ def _write_only_if_blank(sheets, sheet_name: str, row_no: int, col_zero: int, va
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--max-mutations", type=int, default=None)
+    parser.add_argument("--multi-order-only", action="store_true")
     args = parser.parse_args()
 
     services = base.build_client_services()
@@ -56,7 +57,7 @@ def main() -> int:
     # Patch only the primitive cell writer. Folder/file creation still retains
     # the original guarded behavior and rollback logic.
     base.update_value = _write_only_if_blank
-    result = base.sync_intake(max_mutations=None)
+    result = base.sync_intake(max_mutations=None, multi_order_only=args.multi_order_only)
 
     originally_reported = int(result.get("sheet_cells", 0))
     result["logical_write_attempts"] = originally_reported
