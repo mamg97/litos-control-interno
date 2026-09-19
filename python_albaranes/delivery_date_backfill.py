@@ -11,6 +11,7 @@ from __future__ import annotations
 # Historical PDF scan repair phase: 2025 retry 3.
 # Historical PDF scan repair phase: 2024.
 # Historical PDF scan repair phase: 2023.
+# Historical PDF scan repair phase: 2022.
 
 import argparse
 import io
