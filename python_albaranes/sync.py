@@ -63,7 +63,7 @@ def _sheet_id(sheets) -> int:
 
 
 def _read_total_formula_aware(drive, file: p.DriveFile) -> float | None:
-    content = p._download_file(drive, file.file_id)
+    content = p._download_file(drive, file.file_id, file.mime_type)
     return read_total_from_bytes(file.name, content)
 
 
