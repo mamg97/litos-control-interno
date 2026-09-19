@@ -30,6 +30,7 @@ from intake_readonly import (
     list_candidate_messages,
     load_private_intake_config,
     list_folder_files,
+    list_sent_messages,
     sender_address,
     stored_attachment_name,
 )
@@ -275,14 +276,23 @@ def ensure_review_row(sheets, review_state: dict, order_id: str, receipt_date: s
     counters["review_rows_created"] += 1
 
 
-def sync_intake(*, max_mutations: int | None = None, multi_order_only: bool = False) -> dict:
+def sync_intake(
+    *,
+    max_mutations: int | None = None,
+    multi_order_only: bool = False,
+    delivery_batches_only: bool = False,
+) -> dict:
     services = build_client_services()
     private_config = load_private_intake_config(services.sheets)
     assert_write_safety(private_config["kill_switch"])
     allowed_sender = private_config["allowed_sender"]
     orders = load_orders_state(services.sheets)
     review = load_review_state(services.sheets)
-    messages = list_candidate_messages(services.gmail, allowed_sender)
+    messages = (
+        list_sent_messages(services.gmail)
+        if delivery_batches_only
+        else list_candidate_messages(services.gmail, allowed_sender)
+    )
 
     estimated_mutations = 0
     for message in messages:
@@ -291,19 +301,24 @@ def sync_intake(*, max_mutations: int | None = None, multi_order_only: bool = Fa
         subject = _header_value(headers, "Subject")
         internal_ms = int(message.get("internalDate", "0") or 0)
         local_date = datetime.fromtimestamp(internal_ms / 1000, tz=TIMEZONE)
-        if local_date.year != YEAR or sender_address(shown_from) != allowed_sender:
+        if local_date.year != YEAR:
+            continue
+        if not delivery_batches_only and sender_address(shown_from) != allowed_sender:
             continue
 
         metas = _attachment_meta(message.get("payload") or {})
-        groups, _ = group_attachment_indexes_by_order(subject, [item.filename for item in metas])
+        routing_subject = "" if delivery_batches_only else subject
+        groups, _ = group_attachment_indexes_by_order(
+            routing_subject,
+            [item.filename for item in metas],
+        )
         if multi_order_only and len(groups) < 2:
             continue
 
         for order_id, indexes in groups.items():
-            grouped = [metas[index] for index in indexes]
-            if order_id not in orders["row_by_id"]:
-                estimated_mutations += 1
+            if delivery_batches_only and order_id not in orders["row_by_id"]:
                 continue
+            grouped = [metas[index] for index in indexes]
             folder = find_order_folder(services.drive, order_id)
             if not folder:
                 estimated_mutations += 1
@@ -328,6 +343,7 @@ def sync_intake(*, max_mutations: int | None = None, multi_order_only: bool = Fa
         "review_rows_created": 0,
         "sheet_cells": 0,
         "ambiguous_attachments": 0,
+        "blocked_unknown_order": 0,
         "errors": 0,
     }
 
@@ -337,12 +353,15 @@ def sync_intake(*, max_mutations: int | None = None, multi_order_only: bool = Fa
         subject = _header_value(headers, "Subject")
         internal_ms = int(message.get("internalDate", "0") or 0)
         local_date = datetime.fromtimestamp(internal_ms / 1000, tz=TIMEZONE)
-        if local_date.year != YEAR or sender_address(shown_from) != allowed_sender:
+        if local_date.year != YEAR:
+            continue
+        if not delivery_batches_only and sender_address(shown_from) != allowed_sender:
             continue
 
         descriptors = full_attachment_descriptors(services.gmail, message["id"])
+        routing_subject = "" if delivery_batches_only else subject
         groups, unresolved = group_attachment_indexes_by_order(
-            subject,
+            routing_subject,
             [clean(item.get("filename")) for item in descriptors],
         )
         counters["ambiguous_attachments"] += len(unresolved)
@@ -350,6 +369,10 @@ def sync_intake(*, max_mutations: int | None = None, multi_order_only: bool = Fa
             continue
 
         for order_id, indexes in sorted(groups.items()):
+            if delivery_batches_only and order_id not in orders["row_by_id"]:
+                counters["blocked_unknown_order"] += 1
+                continue
+
             grouped_descriptors = [descriptors[index] for index in indexes]
             created_file_ids: list[str] = []
             created_folder_id = ""
@@ -368,6 +391,10 @@ def sync_intake(*, max_mutations: int | None = None, multi_order_only: bool = Fa
                     grouped_descriptors,
                 )
                 counters["files_created"] += len(created_file_ids)
+                counters["order_groups_materialized"] += 1
+
+                if delivery_batches_only:
+                    continue
 
                 expected_names = [
                     stored_attachment_name(
@@ -435,7 +462,6 @@ def sync_intake(*, max_mutations: int | None = None, multi_order_only: bool = Fa
                     )
                     counters["sheet_cells"] += 1
 
-                counters["order_groups_materialized"] += 1
             except Exception:
                 counters["errors"] += 1
                 for file_id in reversed(created_file_ids):
@@ -454,8 +480,9 @@ def sync_intake(*, max_mutations: int | None = None, multi_order_only: bool = Fa
 
     return {
         "phase": "M3",
-        "mode": "CLIENT_INTAKE_PRODUCTION_SYNC",
+        "mode": "DELIVERY_DOCUMENT_ARCHIVE_SYNC" if delivery_batches_only else "CLIENT_INTAKE_PRODUCTION_SYNC",
         "multi_order_only": multi_order_only,
+        "delivery_batches_only": delivery_batches_only,
         "estimated_mutations": estimated_mutations,
         **counters,
         "write_operations": counters["sheet_cells"] + counters["files_created"] + counters["folders_created"],
@@ -465,8 +492,13 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--max-mutations", type=int, default=None)
     parser.add_argument("--multi-order-only", action="store_true")
+    parser.add_argument("--delivery-batches-only", action="store_true")
     args = parser.parse_args()
-    result = sync_intake(max_mutations=args.max_mutations, multi_order_only=args.multi_order_only)
+    result = sync_intake(
+        max_mutations=args.max_mutations,
+        multi_order_only=args.multi_order_only,
+        delivery_batches_only=args.delivery_batches_only,
+    )
     print("CLIENT_INTAKE_SYNC_OK")
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return 0
