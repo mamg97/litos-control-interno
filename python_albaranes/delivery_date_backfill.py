@@ -177,6 +177,42 @@ def scan_definitive_documents(
     return index, extensions
 
 
+def read_master(sheets):
+    response = sheets.spreadsheets().values().get(
+        spreadsheetId=p.MASTER_ID,
+        range=f"'{p.SHEET_NAME}'",
+        valueRenderOption="UNFORMATTED_VALUE",
+        dateTimeRenderOption="FORMATTED_STRING",
+    ).execute()
+    rows = response.get("values", [])
+    header_index = next(
+        (i for i, row in enumerate(rows) if any(clean(cell) == p.HEADERS["id"] for cell in row)),
+        -1,
+    )
+    if header_index < 0:
+        raise RuntimeError("Master header not found")
+    headers = [clean(cell) for cell in rows[header_index]]
+    columns = {header: i for i, header in enumerate(headers) if header}
+    required = {
+        p.HEADERS["id"],
+        ORDER_DATE_HEADER,
+        RECEIPT_DATE_HEADER,
+        DASHBOARD_DATE_HEADER,
+        OBSERVATION_HEADER,
+        INVOICE_HEADER,
+        DELIVERY_HEADER,
+        STAT_DELIVERY_HEADER,
+    }
+    missing = sorted(required - set(columns))
+    if missing:
+        raise RuntimeError("Master header contract changed: " + ", ".join(missing))
+    return rows, header_index, columns
+
+
+def link_column(sheets, column_index: int, first_body_row: int, body_rows: int):
+    return p.read_link_column(sheets, column_index, first_body_row, body_rows)
+
+
 def get_file_meta(drive, file_id: str) -> CandidateFile | None:
     try:
         item = drive.files().get(
