@@ -35,6 +35,7 @@ FIELDS = {
     "amount": "Importe trabajo / Debe (€)",
     "finalPrice": "Precio final (€)",  # PVP final: IVA y recargo de equivalencia incluidos.
     "materialCost": "Coste material est. (€)",
+    "directCostActual": "Coste directo real (€)",
     "status": "Estado pedido",
     "model": "Modelo",
     "material": "Material",
@@ -54,6 +55,9 @@ EXPENSE_FIELDS = {
     "category": "Categoría",
     "amount": "Importe (€)",
     "nature": "Naturaleza del dato",
+    "source": "Fuente",
+    "invoiceDate": "Fecha factura",
+    "reference": "Referencia factura",
 }
 
 MOVEMENT_FIELDS = {
@@ -273,6 +277,7 @@ def read_operational_records(sheets) -> list[dict]:
             "amount": number_or_none(_read(row, columns, FIELDS["amount"])),
             "finalPrice": number_or_none(_read(row, columns, FIELDS["finalPrice"])),
             "materialCost": number_or_none(_read(row, columns, FIELDS["materialCost"])),
+            "directCostActual": number_or_none(_read(row, columns, FIELDS["directCostActual"])),
             "status": _read(row, columns, FIELDS["status"]),
             "model": _read(row, columns, FIELDS["model"]),
             "material": raw_material,
@@ -315,6 +320,9 @@ def read_expenses(sheets) -> list[dict]:
                 "category": category,
                 "amount": amount,
                 "nature": _read(row, columns, EXPENSE_FIELDS["nature"]) or "Sin clasificar",
+                "source": _read(row, columns, EXPENSE_FIELDS["source"]),
+                "invoiceDate": normalize_date(_read(row, columns, EXPENSE_FIELDS["invoiceDate"])),
+                "reference": _read(row, columns, EXPENSE_FIELDS["reference"]),
             }
         )
     return expenses

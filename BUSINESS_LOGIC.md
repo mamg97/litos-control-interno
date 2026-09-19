@@ -229,3 +229,28 @@ A mailbox review should report, at minimum:
 - any conflict or missing evidence that prevents a safe update.
 
 Public documentation must describe this process using neutral roles only. Real mailbox addresses, personal names, customer identities, attachment names and private message contents must remain outside the public repository.
+
+
+## 12. Real-cost precedence and supplier-expense register
+
+LITOS must use real validated figures whenever they are available and retain estimates only where no authoritative real value exists.
+
+Cost precedence for an individual job:
+
+1. validated direct real cost linked to that job;
+2. stored/derived material estimate when no direct real cost exists;
+3. no value when neither source is reliable.
+
+A real direct cost replaces the estimate for profitability; it must never be added on top of the estimate for the same job.
+
+Supplier invoices and job costs are related but not identical concepts:
+
+- every validated supplier invoice may be registered in the private supplier-expense ledger;
+- a supplier invoice may be linked to a job only when the evidence identifies that job safely;
+- bulk/stock purchases remain documented supplier expenditure and must not be allocated arbitrarily across jobs;
+- unlinked supplier invoices remain pending reconciliation and do not overwrite job estimates;
+- where a supplier invoice establishes a reliable purchase rate for a material, that rate may improve future estimates without pretending that a specific stock purchase has already been consumed by a specific job.
+
+The finance dashboard must expose supplier invoices as a separate real-expense table and visibly distinguish real job costs from estimated job costs.
+
+The public feed may expose only the minimum fields required for that table: invoice date, neutral supplier/source name, category, document reference, amount and reconciliation status. Private notes, invoice contents, addresses, bank details and source documents must never be published.

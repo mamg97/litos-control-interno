@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 
 from feed import build_payload, build_sheets_service, payload_hash
 
+EXPENSE_KEYS = frozenset({"month", "category", "amount", "nature", "source", "invoiceDate", "reference"})
 MOVEMENT_KEYS = frozenset({"year", "date", "sourceDate", "type", "ref", "line", "concept", "debit", "credit", "balance"})
 
 DOCUMENT_LINK_KEYS = frozenset(
@@ -71,6 +72,17 @@ def sanitize_public_payload(payload: dict[str, Any]) -> dict[str, Any]:
                 )
         sanitized_records.append(record)
 
+    sanitized_expenses: list[dict[str, Any]] = []
+    for index, raw_expense in enumerate(payload.get("expenses", []) or []):
+        if not isinstance(raw_expense, dict):
+            raise RuntimeError(f"Public feed privacy guard: invalid expense at index {index}")
+        extra = set(raw_expense) - EXPENSE_KEYS
+        if extra:
+            raise RuntimeError(
+                "Public feed privacy guard: unexpected expense fields: " + ", ".join(sorted(extra))
+            )
+        sanitized_expenses.append({key: raw_expense.get(key) for key in EXPENSE_KEYS})
+
     sanitized_movements: list[dict[str, Any]] = []
     for index, raw_movement in enumerate(payload.get("movements", []) or []):
         if not isinstance(raw_movement, dict):
@@ -83,10 +95,10 @@ def sanitize_public_payload(payload: dict[str, Any]) -> dict[str, Any]:
         sanitized_movements.append({key: raw_movement.get(key) for key in MOVEMENT_KEYS})
 
     sanitized = {
-        "version": 9,
+        "version": 10,
         "generatedAt": payload.get("generatedAt"),
         "records": sanitized_records,
-        "expenses": payload.get("expenses", []) or [],
+        "expenses": sanitized_expenses,
         "movements": sanitized_movements,
     }
     assert_public_payload_safe(sanitized)
@@ -120,6 +132,16 @@ def assert_public_payload_safe(payload: dict[str, Any]) -> None:
                 raise RuntimeError(
                     f"Public feed privacy guard: non-Google document URL at record {index}, field {key}"
                 )
+
+    expenses = payload.get("expenses", []) or []
+    for index, expense in enumerate(expenses):
+        if not isinstance(expense, dict):
+            raise RuntimeError(f"Public feed privacy guard: invalid expense at index {index}")
+        extra = set(expense) - EXPENSE_KEYS
+        if extra:
+            raise RuntimeError(
+                "Public feed privacy guard: unexpected expense fields: " + ", ".join(sorted(extra))
+            )
 
     movements = payload.get("movements", []) or []
     for index, movement in enumerate(movements):
