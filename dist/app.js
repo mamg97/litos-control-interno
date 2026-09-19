@@ -1169,9 +1169,23 @@ function isInProduction(row, now = new Date()) {
 
 function traceRows() {
   return [...state.rows].sort((a, b) => {
-    const left = traceDate(a)?.valueOf() || 0;
-    const right = traceDate(b)?.valueOf() || 0;
-    return right - left || text(b.Pedido).localeCompare(text(a.Pedido), "es", { numeric: true });
+    const deliveryA = parseDate(a["Fecha entrega albarán"]);
+    const deliveryB = parseDate(b["Fecha entrega albarán"]);
+
+    // Pending/no-delivery-date jobs must stay at the top so they are visible
+    // for operational follow-up. Within that pending block, use receipt email
+    // and then the order/note date as fallbacks.
+    if (!deliveryA && deliveryB) return -1;
+    if (deliveryA && !deliveryB) return 1;
+
+    if (!deliveryA && !deliveryB) {
+      const fallbackA = parseDate(a["Fecha recepción (email)"] || a["Fecha ficha"])?.valueOf() || 0;
+      const fallbackB = parseDate(b["Fecha recepción (email)"] || b["Fecha ficha"])?.valueOf() || 0;
+      return fallbackB - fallbackA || text(b.Pedido).localeCompare(text(a.Pedido), "es", { numeric: true });
+    }
+
+    return deliveryB.valueOf() - deliveryA.valueOf()
+      || text(b.Pedido).localeCompare(text(a.Pedido), "es", { numeric: true });
   });
 }
 
