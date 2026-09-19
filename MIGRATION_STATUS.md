@@ -1,6 +1,6 @@
 # LITOS migration status
 
-Updated: 2026-09-18
+Updated: 2026-09-19
 
 ## Status
 
@@ -24,6 +24,7 @@ Google Apps Script is retained only as historical rollback/reference source and 
 
 - Draft corporate-style rollout completed and coverage audited.
 - Historical master enrichment completed with internal-order validation and conflict annotation.
+- Historical delivery-date repair completed in phased annual cleanup (2026→2020): false order-header dates removed, note/albarán classification separated, and only differentiated validated delivery dates retained.
 - Historical PVP backfill completed using the precedence documented in `BUSINESS_LOGIC.md`.
 - M5 scheduled organizer completed with no remaining candidate moves.
 - M6 production synchronization and bridge executions completed successfully.
