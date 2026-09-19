@@ -76,6 +76,18 @@ Before using a historical XLS/XLSX:
 
 Historical enrichment is fill-only by default.
 
+
+### Canonical work ID
+
+The four-digit internal work/order ID is the canonical reconciliation key across the private master, Drive folders, incoming or sent attachments, generated drafts, definitive documents and running-account movements.
+
+Names, customer text, materials, email subjects and filename text beyond the ID are secondary evidence only.
+
+- If an attachment carries an explicit work ID, route it only to that ID.
+- A multi-order email must be partitioned attachment by attachment; never assign the whole email to the first detected ID.
+- If several IDs exist and an attachment has no explicit ID, leave that attachment unresolved rather than guessing.
+- If a document's internal ID conflicts with its filename, folder or email context, block automatic reconciliation and require review.
+
 ## 5. Gmail intake
 
 The production intake processes only the explicitly authorized sender stored in the private `Configuracion privada` sheet.
