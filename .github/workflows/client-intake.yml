@@ -58,6 +58,21 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Compile intake adapters
+        run: python -m py_compile intake_readonly.py intake_sync.py intake_sync_safe.py
+
+      - name: Partitioning self-check
+        run: |
+          python - <<'PY'
+          from intake_readonly import group_attachment_indexes_by_order
+          groups, unresolved = group_attachment_indexes_by_order('batch', ['1001 a.pdf', '1002 b.pdf', '1003 c.pdf', '1004 d.pdf'])
+          assert sorted(groups) == ['1001', '1002', '1003', '1004']
+          assert all(len(items) == 1 for items in groups.values())
+          assert unresolved == []
+          groups, unresolved = group_attachment_indexes_by_order('1001', ['photo.jpg', 'sketch.png'])
+          assert groups == {'1001': [0, 1]} and unresolved == []
+          print('M3_PARTITION_OK')
+          PY
       - name: Read-only preflight
         run: python runner.py --preflight
 
