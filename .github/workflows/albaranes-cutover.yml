@@ -44,7 +44,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: litos-m6-${{ github.event_name == 'push' && 'audit' || 'production' }}
+  group: litos-m6-v2-${{ github.event_name == 'push' && 'audit' || 'production' }}
   cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
