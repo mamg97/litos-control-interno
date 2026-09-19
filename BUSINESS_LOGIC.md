@@ -191,6 +191,28 @@ Several albaranes may be attached to one outgoing email; each attachment must be
 
 An outgoing email with a validated albarán attachment is sufficient evidence to mark the job as operationally delivered even when the definitive file has not yet been archived in Drive. In that case, record the delivery evidence and date, remove the job from active production, but do not fabricate a final-document link or financial `Debe`. Accounting reconciliation remains pending until the authoritative amount/document is validated.
 
+
+### Definitive sent document vs generated draft
+
+The PDF/albarán actually sent to the external account/customer is the authoritative commercial document for the delivery. A generated `*_borrador.xlsx` is only a pre-delivery aid and must never be promoted to authoritative status just because it contains a computed PVP.
+
+Whenever a definitive note/albarán is sent:
+
+1. retrieve the exact attachment that was sent;
+2. identify and validate its internal order number;
+3. compare it against both the original handwritten/source note and the current generated draft;
+4. record every material discrepancy (measure, material, concept, quantity, unit price, tax, total or other commercial term) in the private master;
+5. archive the exact definitive PDF in the corresponding order folder;
+6. preserve the draft for audit/history, but keep it subordinate to the definitive document;
+7. update the master document link/state so the definitive document is the active commercial reference;
+8. use the validated definitive amount as the real delivery amount/financial source;
+9. create/update the corresponding `TRABAJO ENTREGADO` movement in the private running account and recalculate the balance from that real amount;
+10. expose the delivery in finance/history as real, not estimated.
+
+If the definitive PDF is not accessible, the email may still prove operational delivery, but financial posting remains pending. Never use a provisional draft total as a real `Debe` merely to close the gap.
+
+Draft-generation errors are business feedback. Repeated discrepancies must be used to improve the generator/catalog rules rather than silently overwritten.
+
 ### Physical delivery with no email evidence
 
 Some albaranes may be delivered physically and therefore will not appear in sent mail.
