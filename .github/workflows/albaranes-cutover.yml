@@ -6,6 +6,10 @@ on:
       - 'python_albaranes/sync.py'
       - 'python_albaranes/history_backfill.py'
       - 'python_albaranes/pvp_backfill.py'
+      - 'python_albaranes/delivery_date_backfill.py'
+      - 'python_albaranes/requirements.txt'
+      - 'python_albaranes/delivery_date_backfill.py'
+      - 'python_albaranes/requirements.txt'
       - '.github/workflows/albaranes-cutover.yml'
   pull_request:
     paths:
@@ -69,7 +73,7 @@ jobs:
         run: pip install -r python_albaranes/requirements.txt
 
       - name: Compile M6 synchronizer
-        run: python -m py_compile python_albaranes/parity.py python_albaranes/total_parser.py python_albaranes/parity_v2.py python_albaranes/sync.py python_albaranes/history_backfill.py python_albaranes/pvp_backfill.py
+        run: python -m py_compile python_albaranes/parity.py python_albaranes/total_parser.py python_albaranes/parity_v2.py python_albaranes/sync.py python_albaranes/history_backfill.py python_albaranes/pvp_backfill.py python_albaranes/delivery_date_backfill.py
 
       - name: Fail-closed preflight
         run: python python_albaranes/sync.py --preflight
@@ -79,6 +83,16 @@ jobs:
         run: |
           test -n "$GOOGLE_OAUTH_USER_JSON"
           echo 'OK: private Google OAuth credential present.'
+
+      - name: Delivery-date read-only audit
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        run: python python_albaranes/delivery_date_backfill.py --dry-run
+
+      - name: One-time delivery-date historical backfill
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[LITOS-DELIVERY-DATE-BACKFILL]') }}
+        env:
+          LITOS_DELIVERY_DATE_WRITE_ENABLED: 'true'
+        run: python python_albaranes/delivery_date_backfill.py --sync --confirm DELIVERY_DATE_BACKFILL_V1
 
       - name: One-time historical master backfill
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[LITOS-HISTORY-BACKFILL]') }}
