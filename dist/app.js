@@ -1167,29 +1167,38 @@ function isInProduction(row, now = new Date()) {
   return receipt >= start && receipt < end && !hasInvoice && !delivered;
 }
 
-function traceYear(order) {
+function tracePeriod(order) {
   const date = orderEntryDate(order)
     || parseDate(order["Fecha para dashboard"])
     || parseDate(order["Fecha entrega albarán"]);
-  return date ? date.getFullYear() : 0;
+  return date ? (date.getFullYear() * 12 + date.getMonth()) : 0;
+}
+
+function deliveryDocumentReviewNeeded(order, now = new Date()) {
+  if (parseDate(order["Fecha entrega albarán"])) return false;
+  const entry = orderEntryDate(order);
+  if (!entry) return false;
+  const entryMonth = new Date(entry.getFullYear(), entry.getMonth(), 1);
+  const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  return entryMonth < currentMonth;
 }
 
 function traceRows() {
   return [...state.rows].sort((a, b) => {
-    const yearA = traceYear(a);
-    const yearB = traceYear(b);
+    const periodA = tracePeriod(a);
+    const periodB = tracePeriod(b);
 
-    // First group by operational/order year, newest year first.
-    if (yearA !== yearB) return yearB - yearA;
+    // First group by operational/order year-month, newest month first.
+    if (periodA !== periodB) return periodB - periodA;
 
     const aDelivery = parseDate(a["Fecha entrega albarán"]);
     const bDelivery = parseDate(b["Fecha entrega albarán"]);
 
-    // Within each year, unresolved/no-delivery-date jobs come first.
+    // Within each month, unresolved/no-delivery-date jobs come first.
     if (!aDelivery && bDelivery) return -1;
     if (aDelivery && !bDelivery) return 1;
 
-    // Pending delivery-date rows: newest receipt email first, then source note.
+    // Pending rows: newest receipt email first, then source note/order date.
     if (!aDelivery && !bDelivery) {
       const aReceipt = parseDate(a["Fecha recepción (email)"]);
       const bReceipt = parseDate(b["Fecha recepción (email)"]);
@@ -1205,7 +1214,7 @@ function traceRows() {
         || text(b.Pedido).localeCompare(text(a.Pedido), "es", { numeric: true });
     }
 
-    // Rows with a validated delivery date: most recent delivery first.
+    // Delivered rows in the same entry month: newest delivery first.
     return bDelivery.valueOf() - aDelivery.valueOf()
       || text(b.Pedido).localeCompare(text(a.Pedido), "es", { numeric: true });
   });
@@ -1245,7 +1254,7 @@ function renderTraceTable({ bodySelector, countSelector, searchSelector }) {
   const rows = allRows.filter((order) => matchesTraceQuery(order, query));
   if (count) count.textContent = query
     ? `${formatInt.format(rows.length)} de ${formatInt.format(allRows.length)} trabajos`
-    : `${formatInt.format(allRows.length)} trabajos · año más reciente primero · dentro de cada año, pendientes antes que entregados`;
+    : `${formatInt.format(allRows.length)} trabajos · año-mes más reciente primero · dentro de cada mes, pendientes antes que entregados`;
   if (!rows.length) {
     const row = document.createElement("tr");
     const cell = document.createElement("td");
@@ -1266,9 +1275,15 @@ function renderTraceTable({ bodySelector, countSelector, searchSelector }) {
       familyFor(order.Modelo),
       materialFor(order),
       sizeFor(order) || "Sin medida completa"
-    ].forEach((value) => {
+    ].forEach((value, index) => {
       const cell = document.createElement("td");
       cell.textContent = value;
+      if (index === 1 && deliveryDocumentReviewNeeded(order)) {
+        const flag = document.createElement("small");
+        flag.className = "trace-review";
+        flag.textContent = "Revisar documento";
+        cell.append(flag);
+      }
       row.append(cell);
     });
     const finalPrice = recordedFinalPrice(order);
