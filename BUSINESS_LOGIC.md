@@ -22,18 +22,24 @@ Do not collapse these into a single date.
 
 ### Operational trace ordering
 
-The work trace/history table is ordered for operational follow-up, not purely chronologically:
+The work trace/history table is ordered for operational follow-up, not purely chronologically.
 
-1. group rows by operational/order year-month, from the most recent month to the oldest;
-2. within each month, rows with no `Fecha entrega albarán` come first;
-3. within that unresolved block, sort by `Fecha recepción (email)` descending;
-4. if receipt date is missing, fall back to `Fecha ficha` descending;
-5. after the unresolved rows of that same month, rows with `Fecha entrega albarán` are sorted from most recent delivery to oldest;
-6. only after the whole month is exhausted does the trace continue with the previous month.
+The grouping key is the **operational month**:
 
-The year-month grouping is resolved from order-entry evidence first (receipt email, then source/order date), with dashboard/delivery dates only as historical fallbacks.
+- if a work has a validated `Fecha entrega albarán`, it belongs to the month of delivery;
+- if it has no validated delivery date, it belongs to its entry month, resolved from `Fecha recepción (email)` and then `Fecha ficha`.
 
-A row with no `Fecha entrega albarán` whose order-entry month has already finished must be visually flagged for manual document review. The absence of a delivery date after the month closes is treated as an operational warning that the definitive document may be missing or unreconciled.
+Ordering rules:
+
+1. operational months run from newest to oldest;
+2. inside each month, unresolved jobs come first;
+3. unresolved jobs are sorted by receipt email descending, then by source/order date descending;
+4. delivered jobs for that same month follow, sorted by `Fecha entrega albarán` descending;
+5. only after the full operational month is exhausted does the trace continue with the previous month.
+
+This means a job ordered in July but delivered in September appears in the September block, after September jobs that are still pending.
+
+A row with no `Fecha entrega albarán` whose entry month has already finished must be visually flagged for manual document review. The absence of a delivery date after the month closes is treated as an operational warning that the definitive document may be missing or unreconciled.
 
 This ordering is independent from the economic/statistical reporting date.
 
@@ -289,16 +295,12 @@ Public documentation must describe this process using neutral roles only. Real m
 
 ### Traceability table ordering
 
-The work-history/traceability table surfaces unresolved delivery dates first.
+Use the canonical **Operational trace ordering** defined in section 1 above. Do not maintain a second independent ordering rule here.
 
-1. Rows without validated `Fecha entrega albarán` come first.
-2. Within that pending group, sort by `Fecha recepción (email)` descending.
-3. If receipt email date is missing, fall back to `Fecha ficha` from the source order/note, also descending.
-4. After the pending group, rows with validated `Fecha entrega albarán` are sorted by that delivery date descending.
+Historical delivery-date enrichment must review definitive albaranes regardless of whether the real document is PDF, XLS, XLSX or XLSM. Source-note files such as `*-nota.pdf` are not definitive albaranes and must never populate the active albarán link or delivery date.
 
-The sort key is not `Fecha para dashboard`. The three source dates remain visible as separate concepts.
+The `FECHA` printed in the header next to `PEDIDO Nº` is the order/fiche date and must not populate `Fecha entrega albarán`. The delivery field is populated only from a differentiated delivery/footer date (`FECHA` / `FECHA DE ENTREGA`) in the definitive document; when both spreadsheet and rendered PDF exist, prefer the PDF because it commonly carries the completed footer date. The internal four-digit work ID must match before a document date is accepted. If the written date is impossible relative to the order date or current date, preserve the conflict for review and leave `Fecha entrega albarán` blank unless an explicit manual validation resolves the documentary error.
 
-Historical delivery-date enrichment must review definitive albaranes regardless of whether the real document is PDF, XLS, XLSX or XLSM. The `FECHA` printed in the header next to `PEDIDO Nº` is the order/fiche date and must not populate `Fecha entrega albarán`. The delivery field is populated only from a differentiated delivery/footer date (`FECHA` / `FECHA DE ENTREGA`) in the definitive document; when both spreadsheet and rendered PDF exist, prefer the PDF because it commonly carries the completed footer date. The internal four-digit work ID must match before a document date is accepted. If the written date is impossible relative to the order date or current date, preserve the conflict for review and leave `Fecha entrega albarán` blank so the table falls back to the next ordering source; never silently repair a documentary date.
 
 ## 12. Real-cost precedence and supplier-expense register
 
