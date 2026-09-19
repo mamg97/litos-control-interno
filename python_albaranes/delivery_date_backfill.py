@@ -249,9 +249,12 @@ def delivery_date_in_segment(
     candidates: list[date] = []
     for row_index in range(start_row, end_row):
         row = rows[row_index]
-        # In a validated definitive albarán, the document's FECHA is the
-        # documentary delivery date even when it shares the header with PEDIDO.
-        # Plausibility and internal work-ID checks are applied later.
+        normalized_row = [normalize(value) for value in row]
+        # "PEDIDO Nº ... FECHA ..." is the order/fiche date, not the delivery
+        # date. Only a differentiated FECHA/FECHA DE ENTREGA elsewhere in the
+        # definitive document may populate Fecha entrega albarán.
+        if any("pedido" in value for value in normalized_row):
+            continue
         for col_index, value in enumerate(row):
             norm = normalize(value).rstrip(".:")
             if norm not in {"fecha", "fecha de entrega"}:
@@ -551,6 +554,11 @@ def build_plan(drive, sheets, *, target_year: int | None = None):
                 candidates.append(item)
                 seen.add(item.file_id)
 
+        # Prefer the rendered definitive PDF when available. Workshop XLS/XLSX
+        # files often keep only the order date in the header, while the PDF
+        # contains the actual delivery date in the footer.
+        candidates.sort(key=lambda item: (extension(item.name) != ".pdf", item.modified_time or ""))
+
         if not candidates:
             stats["no_definitive_document"] += 1
             if machine_managed:
@@ -648,7 +656,7 @@ def build_plan(drive, sheets, *, target_year: int | None = None):
         base_obs = strip_machine_delivery_notes(current_obs)
         note = (
             "Fecha entrega albarán recuperada del documento definitivo "
-            f"({extension(candidate.name).lstrip('.') or 'archivo'}; ID interno validado; FECHA documental del albarán)"
+            f"({extension(candidate.name).lstrip('.') or 'archivo'}; ID interno validado; fecha de entrega diferenciada de la cabecera PEDIDO)"
         )
         plans.append({
             "row_index_zero": row_index,
