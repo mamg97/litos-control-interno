@@ -309,32 +309,66 @@ def parse_document_all(drive, file: CandidateFile) -> dict[str, ParsedDocument]:
         return parse_workbook_all(content, file.name)
     raise RuntimeError("unsupported extension")
 
-def read_catalog_file_ids(sheets) -> dict[str, list[str]]:
-    result: dict[str, list[str]] = defaultdict(list)
+def read_catalog_candidates(sheets) -> dict[str, list[CandidateFile]]:
+    result: dict[str, list[CandidateFile]] = defaultdict(list)
     seen: dict[str, set[str]] = defaultdict(set)
     for sheet_name in RAW_CATALOG_SHEETS:
         try:
             values = sheets.spreadsheets().values().get(
                 spreadsheetId=p.MASTER_ID,
-                range=f"'{sheet_name}'!A:F",
+                range=f"'{sheet_name}'!A:C,F:F",
                 valueRenderOption="FORMATTED_VALUE",
             ).execute().get("values", [])
         except Exception:
-            continue
+            # The Sheets API does not support discontiguous A1 here on every
+            # client version; fall back to the compact A:F range.
+            values = sheets.spreadsheets().values().get(
+                spreadsheetId=p.MASTER_ID,
+                range=f"'{sheet_name}'!A:F",
+                valueRenderOption="FORMATTED_VALUE",
+            ).execute().get("values", [])
         if not values:
             continue
         headers = [clean(value) for value in values[0]]
         columns = {header: index for index, header in enumerate(headers)}
-        if "File ID" not in columns or "Pedido" not in columns:
-            continue
+        required = {"File ID", "Archivo", "URL", "Pedido"}
+        if not required.issubset(columns):
+            # Fallback path when the discontiguous request is represented
+            # differently: reload A:F with canonical columns.
+            values = sheets.spreadsheets().values().get(
+                spreadsheetId=p.MASTER_ID,
+                range=f"'{sheet_name}'!A:F",
+                valueRenderOption="FORMATTED_VALUE",
+            ).execute().get("values", [])
+            if not values:
+                continue
+            headers = [clean(value) for value in values[0]]
+            columns = {header: index for index, header in enumerate(headers)}
+            if not required.issubset(columns):
+                continue
+
         for row in values[1:]:
-            file_id = clean(row[columns["File ID"]]) if columns["File ID"] < len(row) else ""
-            order_id = clean(row[columns["Pedido"]]) if columns["Pedido"] < len(row) else ""
+            def cell(header: str) -> str:
+                index = columns[header]
+                return clean(row[index]) if index < len(row) else ""
+
+            file_id = cell("File ID")
+            order_id = cell("Pedido")
+            name = cell("Archivo")
+            url = cell("URL")
             if not file_id or not re.fullmatch(r"\d{4}", order_id):
                 continue
-            if file_id not in seen[order_id]:
-                seen[order_id].add(file_id)
-                result[order_id].append(file_id)
+            if file_id in seen[order_id]:
+                continue
+            seen[order_id].add(file_id)
+            result[order_id].append(
+                CandidateFile(
+                    file_id=file_id,
+                    name=name,
+                    modified_time="",
+                    web_view_link=url,
+                )
+            )
     return result
 
 def plausible_delivery(candidate: date | None, order_date: date | None) -> bool:
@@ -370,7 +404,7 @@ def build_plan(drive, sheets):
         scanned, ext_counts = scan_definitive_documents(drive)
     else:
         scanned, ext_counts = {}, Counter()
-    catalog_file_ids = read_catalog_file_ids(sheets)
+    catalog_candidates = read_catalog_candidates(sheets)
 
     cache: dict[str, dict[str, ParsedDocument] | Exception] = {}
     meta_cache: dict[str, CandidateFile | None] = {}
@@ -404,13 +438,10 @@ def build_plan(drive, sheets):
                 candidates.append(meta)
 
         seen = {item.file_id for item in candidates}
-        for file_id in catalog_file_ids.get(order_id, []):
-            if file_id in seen:
+        for meta in catalog_candidates.get(order_id, []):
+            if meta.file_id in seen:
                 continue
-            if file_id not in meta_cache:
-                meta_cache[file_id] = get_file_meta(drive, file_id)
-            meta = meta_cache[file_id]
-            if meta is not None and extension(meta.name) in SUPPORTED_EXTENSIONS and not is_draft(meta.name):
+            if extension(meta.name) in SUPPORTED_EXTENSIONS and not is_draft(meta.name):
                 candidates.append(meta)
                 seen.add(meta.file_id)
 
