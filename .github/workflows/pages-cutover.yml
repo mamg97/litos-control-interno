@@ -1,4 +1,5 @@
 name: LITOS M7 Pages Cutover
+# Fresh build after historical delivery-date backfill.
 # Updating this workflow intentionally forces a fresh sanitized feed build from the private master.
 
 on:
