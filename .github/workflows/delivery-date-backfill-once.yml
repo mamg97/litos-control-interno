@@ -1,0 +1,41 @@
+name: LITOS One-off Delivery Date Backfill
+
+on:
+  push:
+    paths:
+      - '.github/workflows/delivery-date-backfill-once.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: litos-delivery-date-backfill-once
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PYTHONUNBUFFERED: "1"
+      LITOS_FREE_ONLY: "true"
+      GOOGLE_OAUTH_USER_JSON: ${{ secrets.GOOGLE_OAUTH_USER_JSON }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: python_albaranes/requirements.txt
+      - run: pip install -r python_albaranes/requirements.txt
+      - name: Compile
+        run: python -m py_compile python_albaranes/delivery_date_backfill.py
+      - name: Pre-write audit
+        run: python python_albaranes/delivery_date_backfill.py --dry-run
+      - name: Fill validated definitive delivery dates
+        env:
+          LITOS_DELIVERY_DATE_WRITE_ENABLED: "true"
+        run: python python_albaranes/delivery_date_backfill.py --sync --confirm DELIVERY_DATE_BACKFILL_V1
+      - name: Post-write audit
+        run: python python_albaranes/delivery_date_backfill.py --dry-run
