@@ -5,6 +5,7 @@ name: LITOS M7 Pages Cutover
 # Trace refresh: year-month ordering + overdue document review flag.
 # Final gap-review refresh after validated delivery dates.
 # Refresh after M6 link sanitation and operational-month trace fix.
+# Refresh after phased historical delivery-date repair and native-Sheets support.
 
 on:
   pull_request:
