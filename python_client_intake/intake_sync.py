@@ -13,6 +13,7 @@ from googleapiclient.http import MediaInMemoryUpload
 
 from auth import build_client_services
 from intake_readonly import (
+    AttachmentMeta,
     HEADERS,
     LOOKBACK_DAYS,
     MASTER_ID,
@@ -24,6 +25,7 @@ from intake_readonly import (
     clean,
     extension_from_mime,
     extract_order_id,
+    group_attachment_indexes_by_order,
     find_order_folder,
     list_candidate_messages,
     load_private_intake_config,
@@ -273,7 +275,7 @@ def ensure_review_row(sheets, review_state: dict, order_id: str, receipt_date: s
     counters["review_rows_created"] += 1
 
 
-def sync_intake(*, max_mutations: int | None = None) -> dict:
+def sync_intake(*, max_mutations: int | None = None, multi_order_only: bool = False) -> dict:
     services = build_client_services()
     private_config = load_private_intake_config(services.sheets)
     assert_write_safety(private_config["kill_switch"])
@@ -282,7 +284,6 @@ def sync_intake(*, max_mutations: int | None = None) -> dict:
     review = load_review_state(services.sheets)
     messages = list_candidate_messages(services.gmail, allowed_sender)
 
-    # Fresh pre-plan: canary refuses an unexpectedly large intake mutation set.
     estimated_mutations = 0
     for message in messages:
         headers = (message.get("payload") or {}).get("headers") or []
@@ -290,32 +291,43 @@ def sync_intake(*, max_mutations: int | None = None) -> dict:
         subject = _header_value(headers, "Subject")
         internal_ms = int(message.get("internalDate", "0") or 0)
         local_date = datetime.fromtimestamp(internal_ms / 1000, tz=TIMEZONE)
+        if local_date.year != YEAR or sender_address(shown_from) != allowed_sender:
+            continue
+
         metas = _attachment_meta(message.get("payload") or {})
-        oid = extract_order_id(subject, [m.filename for m in metas])
-        if local_date.year != YEAR or sender_address(shown_from) != allowed_sender or not oid:
+        groups, _ = group_attachment_indexes_by_order(subject, [item.filename for item in metas])
+        if multi_order_only and len(groups) < 2:
             continue
-        if oid not in orders["row_by_id"]:
-            estimated_mutations += 1
-            continue
-        folder = find_order_folder(services.drive, oid)
-        if not folder:
-            estimated_mutations += 1
-            continue
-        expected = [stored_attachment_name(oid, m, i) for i, m in enumerate(metas)]
-        existing = {clean(f.get("name")) for f in list_folder_files(services.drive, folder["id"])}
-        if any(name not in existing for name in expected):
-            estimated_mutations += 1
+
+        for order_id, indexes in groups.items():
+            grouped = [metas[index] for index in indexes]
+            if order_id not in orders["row_by_id"]:
+                estimated_mutations += 1
+                continue
+            folder = find_order_folder(services.drive, order_id)
+            if not folder:
+                estimated_mutations += 1
+                continue
+            expected = [
+                stored_attachment_name(order_id, attachment, index)
+                for index, attachment in enumerate(grouped)
+            ]
+            existing = {clean(item.get("name")) for item in list_folder_files(services.drive, folder["id"])}
+            if any(name not in existing for name in expected):
+                estimated_mutations += 1
+
     if max_mutations is not None and estimated_mutations > max_mutations:
-        raise RuntimeError(f"Canary blocked: intake has {estimated_mutations} mutable messages")
+        raise RuntimeError(f"Canary blocked: intake has {estimated_mutations} mutable order groups")
 
     counters = {
         "messages_scanned": len(messages),
-        "messages_materialized": 0,
+        "order_groups_materialized": 0,
         "orders_created": 0,
         "folders_created": 0,
         "files_created": 0,
         "review_rows_created": 0,
         "sheet_cells": 0,
+        "ambiguous_attachments": 0,
         "errors": 0,
     }
 
@@ -327,100 +339,134 @@ def sync_intake(*, max_mutations: int | None = None) -> dict:
         local_date = datetime.fromtimestamp(internal_ms / 1000, tz=TIMEZONE)
         if local_date.year != YEAR or sender_address(shown_from) != allowed_sender:
             continue
-        metas = _attachment_meta(message.get("payload") or {})
-        order_id = extract_order_id(subject, [m.filename for m in metas])
-        if not order_id:
+
+        descriptors = full_attachment_descriptors(services.gmail, message["id"])
+        groups, unresolved = group_attachment_indexes_by_order(
+            subject,
+            [clean(item.get("filename")) for item in descriptors],
+        )
+        counters["ambiguous_attachments"] += len(unresolved)
+        if multi_order_only and len(groups) < 2:
             continue
 
-        created_file_ids: list[str] = []
-        created_folder_id = ""
-        try:
-            folder, folder_created = get_or_create_order_folder(services.drive, order_id)
-            if folder_created:
-                counters["folders_created"] += 1
-                created_folder_id = folder["id"]
-            descriptors = full_attachment_descriptors(services.gmail, message["id"])
-            all_files, created_file_ids = save_missing_attachments(
-                services.gmail, services.drive, message["id"], folder["id"], order_id, descriptors
-            )
-            counters["files_created"] += len(created_file_ids)
-            name_to_file = {clean(f.get("name")): f for f in all_files}
-            note_name, image_names = classify_names(order_id, list(name_to_file))
-            note_file = name_to_file.get(note_name) if note_name else None
+        for order_id, indexes in sorted(groups.items()):
+            grouped_descriptors = [descriptors[index] for index in indexes]
+            created_file_ids: list[str] = []
+            created_folder_id = ""
+            try:
+                folder, folder_created = get_or_create_order_folder(services.drive, order_id)
+                if folder_created:
+                    counters["folders_created"] += 1
+                    created_folder_id = folder["id"]
 
-            row_no = orders["row_by_id"].get(order_id)
-            if row_no is None:
-                row_no = orders["next_row"]
-                orders["next_row"] += 1
-                orders["row_by_id"][order_id] = row_no
-                orders["row_values"][row_no] = []
-                update_value(services.sheets, "Pedidos", row_no, orders["columns"][HEADERS["id"]], int(order_id))
-                counters["sheet_cells"] += 1
-                counters["orders_created"] += 1
+                all_files, created_file_ids = save_missing_attachments(
+                    services.gmail,
+                    services.drive,
+                    message["id"],
+                    folder["id"],
+                    order_id,
+                    grouped_descriptors,
+                )
+                counters["files_created"] += len(created_file_ids)
 
-            receipt = local_date.strftime("%d/%m/%Y")
-            set_if_blank(services.sheets, orders, row_no, HEADERS["receipt_date"], receipt, counters)
-            set_if_blank(services.sheets, orders, row_no, HEADERS["receipt_origin"], "Gmail · cliente", counters)
-            set_if_blank(
-                services.sheets,
-                orders,
-                row_no,
-                HEADERS["read_status"],
-                "Adjuntos recibidos · pendiente de lectura y validación",
-                counters,
-            )
-            if note_file:
-                set_if_blank(services.sheets, orders, row_no, HEADERS["source_file"], note_file["name"], counters)
-                update_value(
+                expected_names = [
+                    stored_attachment_name(
+                        order_id,
+                        AttachmentMeta(
+                            filename=clean(item.get("filename")),
+                            mime_type=clean(item.get("mime_type")),
+                            attachment_id=clean(item.get("attachment_id")),
+                        ),
+                        index,
+                    )
+                    for index, item in enumerate(grouped_descriptors)
+                ]
+                name_to_file = {clean(item.get("name")): item for item in all_files}
+                note_name, image_names = classify_names(order_id, expected_names)
+                note_file = name_to_file.get(note_name) if note_name else None
+
+                row_no = orders["row_by_id"].get(order_id)
+                if row_no is None:
+                    row_no = orders["next_row"]
+                    orders["next_row"] += 1
+                    orders["row_by_id"][order_id] = row_no
+                    orders["row_values"][row_no] = []
+                    update_value(
+                        services.sheets,
+                        "Pedidos",
+                        row_no,
+                        orders["columns"][HEADERS["id"]],
+                        int(order_id),
+                    )
+                    counters["sheet_cells"] += 1
+                    counters["orders_created"] += 1
+
+                receipt = local_date.strftime("%d/%m/%Y")
+                set_if_blank(services.sheets, orders, row_no, HEADERS["receipt_date"], receipt, counters)
+                set_if_blank(services.sheets, orders, row_no, HEADERS["receipt_origin"], "Gmail · cliente", counters)
+                set_if_blank(
                     services.sheets,
-                    "Pedidos",
+                    orders,
                     row_no,
-                    orders["columns"][HEADERS["note"]],
-                    hyperlink_formula(drive_url(note_file["id"]), "Abrir"),
+                    HEADERS["read_status"],
+                    "Adjuntos recibidos · pendiente de lectura y validación",
+                    counters,
                 )
-                counters["sheet_cells"] += 1
-                ensure_review_row(services.sheets, review, order_id, receipt, note_file["id"], counters)
-            if image_names:
-                update_value(
-                    services.sheets,
-                    "Pedidos",
-                    row_no,
-                    orders["columns"][HEADERS["attachments"]],
-                    hyperlink_formula(drive_url(folder["id"], folder=True), "Ver adjuntos"),
-                )
-                counters["sheet_cells"] += 1
-            counters["messages_materialized"] += 1
-        except Exception:
-            counters["errors"] += 1
-            # Roll back only artifacts created by this message. Existing data is never deleted.
-            for file_id in reversed(created_file_ids):
-                try:
-                    services.drive.files().delete(fileId=file_id).execute()
-                except Exception:
-                    pass
-            if created_folder_id:
-                try:
-                    children = list_folder_files(services.drive, created_folder_id)
-                    if not children:
-                        services.drive.files().delete(fileId=created_folder_id).execute()
-                except Exception:
-                    pass
-            raise
+
+                if note_file:
+                    set_if_blank(services.sheets, orders, row_no, HEADERS["source_file"], note_file["name"], counters)
+                    update_value(
+                        services.sheets,
+                        "Pedidos",
+                        row_no,
+                        orders["columns"][HEADERS["note"]],
+                        hyperlink_formula(drive_url(note_file["id"]), "Abrir"),
+                    )
+                    counters["sheet_cells"] += 1
+                    ensure_review_row(services.sheets, review, order_id, receipt, note_file["id"], counters)
+
+                if image_names:
+                    update_value(
+                        services.sheets,
+                        "Pedidos",
+                        row_no,
+                        orders["columns"][HEADERS["attachments"]],
+                        hyperlink_formula(drive_url(folder["id"], folder=True), "Ver adjuntos"),
+                    )
+                    counters["sheet_cells"] += 1
+
+                counters["order_groups_materialized"] += 1
+            except Exception:
+                counters["errors"] += 1
+                for file_id in reversed(created_file_ids):
+                    try:
+                        services.drive.files().delete(fileId=file_id).execute()
+                    except Exception:
+                        pass
+                if created_folder_id:
+                    try:
+                        children = list_folder_files(services.drive, created_folder_id)
+                        if not children:
+                            services.drive.files().delete(fileId=created_folder_id).execute()
+                    except Exception:
+                        pass
+                raise
 
     return {
         "phase": "M3",
         "mode": "CLIENT_INTAKE_PRODUCTION_SYNC",
+        "multi_order_only": multi_order_only,
         "estimated_mutations": estimated_mutations,
         **counters,
         "write_operations": counters["sheet_cells"] + counters["files_created"] + counters["folders_created"],
     }
 
-
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--max-mutations", type=int, default=None)
+    parser.add_argument("--multi-order-only", action="store_true")
     args = parser.parse_args()
-    result = sync_intake(max_mutations=args.max_mutations)
+    result = sync_intake(max_mutations=args.max_mutations, multi_order_only=args.multi_order_only)
     print("CLIENT_INTAKE_SYNC_OK")
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return 0
