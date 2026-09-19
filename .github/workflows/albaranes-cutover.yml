@@ -96,7 +96,7 @@ jobs:
         env:
           LITOS_DELIVERY_DATE_WRITE_ENABLED: 'true'
           LITOS_DELIVERY_SCAN_UNLINKED: 'true'
-        run: python python_albaranes/delivery_date_backfill.py --sync --year 2026 --confirm DELIVERY_DATE_BACKFILL_V1
+        run: python python_albaranes/delivery_date_backfill.py --sync --confirm DELIVERY_DATE_BACKFILL_V1
 
       - name: Phased delivery-date backfill by year
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[LITOS-DELIVERY-YEAR-') }}
@@ -169,7 +169,8 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
         env:
           LITOS_DELIVERY_DATE_WRITE_ENABLED: 'true'
-        run: python python_albaranes/delivery_date_backfill.py --sync --confirm DELIVERY_DATE_BACKFILL_V1
+          LITOS_DELIVERY_SCAN_UNLINKED: 'true'
+        run: python python_albaranes/delivery_date_backfill.py --sync --year 2026 --confirm DELIVERY_DATE_BACKFILL_V1
 
       - name: Post-manual formula-aware parity
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
@@ -190,7 +191,8 @@ jobs:
         if: ${{ github.event_name == 'workflow_run' && vars.LITOS_ALBARAN_KILL_SWITCH == 'false' }}
         env:
           LITOS_DELIVERY_DATE_WRITE_ENABLED: 'true'
-        run: python python_albaranes/delivery_date_backfill.py --sync --confirm DELIVERY_DATE_BACKFILL_V1
+          LITOS_DELIVERY_SCAN_UNLINKED: 'true'
+        run: python python_albaranes/delivery_date_backfill.py --sync --year 2026 --confirm DELIVERY_DATE_BACKFILL_V1
 
       - name: Post-bridge formula-aware parity
         if: ${{ github.event_name == 'workflow_run' && vars.LITOS_ALBARAN_KILL_SWITCH == 'false' }}
