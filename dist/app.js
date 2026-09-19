@@ -1168,9 +1168,11 @@ function isInProduction(row, now = new Date()) {
 }
 
 function tracePeriod(order) {
-  const date = orderEntryDate(order)
-    || parseDate(order["Fecha para dashboard"])
-    || parseDate(order["Fecha entrega albarán"]);
+  // Operational month: delivered jobs belong to the month they were delivered;
+  // unresolved jobs belong to the month they entered the workshop.
+  const date = parseDate(order["Fecha entrega albarán"])
+    || orderEntryDate(order)
+    || parseDate(order["Fecha para dashboard"]);
   return date ? (date.getFullYear() * 12 + date.getMonth()) : 0;
 }
 
@@ -1188,7 +1190,8 @@ function traceRows() {
     const periodA = tracePeriod(a);
     const periodB = tracePeriod(b);
 
-    // First group by operational/order year-month, newest month first.
+    // First group by operational month, newest first. Delivered jobs use
+    // delivery month; unresolved jobs use entry/order month.
     if (periodA !== periodB) return periodB - periodA;
 
     const aDelivery = parseDate(a["Fecha entrega albarán"]);
