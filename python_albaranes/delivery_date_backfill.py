@@ -111,7 +111,7 @@ def scan_definitive_documents(drive) -> tuple[dict[str, list[CandidateFile]], Co
                 continue
 
             match = p.ORDER_ID_RE.search(name)
-            if not match or is_draft(name):
+            if not match or is_draft(name) or p.NOTE_RE.search(name.lower()):
                 continue
 
             ext = extension(name)
