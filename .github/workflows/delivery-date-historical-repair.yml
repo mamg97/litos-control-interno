@@ -1,4 +1,5 @@
 name: LITOS Delivery Date Repair · Historical Phases
+# PAUSED while 2026 phase is being validated.
 
 on:
   push:
@@ -11,10 +12,11 @@ permissions:
 
 concurrency:
   group: litos-delivery-date-historical-repair
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   repair-historical:
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
