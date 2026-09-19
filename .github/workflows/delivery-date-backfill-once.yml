@@ -1,6 +1,7 @@
 name: LITOS One-off Delivery Date Backfill
 # rerun after metadata-cache optimization
 # rerun with catalog metadata cache
+# rerun with parallel historical reads
 
 on:
   push:
