@@ -66,7 +66,7 @@ jobs:
           from export import assert_public_payload_safe
 
           payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-          assert payload.get("version") == 10
+          assert payload.get("version") == 11
           assert isinstance(payload.get("records"), list) and payload["records"]
           assert isinstance(payload.get("expenses"), list)
           assert isinstance(payload.get("movements"), list)

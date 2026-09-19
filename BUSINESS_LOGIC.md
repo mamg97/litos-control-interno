@@ -189,6 +189,8 @@ For each sent albarán:
 
 Several albaranes may be attached to one outgoing email; each attachment must be reconciled independently.
 
+An outgoing email with a validated albarán attachment is sufficient evidence to mark the job as operationally delivered even when the definitive file has not yet been archived in Drive. In that case, record the delivery evidence and date, remove the job from active production, but do not fabricate a final-document link or financial `Debe`. Accounting reconciliation remains pending until the authoritative amount/document is validated.
+
 ### Physical delivery with no email evidence
 
 Some albaranes may be delivered physically and therefore will not appear in sent mail.
@@ -253,4 +255,4 @@ Supplier invoices and job costs are related but not identical concepts:
 
 The finance dashboard must expose supplier invoices as a separate real-expense table and visibly distinguish real job costs from estimated job costs.
 
-The public feed may expose only the minimum fields required for that table: invoice date, neutral supplier/source name, category, document reference, amount and reconciliation status. Private notes, invoice contents, addresses, bank details and source documents must never be published.
+The public feed may expose only the minimum fields required for that table: invoice date, neutral supplier/source name, category, document reference, amount, reconciliation status, private-Drive folder/document navigation links and a neutral email-evidence label. Supplier-expense traceability should retain the private email-source link in the master, but the Outlook/Gmail message URL itself must never be published. Private notes, invoice contents, addresses and bank details must never be published.

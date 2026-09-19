@@ -8,7 +8,8 @@ from urllib.parse import urlparse
 
 from feed import build_payload, build_sheets_service, payload_hash
 
-EXPENSE_KEYS = frozenset({"month", "category", "amount", "nature", "source", "invoiceDate", "reference"})
+EXPENSE_KEYS = frozenset({"month", "category", "amount", "nature", "source", "invoiceDate", "reference", "emailEvidence", "folderUrl", "documentUrl"})
+EXPENSE_LINK_KEYS = frozenset({"folderUrl", "documentUrl"})
 MOVEMENT_KEYS = frozenset({"year", "date", "sourceDate", "type", "ref", "line", "concept", "debit", "credit", "balance"})
 
 DOCUMENT_LINK_KEYS = frozenset(
@@ -81,6 +82,14 @@ def sanitize_public_payload(payload: dict[str, Any]) -> dict[str, Any]:
             raise RuntimeError(
                 "Public feed privacy guard: unexpected expense fields: " + ", ".join(sorted(extra))
             )
+        for key in EXPENSE_LINK_KEYS:
+            value = raw_expense.get(key)
+            if value in (None, ""):
+                continue
+            if not _is_allowed_google_document_url(value):
+                raise RuntimeError(
+                    f"Public feed privacy guard: non-Google supplier link at expense {index}, field {key}"
+                )
         sanitized_expenses.append({key: raw_expense.get(key) for key in EXPENSE_KEYS})
 
     sanitized_movements: list[dict[str, Any]] = []
@@ -95,7 +104,7 @@ def sanitize_public_payload(payload: dict[str, Any]) -> dict[str, Any]:
         sanitized_movements.append({key: raw_movement.get(key) for key in MOVEMENT_KEYS})
 
     sanitized = {
-        "version": 10,
+        "version": 11,
         "generatedAt": payload.get("generatedAt"),
         "records": sanitized_records,
         "expenses": sanitized_expenses,
@@ -107,7 +116,7 @@ def sanitize_public_payload(payload: dict[str, Any]) -> dict[str, Any]:
 
 def _walk_non_document_values(value: Any, *, parent_key: str | None = None):
     if isinstance(value, str):
-        if parent_key not in DOCUMENT_LINK_KEYS:
+        if parent_key not in (DOCUMENT_LINK_KEYS | EXPENSE_LINK_KEYS):
             yield value
         return
     if isinstance(value, dict):
@@ -142,6 +151,14 @@ def assert_public_payload_safe(payload: dict[str, Any]) -> None:
             raise RuntimeError(
                 "Public feed privacy guard: unexpected expense fields: " + ", ".join(sorted(extra))
             )
+        for key in EXPENSE_LINK_KEYS:
+            value = expense.get(key)
+            if value in (None, ""):
+                continue
+            if not _is_allowed_google_document_url(value):
+                raise RuntimeError(
+                    f"Public feed privacy guard: non-Google supplier link at expense {index}, field {key}"
+                )
 
     movements = payload.get("movements", []) or []
     for index, movement in enumerate(movements):

@@ -144,12 +144,14 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
 .estadillo-ledger-table tr:last-child td { border-bottom: 0; }
 .supplier-expense-panel { margin-top: 1rem; padding: 1.25rem; }
 .supplier-expense-wrap { margin-top: .85rem; overflow-x: auto; border: 1px solid #e1ecea; border-radius: 10px; }
-.supplier-expense-table { width: 100%; min-width: 760px; border-collapse: collapse; font-size: .75rem; }
+.supplier-expense-table { width: 100%; min-width: 1120px; border-collapse: collapse; font-size: .75rem; }
 .supplier-expense-table th { padding: .58rem .68rem; border-bottom: 1px solid var(--line); background: #f8fbfa; color: var(--ink-soft); font-family: "DM Mono", monospace; font-size: .62rem; font-weight: 600; letter-spacing: .05em; text-align: left; text-transform: uppercase; }
 .supplier-expense-table td { padding: .62rem .68rem; border-bottom: 1px solid #edf2f1; color: #345457; vertical-align: top; }
 .supplier-expense-table td:first-child, .supplier-expense-table td:nth-child(4), .supplier-expense-table td:last-child { font-family: "DM Mono", monospace; white-space: nowrap; }
 .supplier-expense-table td:last-child { text-align: right; font-weight: 800; }
 .supplier-expense-table tr:last-child td { border-bottom: 0; }
+.supplier-expense-table a { color: var(--teal); font-weight: 800; text-decoration: none; white-space: nowrap; }
+.supplier-expense-table a:hover { text-decoration: underline; }
 .supplier-status { font-size: .68rem; font-weight: 800; }
 .supplier-status.active { color: #26734d; }
 .supplier-status.pending { color: #9a6418; }
@@ -564,8 +566,8 @@ h2 { margin-bottom: .45rem; color: var(--deep); font-size: 1.1rem; line-height: 
             <p class="estadillo-balance-note">Esta tabla muestra el gasto documental real de proveedores. Una factura vinculada a un trabajo sustituye su coste estimado; una compra de stock o una factura aún sin vincular se conserva aquí sin duplicarla en el coste de los pedidos.</p>
             <div class="supplier-expense-wrap">
               <table class="supplier-expense-table">
-                <thead><tr><th>Fecha</th><th>Proveedor</th><th>Concepto</th><th>Referencia</th><th>Estado</th><th>Importe</th></tr></thead>
-                <tbody id="supplierExpensesBody"><tr><td colspan="6" class="empty-state">Cargando facturas de proveedores…</td></tr></tbody>
+                <thead><tr><th>Fecha</th><th>Proveedor</th><th>Concepto</th><th>Referencia</th><th>Estado</th><th>Importe</th><th>Carpeta</th><th>Documento</th><th>Fuente</th></tr></thead>
+                <tbody id="supplierExpensesBody"><tr><td colspan="9" class="empty-state">Cargando facturas de proveedores…</td></tr></tbody>
               </table>
             </div>
           </article>

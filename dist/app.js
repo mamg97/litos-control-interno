@@ -342,7 +342,7 @@ function mapPublicExpenses(records) {
     const month = text(record.month);
     const category = text(record.category);
     const amount = parseNumber(record.amount);
-    return { month, category, amount, nature: text(record.nature) || "Sin clasificar", source: text(record.source), invoiceDate: text(record.invoiceDate), reference: text(record.reference) };
+    return { month, category, amount, nature: text(record.nature) || "Sin clasificar", source: text(record.source), invoiceDate: text(record.invoiceDate), reference: text(record.reference), emailEvidence: text(record.emailEvidence), folderUrl: text(record.folderUrl), documentUrl: text(record.documentUrl) };
   }).filter((record) => /^\d{4}-(0[1-9]|1[0-2])$/.test(record.month) && record.category && record.amount !== null);
 }
 
@@ -1162,7 +1162,8 @@ function isInProduction(row, now = new Date()) {
   if (!receipt) return false;
   const { start, end } = currentQuarterBounds(now);
   const hasInvoice = Boolean(text(row["Archivo factura / albarán (XLSX)"]));
-  return receipt >= start && receipt < end && !hasInvoice;
+  const delivered = Boolean(parseDate(row["Fecha entrega (estadillo)"])) || normalize(row["Estado pedido"]).startsWith("entregado");
+  return receipt >= start && receipt < end && !hasInvoice && !delivered;
 }
 
 function traceRows() {
@@ -1636,7 +1637,7 @@ function renderSupplierExpenses(year) {
   if (!rows.length) {
     const tr = document.createElement("tr");
     const td = document.createElement("td");
-    td.colSpan = 6;
+    td.colSpan = 9;
     td.className = "empty-state";
     td.textContent = "No hay facturas de proveedores registradas para este año.";
     tr.append(td);
@@ -1648,7 +1649,7 @@ function renderSupplierExpenses(year) {
     const tr = document.createElement("tr");
     const nature = normalize(expense.nature);
     const status = nature.includes("pendiente") ? "Pendiente de vincular" : nature.includes("stock") ? "Compra de stock" : "Vinculado a trabajo";
-    const values = [
+    const plainValues = [
       formatOperationalDate(expense.invoiceDate || `${expense.month}-01`),
       expense.source || "Proveedor",
       expense.category.replace(/^Compra proveedor ·\s*/i, ""),
@@ -1656,12 +1657,32 @@ function renderSupplierExpenses(year) {
       status,
       formatMoney(expense.amount)
     ];
-    values.forEach((value, index) => {
+    plainValues.forEach((value, index) => {
       const td = document.createElement("td");
       td.textContent = value;
       if (index === 4) td.className = normalize(status).includes("pendiente") ? "supplier-status pending" : "supplier-status active";
       tr.append(td);
     });
+    [
+      { url: expense.folderUrl, label: "Abrir carpeta" },
+      { url: expense.documentUrl, label: "Abrir documento" }
+    ].forEach(({ url, label }) => {
+      const td = document.createElement("td");
+      if (url) {
+        const link = document.createElement("a");
+        link.href = url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = label;
+        td.append(link);
+      } else {
+        td.textContent = "—";
+      }
+      tr.append(td);
+    });
+    const evidence = document.createElement("td");
+    evidence.textContent = expense.emailEvidence || "—";
+    tr.append(evidence);
     body.append(tr);
   });
   if (total) {

@@ -58,6 +58,12 @@ EXPENSE_FIELDS = {
     "source": "Fuente",
     "invoiceDate": "Fecha factura",
     "reference": "Referencia factura",
+    "emailEvidence": "Referencia email fuente",
+}
+
+EXPENSE_LINK_FIELDS = {
+    "folderUrl": "Carpeta Drive",
+    "documentUrl": "Documento Drive",
 }
 
 MOVEMENT_FIELDS = {
@@ -303,12 +309,25 @@ def read_expenses(sheets) -> list[dict]:
         return []
     headers = [clean(cell) for cell in values[0]]
     columns = {header: index for index, header in enumerate(headers)}
-    missing = sorted(field for field in EXPENSE_FIELDS.values() if field not in columns)
+    required = set(EXPENSE_FIELDS.values()) | set(EXPENSE_LINK_FIELDS.values())
+    missing = sorted(field for field in required if field not in columns)
     if missing:
         raise RuntimeError("Faltan columnas públicas en Gastos: " + ", ".join(missing))
 
+    body = values[1:]
+    links = {
+        public_name: read_link_column(
+            sheets,
+            GASTOS_SHEET,
+            columns[column_name],
+            2,
+            len(body),
+        )
+        for public_name, column_name in EXPENSE_LINK_FIELDS.items()
+    }
+
     expenses: list[dict] = []
-    for row in values[1:]:
+    for body_index, row in enumerate(body):
         month = normalize_month(_read(row, columns, EXPENSE_FIELDS["month"]))
         category = _read(row, columns, EXPENSE_FIELDS["category"])
         amount = number_or_none(_read(row, columns, EXPENSE_FIELDS["amount"]))
@@ -323,10 +342,12 @@ def read_expenses(sheets) -> list[dict]:
                 "source": _read(row, columns, EXPENSE_FIELDS["source"]),
                 "invoiceDate": normalize_date(_read(row, columns, EXPENSE_FIELDS["invoiceDate"])),
                 "reference": _read(row, columns, EXPENSE_FIELDS["reference"]),
+                "emailEvidence": _read(row, columns, EXPENSE_FIELDS["emailEvidence"]),
+                "folderUrl": links["folderUrl"][body_index],
+                "documentUrl": links["documentUrl"][body_index],
             }
         )
     return expenses
-
 
 def read_movements(sheets) -> list[dict]:
     """Read the private running account exactly as reconciled in the master Sheet."""
