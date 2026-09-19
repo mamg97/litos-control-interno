@@ -150,6 +150,13 @@ jobs:
           LITOS_CLIENT_WRITE_ENABLED: "true"
         run: python intake_sync_safe.py
 
+      - name: M3 archive sent definitive documents
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
+        working-directory: python_client_intake
+        env:
+          LITOS_CLIENT_WRITE_ENABLED: "true"
+        run: python intake_sync.py --delivery-batches-only
+
       - name: M4 hardened manual production sync
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' }}
         working-directory: python_handwriting
@@ -168,6 +175,13 @@ jobs:
         env:
           LITOS_CLIENT_WRITE_ENABLED: "true"
         run: python intake_sync_safe.py
+
+      - name: M3 archive sent definitive documents scheduled
+        if: ${{ github.event_name == 'schedule' && vars.LITOS_HANDWRITING_KILL_SWITCH != 'true' }}
+        working-directory: python_client_intake
+        env:
+          LITOS_CLIENT_WRITE_ENABLED: "true"
+        run: python intake_sync.py --delivery-batches-only
 
       - name: M4 hardened scheduled production sync
         if: ${{ github.event_name == 'schedule' && vars.LITOS_HANDWRITING_KILL_SWITCH != 'true' }}
