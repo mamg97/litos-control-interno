@@ -1,4 +1,5 @@
 name: LITOS M7 Pages Cutover
+# Retry after delivery-date regression guard.
 # Auto-rebuild after master-writing workflows.
 # Force rebuild after 7903 master correction.
 # Refresh after 2026 final-price integrity audit.
