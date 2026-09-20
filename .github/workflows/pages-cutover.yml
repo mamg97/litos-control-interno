@@ -584,19 +584,19 @@ jobs:
           record_7715 = by_id.get("7715")
           assert record_7715 is not None, "7715 missing from staged public feed"
           assert not record_7715.get("deliveryDocumentDate"), (
-              f"7715 unexpectedly has delivery date: {record_7715.get('deliveryDocumentDate')!r}"
+              f"7715 must not expose its conflicting visual date: {record_7715.get('deliveryDocumentDate')!r}"
           )
-          assert record_7715.get("finalPrice") in (None, "", 0), (
-              f"7715 must not expose final price without definitive albarán: {record_7715.get('finalPrice')!r}"
-          )
-          assert "falta albarán definitivo" in str(record_7715.get("deliveryReviewStatus", "")).lower(), (
+          assert "conflicto documental" in str(record_7715.get("deliveryReviewStatus", "")).lower(), (
               f"7715 review status mismatch: {record_7715.get('deliveryReviewStatus')!r}"
+          )
+          assert abs(float(record_7715.get("finalPrice")) - 127.22) < 0.01, (
+              f"7715 definitive final price mismatch: {record_7715.get('finalPrice')!r}"
           )
           print(
               "M7_JUN_2025_PHASE_OK "
               f"validated={len(expected_jun_2025)} "
               f"conflict_7711={record_7711.get('deliveryReviewStatus')} "
-              f"missing_7715={record_7715.get('deliveryReviewStatus')}"
+              f"recovered_7715={record_7715.get('deliveryReviewStatus')}"
           )
 
           expected_may_2025 = {
