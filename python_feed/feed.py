@@ -151,6 +151,10 @@ def column_letter(index_zero_based: int) -> str:
 
 
 def link_from_cell(cell: dict) -> str:
+    formula = clean((cell.get("userEnteredValue") or {}).get("formulaValue"))
+    match = re.match(r'^=HYPERLINK\("([^"]+)"[,;]', formula, re.IGNORECASE)
+    if match:
+        return match.group(1).replace('""', '"')
     base_uri = (
         (((cell.get("userEnteredFormat") or {}).get("textFormat") or {}).get("link") or {})
         .get("uri")
@@ -209,7 +213,7 @@ def read_link_column(
             spreadsheetId=MASTER_ID,
             ranges=[f"'{sheet_name}'!{letter}{first_body_row_one_based}:{letter}{last_row}"],
             includeGridData=True,
-            fields="sheets.data.rowData.values(hyperlink,textFormatRuns,userEnteredFormat.textFormat.link)",
+            fields="sheets.data.rowData.values(hyperlink,textFormatRuns,userEnteredFormat.textFormat.link,userEnteredValue.formulaValue)",
         )
         .execute()
     )
