@@ -50,6 +50,7 @@ ORDER_DATE_HEADER = "Fecha ficha"
 RECEIPT_DATE_HEADER = "Fecha recepción (email)"
 DASHBOARD_DATE_HEADER = "Fecha para dashboard"
 OBSERVATION_HEADER = "Observación de conciliación"
+REVIEW_STATUS_HEADER = "Estado conciliación definitivo"
 INVOICE_HEADER = "Archivo factura / albarán (XLSX)"
 
 SUPPORTED_EXTENSIONS = {".pdf", ".xls", ".xlsx", ".xlsm"}
@@ -553,6 +554,16 @@ def plausible_delivery(
         return False
     if order_date is not None and candidate < order_date:
         return False
+    # If the candidate simply repeats the order date while the customer
+    # ledger records delivery materially later, fail closed. This is the
+    # exact stale-template pattern found in work 7878.
+    if (
+        order_date is not None
+        and stat_delivery_date is not None
+        and candidate == order_date
+        and stat_delivery_date > candidate + timedelta(days=1)
+    ):
+        return False
     # The documentary albarán date cannot occur after a delivery already
     # recorded in the customer ledger. Fail closed instead of accepting
     # a later header/order date from a stale or reused document.
@@ -673,7 +684,37 @@ def build_plan(drive, sheets, *, target_year: int | None = None):
 
         current = row[columns[DELIVERY_HEADER]] if columns[DELIVERY_HEADER] < len(row) else ""
         current_obs = row[columns[OBSERVATION_HEADER]] if columns[OBSERVATION_HEADER] < len(row) else ""
+        review_status = (
+            clean(row[columns[REVIEW_STATUS_HEADER]])
+            if REVIEW_STATUS_HEADER in columns and columns[REVIEW_STATUS_HEADER] < len(row)
+            else ""
+        )
+        review_status_lower = review_status.lower()
+        manual_no_date_lock = (
+            "conflicto documental" in review_status_lower
+            or "sin fecha entrega diferenciada" in review_status_lower
+        )
         machine_managed = MACHINE_DELIVERY_MARKER in clean(current_obs)
+
+        # Manual documentary review has precedence over automated extraction.
+        # If a reviewer has explicitly classified the document as conflicting
+        # or as lacking a differentiated delivery date, never repopulate AX.
+        if manual_no_date_lock:
+            if clean(current):
+                base_obs = strip_machine_delivery_notes(current_obs)
+                plans.append({
+                    "row_index_zero": row_index,
+                    "order_id": order_id,
+                    "delivery_date": None,
+                    "clear_delivery": True,
+                    "observation": base_obs,
+                    "conflict_only": False,
+                })
+                stats["manual_review_locked_dates_cleared"] += 1
+            else:
+                stats["manual_review_locked_blank"] += 1
+            continue
+
         if clean(current) and not machine_managed:
             stats["already_filled_manual_or_validated"] += 1
             continue
