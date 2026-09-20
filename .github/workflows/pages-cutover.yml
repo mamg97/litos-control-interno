@@ -2457,6 +2457,50 @@ jobs:
               )
           print("M7_NOV_2021_PHASE_OK audited=3 validated=3 conflicts=0 corrected=0")
 
+          expected_oct_2021 = {
+              "7151": ("2021-10-04", 39.12),
+              "7152": ("2021-10-04", 100.96),
+              "7153": ("2021-10-04", 506.60),
+              "7154": ("2021-10-04", 569.68),
+              "7148": ("2021-10-13", 365.68),
+              "7150": ("2021-10-13", 499.97),
+              "7155": ("2021-10-13", 507.58),
+              "7156": ("2021-10-13", 243.57),
+              "7158": ("2021-10-13", 498.76),
+              "7157": ("2021-10-14", 382.39),
+              "7149": ("2021-10-22", 267.90),
+              "7159": ("2021-10-22", 63.10),
+              "7160": ("2021-10-22", 489.66),
+              "7161": ("2021-10-22", 281.43),
+              "7162": ("2021-10-22", 281.43),
+              "7163": ("2021-10-22", 257.99),
+              "7164": ("2021-10-28", 297.70),
+              "7166": ("2021-10-28", 218.33),
+              "7165": ("2021-10-29", 168.25),
+          }
+          for work_id, (expected_date, expected_price) in expected_oct_2021.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} October-2021 delivery mismatch: "
+                  f"{record.get('deliveryDocumentDate')!r}"
+              )
+              assert "conciliado" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{work_id} October-2021 reconciliation status missing: "
+                  f"{record.get('deliveryReviewStatus')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} October-2021 final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          assert by_id["7153"].get("deliveryDocumentDate") == "2021-10-04", (
+              f"7153 corrected 2021 date missing: {by_id['7153'].get('deliveryDocumentDate')!r}"
+          )
+          assert by_id["7148"].get("deliveryReviewStatus") == "Conciliado · fecha documental y PVP validados", (
+              f"7148 old ID-conflict state was not cleared: {by_id['7148'].get('deliveryReviewStatus')!r}"
+          )
+          print("M7_OCT_2021_PHASE_OK audited=19 validated=19 conflicts=0 corrected=2")
+
           expected_nov_2023 = {
               "7446": ("2023-11-06", 138.82),
               "7447": ("2023-11-10", 410.13),
