@@ -1192,6 +1192,7 @@ function deliveryDocumentReviewLabel(order, now = new Date()) {
   if (status.includes("conflicto documental")) return "Conflicto documental";
   if (status.includes("sin fecha entrega diferenciada")) return "Sin fecha de entrega en albarán";
   if (status.includes("falta albarán definitivo")) return "Falta albarán definitivo";
+  if (status.includes("mes en curso")) return "Pendiente de albarán · mes en curso";
   return deliveryDocumentReviewNeeded(order, now) ? "Revisar documento" : "";
 }
 
@@ -1295,7 +1296,8 @@ function renderTraceTable({ bodySelector, countSelector, searchSelector }) {
         const reviewLabel = deliveryDocumentReviewLabel(order);
         if (reviewLabel) {
           const flag = document.createElement("small");
-          flag.className = "trace-review";
+          const status = text(order["Estado conciliación definitivo"]).toLowerCase();
+          flag.className = status.includes("mes en curso") ? "trace-review current-month" : "trace-review";
           flag.textContent = reviewLabel;
           cell.append(flag);
         }
