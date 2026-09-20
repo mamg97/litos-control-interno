@@ -289,9 +289,10 @@ jobs:
           # actually reaches the public feed consumed by the website.
           from collections import Counter
           work_id_counts = Counter(
-              str(record.get("id"))
+              work_id
               for record in payload["records"]
-              if record.get("id") not in (None, "")
+              for work_id in [str(record.get("id", "")).strip()]
+              if len(work_id) == 4 and work_id.isdigit()
           )
           duplicate_work_ids = sorted(
               work_id for work_id, count in work_id_counts.items() if count > 1
