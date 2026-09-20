@@ -1,4 +1,5 @@
 name: LITOS M7 Pages Cutover
+# July 2024 full-block propagation audit.
 # August 2024 full-block propagation audit.
 # September 2024 full-block propagation audit.
 # October 2024 full-block propagation audit.
@@ -877,6 +878,43 @@ jobs:
               "M7_AUG_2024_PHASE_OK "
               f"validated={len(expected_aug_2024)} "
               f"missing_7579={record_7579.get('deliveryReviewStatus')}"
+          )
+
+          expected_jul_2024 = {
+              "7566": ("2024-07-12", 138.82),
+              "7567": ("2024-07-12", 94.65),
+              "7573": ("2024-07-19", 100.96),
+              "7570": ("2024-07-22", 388.70),
+              "7574": ("2024-07-22", 44.17),
+              "7557": ("2024-07-30", 78.17),
+              "7571": ("2024-07-30", 100.96),
+              "7572": ("2024-07-30", 100.96),
+          }
+          for work_id, (expected_date, expected_price) in expected_jul_2024.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} July-2024 delivery mismatch: {record.get('deliveryDocumentDate')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} July-2024 final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          for missing_id in ("7565", "7581"):
+              record = by_id.get(missing_id)
+              assert record is not None, f"{missing_id} missing from staged public feed"
+              assert not record.get("deliveryDocumentDate"), (
+                  f"{missing_id} unexpectedly has delivery date: {record.get('deliveryDocumentDate')!r}"
+              )
+              assert record.get("finalPrice") in (None, "", 0), (
+                  f"{missing_id} must not expose undocumented final price: {record.get('finalPrice')!r}"
+              )
+              assert "falta albarán definitivo" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{missing_id} missing-albaran status mismatch: {record.get('deliveryReviewStatus')!r}"
+              )
+          print(
+              "M7_JUL_2024_PHASE_OK "
+              f"validated={len(expected_jul_2024)} missing=2"
           )
 
           expected_may_2025 = {
