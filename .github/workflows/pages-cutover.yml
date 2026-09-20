@@ -1,4 +1,5 @@
 name: LITOS M7 Pages Cutover
+# January 2025 full-block propagation audit.
 # February 2025 full-block propagation audit.
 # March 2025 full-block propagation audit.
 # June 2025 full-block propagation audit.
@@ -662,6 +663,29 @@ jobs:
               f"7654 corrected-document status missing: {by_id['7654'].get('deliveryReviewStatus')!r}"
           )
           print(f"M7_FEB_2025_PHASE_OK records={len(expected_feb_2025)}")
+
+          expected_jan_2025 = {
+              "7633": ("2025-01-08", 100.96),
+              "7640": ("2025-01-08", 219.59),
+              "7642": ("2025-01-15", 25.24),
+              "7645": ("2025-01-17", 268.81),
+              "7646": ("2025-01-17", 224.59),
+              "7648": ("2025-01-17", 206.97),
+              "7647": ("2025-01-22", 357.64),
+              "7658": ("2025-01-22", 214.54),
+              "7651": ("2025-01-28", 277.21),
+              "7662": ("2025-01-28", 119.89),
+          }
+          for work_id, (expected_date, expected_price) in expected_jan_2025.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} January-2025 delivery mismatch: {record.get('deliveryDocumentDate')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} January-2025 final price mismatch: {record.get('finalPrice')!r}"
+              )
+          print(f"M7_JAN_2025_PHASE_OK records={len(expected_jan_2025)}")
 
           expected_may_2025 = {
               "7678": ("2025-05-05", 445.49),
