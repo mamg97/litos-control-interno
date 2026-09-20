@@ -1,4 +1,5 @@
 name: LITOS M7 Pages Cutover
+# June 2025 doc-sheet-web phase audit.
 # October 2025 full-block propagation audit.
 # Retry after canonical 7749 deduplication.
 # September 2025 full propagation guard.
@@ -539,6 +540,61 @@ jobs:
               f"records={len(expected_oct_2025)} "
               f"first={by_id['7768'].get('deliveryDocumentDate')} "
               f"last={by_id['7786'].get('deliveryDocumentDate')}"
+          )
+
+          expected_jun_2025 = {
+              "7696": ("2025-06-02", 388.70),
+              "7697": ("2025-06-02", 195.61),
+              "7703": ("2025-06-04", 297.19),
+              "7720": ("2025-06-04", 315.50),
+              "7704": ("2025-06-09", 492.18),
+              "7707": ("2025-06-12", 256.19),
+              "7714": ("2025-06-12", 302.68),
+              "7712": ("2025-06-16", 220.85),
+              "7713": ("2025-06-17", 378.60),
+              "7723": ("2025-06-18", 145.13),
+              "7708": ("2025-06-24", 261.23),
+              "7718": ("2025-06-25", 331.91),
+          }
+          for work_id, (expected_date, expected_price) in expected_jun_2025.items():
+              matches = [record for record in payload["records"] if str(record.get("id")) == work_id]
+              assert len(matches) == 1, f"{work_id} expected once in feed, got {len(matches)}"
+              record = matches[0]
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} June-2025 delivery mismatch: {record.get('deliveryDocumentDate')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} June-2025 final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          record_7711 = by_id.get("7711")
+          assert record_7711 is not None, "7711 missing from staged public feed"
+          assert not record_7711.get("deliveryDocumentDate"), (
+              f"7711 must not expose invalid 2024 visual date: {record_7711.get('deliveryDocumentDate')!r}"
+          )
+          assert "conflicto documental" in str(record_7711.get("deliveryReviewStatus", "")).lower(), (
+              f"7711 review status mismatch: {record_7711.get('deliveryReviewStatus')!r}"
+          )
+          assert abs(float(record_7711.get("finalPrice")) - 494.07) < 0.01, (
+              f"7711 final price mismatch: {record_7711.get('finalPrice')!r}"
+          )
+
+          record_7715 = by_id.get("7715")
+          assert record_7715 is not None, "7715 missing from staged public feed"
+          assert not record_7715.get("deliveryDocumentDate"), (
+              f"7715 unexpectedly has delivery date: {record_7715.get('deliveryDocumentDate')!r}"
+          )
+          assert record_7715.get("finalPrice") in (None, "", 0), (
+              f"7715 must not expose final price without definitive albarán: {record_7715.get('finalPrice')!r}"
+          )
+          assert "falta albarán definitivo" in str(record_7715.get("deliveryReviewStatus", "")).lower(), (
+              f"7715 review status mismatch: {record_7715.get('deliveryReviewStatus')!r}"
+          )
+          print(
+              "M7_JUN_2025_PHASE_OK "
+              f"validated={len(expected_jun_2025)} "
+              f"conflict_7711={record_7711.get('deliveryReviewStatus')} "
+              f"missing_7715={record_7715.get('deliveryReviewStatus')}"
           )
 
           expected_nov_2025 = {
