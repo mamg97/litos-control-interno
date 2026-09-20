@@ -2791,6 +2791,72 @@ jobs:
               )
           print("M7_JAN_2021_PHASE_OK audited=6 validated=6 conflicts=0 corrected=0")
 
+          expected_dec_2020 = {
+              "7059": ("2020-12-03", 301.25),
+              "7062": ("2020-12-03", 148.92),
+              "7057": ("2020-12-15", 282.23),
+              "7068": ("2020-12-15", 126.20),
+              "7063": ("2020-12-17", 113.58),
+              "7067": ("2020-12-17", 55.23),
+              "7043": ("2020-12-22", 601.02),
+              "7061": ("2020-12-22", 186.28),
+              "7053": ("2020-12-28", 283.02),
+          }
+          for work_id, (expected_date, expected_price) in expected_dec_2020.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} December-2020 delivery mismatch: "
+                  f"{record.get('deliveryDocumentDate')!r}"
+              )
+              assert "conciliado" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{work_id} December-2020 reconciliation status missing: "
+                  f"{record.get('deliveryReviewStatus')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} December-2020 final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          for work_id, expected_price in {"7060": 365.98, "7069": 37.86}.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert not record.get("deliveryDocumentDate"), (
+                  f"{work_id} must not expose conflicting delivery date: "
+                  f"{record.get('deliveryDocumentDate')!r}"
+              )
+              assert "conflicto documental" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{work_id} December-2020 conflict status missing: "
+                  f"{record.get('deliveryReviewStatus')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} December-2020 final price mismatch: {record.get('finalPrice')!r}"
+              )
+          print("M7_DEC_2020_PHASE_OK audited=11 validated=9 conflicts=2 corrected=0")
+
+          expected_nov_2020 = {
+              "7049": ("2020-11-10", 276.13),
+              "7052": ("2020-11-10", 333.35),
+              "7037": ("2020-11-30", 271.33),
+              "7055": ("2020-11-30", 195.61),
+              "7056": ("2020-11-30", 254.11),
+              "7058": ("2020-11-30", 130.73),
+          }
+          for work_id, (expected_date, expected_price) in expected_nov_2020.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} November-2020 delivery mismatch: "
+                  f"{record.get('deliveryDocumentDate')!r}"
+              )
+              assert "conciliado" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{work_id} November-2020 reconciliation status missing: "
+                  f"{record.get('deliveryReviewStatus')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} November-2020 final price mismatch: {record.get('finalPrice')!r}"
+              )
+          print("M7_NOV_2020_PHASE_OK audited=6 validated=6 conflicts=0 corrected=0")
+
           expected_nov_2023 = {
               "7446": ("2023-11-06", 138.82),
               "7447": ("2023-11-10", 410.13),
