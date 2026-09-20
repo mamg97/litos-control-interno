@@ -254,7 +254,11 @@ def _link_from_cell(cell: dict) -> str:
         uri = (((run or {}).get("format") or {}).get("link") or {}).get("uri")
         if uri:
             return str(uri)
-    return ""
+    base_uri = (
+        (((cell.get("userEnteredFormat") or {}).get("textFormat") or {}).get("link") or {})
+        .get("uri")
+    )
+    return str(base_uri or "")
 
 
 def read_link_column(
@@ -274,7 +278,7 @@ def read_link_column(
             ranges=[f"'{SHEET_NAME}'!{letter}{first_body_row_one_based}:{letter}{last_row}"],
             includeGridData=True,
             fields=(
-                "sheets.data.rowData.values(formattedValue,hyperlink,textFormatRuns)"
+                "sheets.data.rowData.values(formattedValue,hyperlink,textFormatRuns,userEnteredFormat.textFormat.link)"
             ),
         )
         .execute()
