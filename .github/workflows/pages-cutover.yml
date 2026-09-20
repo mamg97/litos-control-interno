@@ -2968,6 +2968,7 @@ jobs:
               f"{[record.get('id') for record in july_2020_records]}"
           )
           print("M7_JUL_2020_PHASE_OK audited=0 no_records=1")
+          # Second-pass 2020 status sync: regenerate public feed after master cleanup.
 
           expected_nov_2023 = {
               "7446": ("2023-11-06", 138.82),
