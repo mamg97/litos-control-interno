@@ -302,11 +302,22 @@ Historical delivery-date enrichment must review definitive albaranes regardless 
 The `FECHA` printed in the header next to `PEDIDO Nº` is the order/fiche date and must not populate `Fecha entrega albarán`. The delivery field is populated only from a differentiated delivery/footer date (`FECHA` / `FECHA DE ENTREGA`) in the definitive document; when both spreadsheet and rendered PDF exist, prefer the PDF because it commonly carries the completed footer date. The internal four-digit work ID must match before a document date is accepted. If the written date is impossible relative to the order date or current date, preserve the conflict for review and leave `Fecha entrega albarán` blank unless an explicit manual validation resolves the documentary error.
 
 
-### Delivery-date repair completed 2026-09-19
+### Delivery-date repair and phased reconciliation
 
 A historical repair was required after detecting that the previous XLS/XLSX backfill could read the `FECHA` placed on the same header row as `PEDIDO Nº` and incorrectly store it as `Fecha entrega albarán`.
 
-The repair was executed in annual phases from 2026 backwards through 2020. Header-date copies were removed, the parser now skips the order header row, `*-nota.pdf` files are excluded from definitive-document classification, and native Google Sheets are supported as candidate albaranes. After the repair, a delivery date is retained only when it is differentiated from the order header and passes document-ID/date validation, or when it has been explicitly validated manually.
+The repair is executed in controlled chronological phases. 2026 was reconciled first; historical years are then reviewed month/phase by month/phase before moving farther back. Header-date copies are removed, the parser skips the order header row, `*-nota.pdf` files are excluded from definitive-document classification, and native Google Sheets are supported as candidate albaranes. XLSX/XLSM reconciliation must also inspect DrawingML/text-box content because the workshop template often stores the definitive albarán `FECHA` in a floating graphic object rather than a worksheet cell. After repair, a delivery date is retained only when it is differentiated from the order header and passes document/date validation, or when it has been explicitly validated manually.
+
+
+### Mandatory document → master → web closure
+
+No reconciliation phase is complete merely because the private master has been edited. Every corrected work must close the full chain:
+
+1. **Document**: inspect the definitive PDF/XLS/XLSX/XLSM itself. For Excel files, inspect both worksheet cells and DrawingML/text boxes. Validate the work ID from the document content; if the ID/header is inherited from a template, only accept the document after manual reconciliation against material, concept, inscription/person, dimensions and amount. Preserve the template discrepancy explicitly.
+2. **Private master**: write the validated definitive `Precio final (€)`, `Fecha entrega albarán`, source/reference and reconciliation status. `Total sheet (€)` must agree with the validated definitive TOTAL when that document is authoritative. Never leave a synthetic estadillo-derived PVP in place once a trustworthy definitive TOTAL exists.
+3. **Public feed / website**: regenerate the privacy-safe feed and assert that every reconciled phase record exposes the same work ID, final price, delivery date/review status and active document link as the master. GitHub Pages deployment must fail closed if those propagation assertions do not pass.
+
+The public website is a projection of the private master through the generated feed; it is not considered updated until the staged feed assertions and Pages deployment both succeed.
 
 Historical rows with no trustworthy differentiated delivery date remain blank by design. They must not be populated from `Fecha ficha`, email receipt, dashboard date or estadillo merely to avoid a blank value.
 
