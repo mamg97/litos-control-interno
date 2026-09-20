@@ -2592,6 +2592,67 @@ jobs:
               )
           print("M7_JUL_2021_PHASE_OK audited=12 validated=12 conflicts=0 corrected=0")
 
+          expected_jun_2021 = {
+              "7108": ("2021-06-03", 439.18),
+              "7114": ("2021-06-03", 44.17),
+              "7117": ("2021-06-08", 100.96),
+              "7120": ("2021-06-18", 283.06),
+              "7121": ("2021-06-18", 298.10),
+              "7123": ("2021-06-18", 240.82),
+              "7118": ("2021-06-24", 384.96),
+              "7119": ("2021-06-25", 436.56),
+          }
+          for work_id, (expected_date, expected_price) in expected_jun_2021.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} June-2021 delivery mismatch: "
+                  f"{record.get('deliveryDocumentDate')!r}"
+              )
+              assert "conciliado" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{work_id} June-2021 reconciliation status missing: "
+                  f"{record.get('deliveryReviewStatus')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} June-2021 final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          assert by_id.get("1120") is None, "Historical typo 1120 must not remain as canonical work ID"
+          assert "1wpl-0TaiGqTpcgvxWbW5BrIA39-DqvJt" in str(by_id["7120"].get("invoiceFile", "")), (
+              f"7120 must point to recovered canonical albaran: {by_id['7120'].get('invoiceFile')!r}"
+          )
+          print("M7_JUN_2021_PHASE_OK audited=8 validated=8 conflicts=0 corrected=3")
+
+          expected_may_2021 = {
+              "7094": ("2021-05-03", 145.13),
+              "7103": ("2021-05-03", 352.64),
+              "7105": ("2021-05-03", 319.79),
+              "7101": ("2021-05-10", 382.39),
+              "7106": ("2021-05-10", 269.46),
+              "7109": ("2021-05-10", 259.80),
+              "7111": ("2021-05-11", 100.96),
+              "7107": ("2021-05-13", 311.61),
+              "7110": ("2021-05-19", 264.49),
+              "7115": ("2021-05-20", 25.24),
+              "7112": ("2021-05-26", 113.58),
+              "7113": ("2021-05-28", 265.65),
+          }
+          for work_id, (expected_date, expected_price) in expected_may_2021.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} May-2021 delivery mismatch: "
+                  f"{record.get('deliveryDocumentDate')!r}"
+              )
+              assert "conciliado" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{work_id} May-2021 reconciliation status missing: "
+                  f"{record.get('deliveryReviewStatus')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} May-2021 final price mismatch: {record.get('finalPrice')!r}"
+              )
+          print("M7_MAY_2021_PHASE_OK audited=12 validated=12 conflicts=0 corrected=0")
+
           expected_nov_2023 = {
               "7446": ("2023-11-06", 138.82),
               "7447": ("2023-11-10", 410.13),
