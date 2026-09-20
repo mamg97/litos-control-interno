@@ -297,6 +297,19 @@ jobs:
               f"7904={record_7904.get('deliveryReviewStatus')}"
           )
 
+          record_7923 = by_id.get("7923")
+          assert record_7923 is not None, "7923 missing from staged public feed"
+          assert record_7923.get("deliveryReviewStatus") == "Pendiente · mes en curso", (
+              f"7923 current-month status did not propagate: {record_7923.get('deliveryReviewStatus')!r}"
+          )
+          assert not record_7923.get("deliveryDocumentDate"), (
+              f"7923 unexpectedly has a delivery date: {record_7923.get('deliveryDocumentDate')!r}"
+          )
+          print(
+              "M7_CURRENT_MONTH_STATUS_OK "
+              f"7923={record_7923.get('deliveryReviewStatus')}"
+          )
+
           document_links = sum(
               1
               for record in payload['records']
