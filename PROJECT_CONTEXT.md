@@ -59,6 +59,8 @@ The website does not scrape Drive or Apps Script at runtime. M7 reads the privat
 
 Historical work is undergoing a second controlled reconciliation pass, working backwards through the archive in small chronological blocks. The current review frontier has reached **July 2020**. The 2021 historical block is fully reviewed month by month, and the controlled 2020 pass has now reached the start of the available master/estadillo history: no July-2020 records are present, while the first available 2020 orders are in August.
 
+A second-pass cleanup of unresolved historical dates is now in progress. August and December 2020 were re-inspected at raw XLSX level (including package structure), folder contents and alternative-file search. Their remaining date warnings are not treated as contradictory delivery dates: the only FECHA present is the PEDIDO header date, and no differentiated delivery date exists in worksheet cells, DrawingML/text boxes, PDF or an alternative version. Those records therefore keep validated PVP/document provenance while `Fecha entrega albarán` stays blank with status `Revisión manual · sin fecha de entrega documental`.
+
 For each historical month the process closes the full chain:
 
 1. inspect the linked XLS/XLSX itself and validate the internal four-digit work ID, document date and exact `SUMA`/amount;
