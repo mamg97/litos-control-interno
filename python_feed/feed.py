@@ -151,18 +151,17 @@ def column_letter(index_zero_based: int) -> str:
 
 
 def link_from_cell(cell: dict) -> str:
-    direct = clean(cell.get("hyperlink"))
-    if direct:
-        return direct
-    for run in cell.get("textFormatRuns", []) or []:
-        uri = (((run or {}).get("format") or {}).get("link") or {}).get("uri")
-        if uri:
-            return str(uri)
     base_uri = (
         (((cell.get("userEnteredFormat") or {}).get("textFormat") or {}).get("link") or {})
         .get("uri")
     )
-    return str(base_uri or "")
+    if base_uri:
+        return str(base_uri)
+    for run in cell.get("textFormatRuns", []) or []:
+        uri = (((run or {}).get("format") or {}).get("link") or {}).get("uri")
+        if uri:
+            return str(uri)
+    return clean(cell.get("hyperlink"))
 
 
 def build_sheets_service():

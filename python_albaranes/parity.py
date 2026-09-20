@@ -247,18 +247,17 @@ def read_sheet_values(sheets) -> tuple[list[list[Any]], int, dict[str, int]]:
 
 
 def _link_from_cell(cell: dict) -> str:
-    direct = str(cell.get("hyperlink", "") or "")
-    if direct:
-        return direct
-    for run in cell.get("textFormatRuns", []) or []:
-        uri = (((run or {}).get("format") or {}).get("link") or {}).get("uri")
-        if uri:
-            return str(uri)
     base_uri = (
         (((cell.get("userEnteredFormat") or {}).get("textFormat") or {}).get("link") or {})
         .get("uri")
     )
-    return str(base_uri or "")
+    if base_uri:
+        return str(base_uri)
+    for run in cell.get("textFormatRuns", []) or []:
+        uri = (((run or {}).get("format") or {}).get("link") or {}).get("uri")
+        if uri:
+            return str(uri)
+    return str(cell.get("hyperlink", "") or "")
 
 
 def read_link_column(
