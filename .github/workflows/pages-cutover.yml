@@ -1,4 +1,5 @@
 name: LITOS M7 Pages Cutover
+# Force rebuild after 7903 master correction.
 # Refresh after 2026 final-price integrity audit.
 # Refresh after canonical 7917 master reconciliation.
 # Refresh after focused 2026 delivery-date repair.
@@ -244,6 +245,23 @@ jobs:
           assert isinstance(payload.get('movements'), list) and payload['movements']
           assert isinstance(payload['movements'][-1].get('balance'), (int, float))
           assert_public_payload_safe(payload)
+
+          # Phase-2026 propagation guard: verify the private-master correction
+          # actually reaches the public feed consumed by the website.
+          by_id = {str(record.get("id")): record for record in payload["records"]}
+          record_7903 = by_id.get("7903")
+          assert record_7903 is not None, "7903 missing from staged public feed"
+          assert record_7903.get("deliveryDocumentDate") == "2026-08-31", (
+              f"7903 delivery date did not propagate: {record_7903.get('deliveryDocumentDate')!r}"
+          )
+          assert abs(float(record_7903.get("finalPrice")) - 449.31) < 0.01, (
+              f"7903 final price did not propagate: {record_7903.get('finalPrice')!r}"
+          )
+          print(
+              "M7_7903_PROPAGATION_OK "
+              f"delivery={record_7903.get('deliveryDocumentDate')} "
+              f"finalPrice={record_7903.get('finalPrice')}"
+          )
 
           document_links = sum(
               1
