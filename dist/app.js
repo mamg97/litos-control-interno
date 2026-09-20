@@ -307,6 +307,7 @@ function mapPublicRows(records) {
     "Fecha recepción (email)": text(record.receiptDate),
     "Fecha entrega (estadillo)": text(record.deliveredDate),
     "Fecha entrega albarán": text(record.deliveryDocumentDate),
+    "Estado conciliación definitivo": text(record.deliveryReviewStatus),
     "Fecha para dashboard": text(record.date),
     "Importe trabajo / Debe (€)": record.amount ?? "",
     "Precio final (€)": record.finalPrice ?? record.pvp ?? "",
@@ -1185,6 +1186,14 @@ function deliveryDocumentReviewNeeded(order, now = new Date()) {
   return entryMonth < currentMonth;
 }
 
+function deliveryDocumentReviewLabel(order, now = new Date()) {
+  if (parseDate(order["Fecha entrega albarán"])) return "";
+  const status = text(order["Estado conciliación definitivo"]).toLowerCase();
+  if (status.includes("conflicto documental")) return "Conflicto documental";
+  if (status.includes("falta albarán definitivo")) return "Falta albarán definitivo";
+  return deliveryDocumentReviewNeeded(order, now) ? "Revisar documento" : "";
+}
+
 function traceRows() {
   return [...state.rows].sort((a, b) => {
     const periodA = tracePeriod(a);
@@ -1281,11 +1290,14 @@ function renderTraceTable({ bodySelector, countSelector, searchSelector }) {
     ].forEach((value, index) => {
       const cell = document.createElement("td");
       cell.textContent = value;
-      if (index === 1 && deliveryDocumentReviewNeeded(order)) {
-        const flag = document.createElement("small");
-        flag.className = "trace-review";
-        flag.textContent = "Revisar documento";
-        cell.append(flag);
+      if (index === 1) {
+        const reviewLabel = deliveryDocumentReviewLabel(order);
+        if (reviewLabel) {
+          const flag = document.createElement("small");
+          flag.className = "trace-review";
+          flag.textContent = reviewLabel;
+          cell.append(flag);
+        }
       }
       row.append(cell);
     });
