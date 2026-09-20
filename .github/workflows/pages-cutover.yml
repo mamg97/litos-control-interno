@@ -1787,6 +1787,43 @@ jobs:
           )
           print("M7_MAR_2023_PHASE_OK audited=15 resolved_prices=15 date_conflicts=15")
 
+          expected_feb_2023_conflicts = {
+              "7326": 45.05,
+              "7328": 119.89,
+              "7329": 297.16,
+              "7327": 100.96,
+              "7330": 201.92,
+              "7336": 237.26,
+              "7332": 286.31,
+          }
+          for work_id, expected_price in expected_feb_2023_conflicts.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert not record.get("deliveryDocumentDate"), (
+                  f"{work_id} February-2023 conflicting date must remain unresolved: "
+                  f"{record.get('deliveryDocumentDate')!r}"
+              )
+              assert "conflicto documental" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{work_id} February-2023 conflict status missing: "
+                  f"{record.get('deliveryReviewStatus')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} February-2023 final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          record_7325 = by_id.get("7325")
+          assert record_7325 is not None, "7325 missing from staged public feed"
+          assert record_7325.get("deliveryDocumentDate") == "2023-02-20", (
+              f"7325 delivery mismatch: {record_7325.get('deliveryDocumentDate')!r}"
+          )
+          assert abs(float(record_7325.get("finalPrice")) - 243.00) < 0.01, (
+              f"7325 final price mismatch: {record_7325.get('finalPrice')!r}"
+          )
+          assert "1Uyng_hSs_sQjQcx2dIsNBqI91oGETWQR" in str(record_7325.get("invoiceFile", "")), (
+              f"7325 canonical document mismatch: {record_7325.get('invoiceFile')!r}"
+          )
+          print("M7_FEB_2023_PHASE_OK audited=8 validated=1 conflicts=7")
+
           expected_nov_2023 = {
               "7446": ("2023-11-06", 138.82),
               "7447": ("2023-11-10", 410.13),
