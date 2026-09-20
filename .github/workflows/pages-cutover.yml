@@ -1,4 +1,5 @@
 name: LITOS M7 Pages Cutover
+# Force refresh after 7771 historical repair.
 # Retry after delivery-date regression guard.
 # Auto-rebuild after master-writing workflows.
 # Force rebuild after 7903 master correction.
@@ -476,6 +477,20 @@ jobs:
               f"7824={record_7824.get('deliveryDocumentDate')} "
               f"7841={record_7841.get('deliveryReviewStatus')} "
               f"7847={by_id['7847'].get('deliveryDocumentDate')}"
+          )
+
+          record_7771 = by_id.get("7771")
+          assert record_7771 is not None, "7771 missing from staged public feed"
+          assert record_7771.get("deliveryDocumentDate") == "2025-10-07", (
+              f"7771 delivery date mismatch: {record_7771.get('deliveryDocumentDate')!r}"
+          )
+          assert abs(float(record_7771.get("finalPrice")) - 230.95) < 0.01, (
+              f"7771 final price mismatch: {record_7771.get('finalPrice')!r}"
+          )
+          print(
+              "M7_7771_CASE_OK "
+              f"delivery={record_7771.get('deliveryDocumentDate')} "
+              f"finalPrice={record_7771.get('finalPrice')}"
           )
 
           document_links = sum(
