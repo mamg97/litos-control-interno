@@ -64,6 +64,8 @@ The private ledger must remain private. The public dashboard may expose only the
 
 Cash advances are movements of settlement, not additional revenue. Never add `ENTREGA A CUENTA` to revenue a second time.
 
+A later accounting movement that reuses an existing work ID must not create a second `Pedidos` row. `Pedidos` has one canonical row per work ID. Subsequent reform, repair, adjustment or other accounting entries that refer to that same historical ID remain separate rows in `Movimientos cliente` and may be documented on the canonical work, but they do not clone the order master row.
+
 For financial views, delivered-work value drives recorded revenue; advances only affect the running account balance.
 
 ## 3. Final sale price / PVP
