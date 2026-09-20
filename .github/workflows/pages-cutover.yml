@@ -1,4 +1,5 @@
 name: LITOS M7 Pages Cutover
+# July 2025 full propagation guard.
 # December 2025 full propagation guard.
 # November 2025 full propagation guard.
 # October 2025 full propagation guard.
@@ -630,6 +631,38 @@ jobs:
               f"7815={record_7815.get('deliveryDocumentDate')}/{record_7815.get('finalPrice')} "
               f"7787={by_id['7787'].get('deliveryReviewStatus')} "
               f"7798={by_id['7798'].get('deliveryReviewStatus')}"
+          )
+
+          expected_jul_2025 = {
+              "7717": ("2025-07-01", 132.51),
+              "7724": ("2025-07-03", 304.14),
+              "7709": ("2025-07-09", 214.54),
+              "7732": ("2025-07-09", 239.78),
+              "7710": ("2025-07-14", 831.09),
+              "7726": ("2025-07-14", 94.65),
+              "7721": ("2025-07-16", 542.96),
+              "7719": ("2025-07-18", 333.80),
+              "7725": ("2025-07-21", 100.96),
+              "7722": ("2025-07-23", 232.73),
+              "7733": ("2025-07-23", 55.96),
+              "7690": ("2025-07-29", 214.54),
+              "7716": ("2025-07-29", 175.87),
+          }
+          for work_id, (expected_date, expected_price) in expected_jul_2025.items():
+              matches = [record for record in payload["records"] if str(record.get("id")) == work_id]
+              assert len(matches) == 1, f"{work_id} expected once in feed, got {len(matches)}"
+              record = matches[0]
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} July-2025 delivery mismatch: {record.get('deliveryDocumentDate')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} July-2025 final price mismatch: {record.get('finalPrice')!r}"
+              )
+          print(
+              "M7_JUL_2025_PHASE_OK "
+              f"records={len(expected_jul_2025)} "
+              f"first={by_id['7717'].get('deliveryDocumentDate')} "
+              f"last={by_id['7716'].get('deliveryDocumentDate')}"
           )
 
           document_links = sum(
