@@ -1,4 +1,5 @@
 name: LITOS M7 Pages Cutover
+# December 2023 full-block propagation audit.
 # January 2024 full-block propagation audit.
 # February 2024 full-block propagation audit.
 # March 2024 full-block propagation audit.
@@ -1199,6 +1200,45 @@ jobs:
           print(
               "M7_JAN_2024_PHASE_OK "
               f"validated={len(expected_jan_2024)} missing=3"
+          )
+
+          expected_dec_2023 = {
+              "7452": ("2023-12-14", 75.72),
+              "7456": ("2023-12-14", 222.96),
+              "7459": ("2023-12-14", 18.93),
+              "7460": ("2023-12-14", 12.62),
+              "7440": ("2023-12-20", 262.18),
+              "7462": ("2023-12-20", 401.19),
+              "7472": ("2023-12-20", 254.26),
+              "7449": ("2023-12-22", 327.74),
+              "7468": ("2023-12-27", 294.50),
+          }
+          for work_id, (expected_date, expected_price) in expected_dec_2023.items():
+              matches = [record for record in payload["records"] if str(record.get("id")) == work_id]
+              assert len(matches) == 1, f"{work_id} expected once in feed, got {len(matches)}"
+              record = matches[0]
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} December-2023 delivery mismatch: {record.get('deliveryDocumentDate')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} December-2023 final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          record_7470 = by_id.get("7470")
+          assert record_7470 is not None, "7470 missing from staged public feed"
+          assert not record_7470.get("deliveryDocumentDate"), (
+              f"7470 unexpectedly has delivery date: {record_7470.get('deliveryDocumentDate')!r}"
+          )
+          assert record_7470.get("finalPrice") in (None, "", 0), (
+              f"7470 must not expose final price without definitive albaran: {record_7470.get('finalPrice')!r}"
+          )
+          assert "falta albarán definitivo" in str(record_7470.get("deliveryReviewStatus", "")).lower(), (
+              f"7470 status mismatch: {record_7470.get('deliveryReviewStatus')!r}"
+          )
+
+          print(
+              "M7_DEC_2023_PHASE_OK "
+              f"validated={len(expected_dec_2023)} missing_7470={record_7470.get('deliveryReviewStatus')}"
           )
 
           expected_may_2025 = {
