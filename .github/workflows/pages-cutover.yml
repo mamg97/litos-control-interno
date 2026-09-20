@@ -1538,6 +1538,39 @@ jobs:
               f"conflict_7407={record_7407.get('deliveryReviewStatus')}"
           )
 
+          record_7390 = by_id.get("7390")
+          assert record_7390 is not None, "7390 missing from staged public feed"
+          assert not record_7390.get("deliveryDocumentDate"), (
+              f"7390 conflicting documentary date must stay unresolved: {record_7390.get('deliveryDocumentDate')!r}"
+          )
+          assert abs(float(record_7390.get("finalPrice")) - 304.04) < 0.01, (
+              f"7390 final price mismatch: {record_7390.get('finalPrice')!r}"
+          )
+          assert "conflicto documental" in str(record_7390.get("deliveryReviewStatus", "")).lower(), (
+              f"7390 conflict status missing: {record_7390.get('deliveryReviewStatus')!r}"
+          )
+          assert "15PugZGMdPZWr8CIq3ujFKQIgmt-ouTxM" in str(record_7390.get("invoiceFile", "")), (
+              f"7390 wrong canonical document: {record_7390.get('invoiceFile')!r}"
+          )
+
+          record_7397 = by_id.get("7397")
+          assert record_7397 is not None, "7397 missing from staged public feed"
+          assert record_7397.get("deliveryDocumentDate") == "2023-08-29", (
+              f"7397 delivery mismatch: {record_7397.get('deliveryDocumentDate')!r}"
+          )
+          assert abs(float(record_7397.get("finalPrice")) - 246.09) < 0.01, (
+              f"7397 final price mismatch: {record_7397.get('finalPrice')!r}"
+          )
+          assert "1T6uyCaKVu-ju1HLYIH9ZMF323wNwX9S-" in str(record_7397.get("invoiceFile", "")), (
+              f"7397 wrong canonical document: {record_7397.get('invoiceFile')!r}"
+          )
+          print(
+              "M7_AUG_2023_BATCH3_OK "
+              f"validated_7397={record_7397.get('deliveryDocumentDate')}/{record_7397.get('finalPrice')} "
+              f"conflict_7390={record_7390.get('deliveryReviewStatus')}"
+          )
+          print("M7_AUG_2023_PHASE_OK audited=12 validated=10 conflicts=2")
+
           expected_nov_2023 = {
               "7446": ("2023-11-06", 138.82),
               "7447": ("2023-11-10", 410.13),
