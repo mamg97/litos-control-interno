@@ -1,4 +1,5 @@
 name: LITOS M7 Pages Cutover
+# June 2024 full-block propagation audit.
 # July 2024 full-block propagation audit.
 # August 2024 full-block propagation audit.
 # September 2024 full-block propagation audit.
@@ -916,6 +917,33 @@ jobs:
               "M7_JUL_2024_PHASE_OK "
               f"validated={len(expected_jul_2024)} missing=2"
           )
+
+          expected_jun_2024 = {
+              "7533": ("2024-06-20", 249.88),
+              "7536": ("2024-06-20", 319.29),
+              "7550": ("2024-06-20", 535.09),
+              "7552": ("2024-06-20", 294.05),
+              "7555": ("2024-06-20", 432.87),
+              "7556": ("2024-06-25", 445.49),
+              "7553": ("2024-06-26", 361.40),
+              "7560": ("2024-06-26", 472.49),
+              "7561": ("2024-06-28", 282.13),
+              "7562": ("2024-06-28", 443.55),
+              "7564": ("2024-06-28", 207.58),
+          }
+          for work_id, (expected_date, expected_price) in expected_jun_2024.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} June-2024 delivery mismatch: {record.get('deliveryDocumentDate')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} June-2024 final price mismatch: {record.get('finalPrice')!r}"
+              )
+          assert "documento correcto recuperado" in str(by_id["7560"].get("deliveryReviewStatus", "")).lower(), (
+              f"7560 corrected-document status missing: {by_id['7560'].get('deliveryReviewStatus')!r}"
+          )
+          print(f"M7_JUN_2024_PHASE_OK records={len(expected_jun_2024)}")
 
           expected_may_2025 = {
               "7678": ("2025-05-05", 445.49),
