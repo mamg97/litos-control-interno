@@ -39,6 +39,7 @@ HEADERS = {
 ORDER_ID_RE = re.compile(r"(?:^|[^0-9])(\d{4})(?:[^0-9]|$)")
 DRAFT_RE = re.compile(r"(?:^|[_ -])borrador(?:[_ .-]|$)", re.IGNORECASE)
 NOTE_RE = re.compile(r"(?:^|[_ -])nota(?:[_ .-]|$)", re.IGNORECASE)
+VARIANT_RE = re.compile(r"(?:^|[_ .-])(?:bis|reposicion|repuesto|reemplazo)(?:[_ .-]|$)", re.IGNORECASE)
 GOOGLE_SHEETS_MIME = "application/vnd.google-apps.spreadsheet"
 XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 DRIVE_ID_RE = re.compile(r"[-\w]{20,}")
@@ -151,6 +152,25 @@ def _list_children(drive, folder_id: str) -> list[dict]:
             return out
 
 
+def _is_variant_candidate(name: str, order_id: str) -> bool:
+    normalized = _normalize(name)
+    if VARIANT_RE.search(normalized):
+        return True
+    match = re.search(rf"(?:^|[^0-9]){re.escape(order_id)}(?P<tail>.*)", normalized)
+    if not match:
+        return False
+    tail = match.group("tail")
+    return bool(re.match(r"\s*[-_]\s*\d+(?:\D|$)", tail))
+
+
+def _prefer_candidate(candidate: DriveFile, existing: DriveFile, order_id: str) -> bool:
+    candidate_variant = _is_variant_candidate(candidate.name, order_id)
+    existing_variant = _is_variant_candidate(existing.name, order_id)
+    if candidate_variant != existing_variant:
+        return not candidate_variant
+    return candidate.modified_time > existing.modified_time
+
+
 def scan_albaranes(drive) -> dict[str, dict[str, DriveFile]]:
     index: dict[str, dict[str, DriveFile]] = {}
     visited: set[str] = set()
@@ -192,7 +212,7 @@ def scan_albaranes(drive) -> dict[str, dict[str, DriveFile]]:
             )
             entry = index.setdefault(order_id, {})
             existing = entry.get(kind)
-            if existing is None or candidate.modified_time > existing.modified_time:
+            if existing is None or _prefer_candidate(candidate, existing, order_id):
                 entry[kind] = candidate
 
     return index

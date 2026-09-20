@@ -99,6 +99,7 @@ Before using a historical XLS/XLSX:
 - treat mismatches as conflicts and annotate them;
 - reject impossible dates (for example, a fiche date after a known delivery date) unless independently validated;
 - prefer explicit values from a validated document over inferred values;
+- when several files share the same four-digit filename ID, prefer the base document over explicit variants such as `BIS`, `REPOSICION`/`REPOSICIÓN`, replacements or numeric revision suffixes; a variant is eligible only when no base document exists or when a manual reconciliation explicitly promotes it;
 - otherwise use the master/estadillo only for fields whose business meaning is known.
 
 Historical enrichment is fill-only by default.
