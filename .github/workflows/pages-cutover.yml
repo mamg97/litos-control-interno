@@ -2181,6 +2181,48 @@ jobs:
               )
           print("M7_JUN_2022_PHASE_OK audited=13 validated=13 conflicts=0")
 
+          expected_may_2022 = {
+              "7227": ("2022-05-03", 100.96),
+              "7230": ("2022-05-13", 294.05),
+              "7239": ("2022-05-19", 195.61),
+              "7233": ("2022-05-24", 287.74),
+              "7236": ("2022-05-30", 334.30),
+              "7237": ("2022-05-30", 100.96),
+              "7240": ("2022-05-30", 290.26),
+          }
+          for work_id, (expected_date, expected_price) in expected_may_2022.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} May-2022 delivery mismatch: "
+                  f"{record.get('deliveryDocumentDate')!r}"
+              )
+              assert "conciliado" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{work_id} May-2022 reconciliation status missing: "
+                  f"{record.get('deliveryReviewStatus')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} May-2022 final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          record_7234 = by_id.get("7234")
+          assert record_7234 is not None, "7234 missing from staged public feed"
+          assert not record_7234.get("deliveryDocumentDate"), (
+              f"7234 conflicting May-2022 date must remain unresolved: "
+              f"{record_7234.get('deliveryDocumentDate')!r}"
+          )
+          assert "conflicto documental" in str(record_7234.get("deliveryReviewStatus", "")).lower(), (
+              f"7234 May-2022 conflict status missing: "
+              f"{record_7234.get('deliveryReviewStatus')!r}"
+          )
+          assert abs(float(record_7234.get("finalPrice")) - 353.36) < 0.01, (
+              f"7234 May-2022 final price mismatch: {record_7234.get('finalPrice')!r}"
+          )
+          assert "1aUBkh476U_h4fEsNEmgbivxMsAnExZPI" in str(record_7234.get("invoiceFile", "")), (
+              f"7234 audit document mismatch: {record_7234.get('invoiceFile')!r}"
+          )
+          print("M7_MAY_2022_PHASE_OK audited=9 validated=7 conflicts=1 pending=1")
+
           expected_nov_2023 = {
               "7446": ("2023-11-06", 138.82),
               "7447": ("2023-11-10", 410.13),
