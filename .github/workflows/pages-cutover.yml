@@ -271,6 +271,32 @@ jobs:
               f"finalPrice={record_7903.get('finalPrice')}"
           )
 
+          record_7885 = by_id.get("7885")
+          assert record_7885 is not None, "7885 missing from staged public feed"
+          assert not record_7885.get("deliveryDocumentDate"), (
+              f"7885 must not expose an unvalidated delivery date: {record_7885.get('deliveryDocumentDate')!r}"
+          )
+          assert record_7885.get("deliveryReviewStatus") == "Revisión manual · conflicto documental", (
+              f"7885 review status did not propagate: {record_7885.get('deliveryReviewStatus')!r}"
+          )
+          assert abs(float(record_7885.get("finalPrice")) - 589.99) < 0.01, (
+              f"7885 final price did not propagate: {record_7885.get('finalPrice')!r}"
+          )
+
+          record_7904 = by_id.get("7904")
+          assert record_7904 is not None, "7904 missing from staged public feed"
+          assert not record_7904.get("deliveryDocumentDate"), (
+              f"7904 unexpectedly has a delivery date: {record_7904.get('deliveryDocumentDate')!r}"
+          )
+          assert record_7904.get("deliveryReviewStatus") == "Pendiente revisión · falta albarán definitivo", (
+              f"7904 review status did not propagate: {record_7904.get('deliveryReviewStatus')!r}"
+          )
+          print(
+              "M7_DELIVERY_REVIEW_STATUS_OK "
+              f"7885={record_7885.get('deliveryReviewStatus')} "
+              f"7904={record_7904.get('deliveryReviewStatus')}"
+          )
+
           document_links = sum(
               1
               for record in payload['records']
