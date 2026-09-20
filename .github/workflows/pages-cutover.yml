@@ -1,4 +1,5 @@
 name: LITOS M7 Pages Cutover
+# September 2025 full propagation guard.
 # August 2025 full propagation guard.
 # July 2025 full propagation guard.
 # December 2025 full propagation guard.
@@ -698,6 +699,57 @@ jobs:
               f"records={len(expected_aug_2025)} "
               f"first={by_id['7729'].get('deliveryDocumentDate')} "
               f"last={by_id['7731'].get('deliveryDocumentDate')}"
+          )
+
+          expected_sep_2025 = {
+              "7748": ("2025-09-01", 197.19),
+              "7749": ("2025-09-01", 382.20),
+              "7753": ("2025-09-01", 195.61),
+              "7759": ("2025-09-03", 75.72),
+              "7762": ("2025-09-03", 164.06),
+              "7736": ("2025-09-05", 138.82),
+              "7756": ("2025-09-05", 316.87),
+              "7760": ("2025-09-05", 28.87),
+              "7763": ("2025-09-05", 174.66),
+              "7764": ("2025-09-19", 208.23),
+              "7742": ("2025-09-22", 182.99),
+              "7755": ("2025-09-22", 318.18),
+              "7730": ("2025-08-29", 425.02),
+              "7743": ("2025-09-22", 263.76),
+              "7751": ("2025-09-23", 231.89),
+              "7769": ("2025-09-23", 100.96),
+              "7750": ("2025-09-30", 282.69),
+              "7758": ("2025-09-30", 281.43),
+              "7765": ("2025-09-30", 75.72),
+              "7770": ("2025-09-30", 274.01),
+          }
+          for work_id, (expected_date, expected_price) in expected_sep_2025.items():
+              matches = [record for record in payload["records"] if str(record.get("id")) == work_id]
+              assert len(matches) == 1, f"{work_id} expected once in feed, got {len(matches)}"
+              record = matches[0]
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} September-2025 delivery mismatch: {record.get('deliveryDocumentDate')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} September-2025 final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          assert "excepción de plantilla validada" in str(by_id["7743"].get("deliveryReviewStatus", "")).lower(), (
+              f"7743 special reconciliation status missing: {by_id['7743'].get('deliveryReviewStatus')!r}"
+          )
+          assert "discrepancia de fecha de pedido" in str(by_id["7763"].get("deliveryReviewStatus", "")).lower(), (
+              f"7763 order-date discrepancy status missing: {by_id['7763'].get('deliveryReviewStatus')!r}"
+          )
+          assert "contabilización posterior" in str(by_id["7730"].get("deliveryReviewStatus", "")).lower(), (
+              f"7730 delayed-accounting status missing: {by_id['7730'].get('deliveryReviewStatus')!r}"
+          )
+
+          print(
+              "M7_SEP_2025_PHASE_OK "
+              f"records={len(expected_sep_2025)} "
+              f"7730={by_id['7730'].get('deliveryDocumentDate')}/{by_id['7730'].get('deliveredDate')} "
+              f"7743={by_id['7743'].get('deliveryDocumentDate')} "
+              f"7763={by_id['7763'].get('deliveryDocumentDate')}"
           )
 
           document_links = sum(
