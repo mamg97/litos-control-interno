@@ -55,19 +55,21 @@ All schedules remain behind repository kill switches where applicable.
 
 The website does not scrape Drive or Apps Script at runtime. M7 reads the private master, builds a sanitized static `feed.json`, validates it, and deploys GitHub Pages.
 
-## Historical reconciliation completed
+## Historical reconciliation status
 
-Historical work was enriched from archived XLS/XLSX files and private accounting/ledger data.
+Historical work is undergoing a second controlled reconciliation pass, working backwards through the archive in small chronological blocks. The current review frontier has reached **May 2021**.
 
-Key safeguards used:
+For each historical month the process closes the full chain:
 
-- validate the order number inside the workbook, not only the file/folder name;
-- reject or annotate impossible dates;
-- fill missing master fields without blindly overwriting existing authoritative values;
-- preserve ambiguous cases for review;
-- record reconciliation provenance in the master.
+1. inspect the linked XLS/XLSX itself and validate the internal four-digit work ID, document date and exact `SUMA`/amount;
+2. compare those values with the private master and estadillo, correcting transcription errors, rounded historical bases and wrong document links only when the evidence is strong;
+3. write the authoritative `Precio final (€)`, documentary date, reconciliation status and provenance back to the private master;
+4. preserve unresolved cases as explicit conflicts or pending items instead of guessing;
+5. add an M7 propagation guard for the reviewed month and require a successful sanitized-feed build and GitHub Pages deploy before considering the block closed.
 
-Historical PVP reconciliation was also completed. See `BUSINESS_LOGIC.md` for price semantics and precedence.
+The definitive document takes precedence over a rounded estadillo amount for PVP recovery. The working multiplier remains `base × 1.262` when the document contains a validated pre-tax base rather than a tax-inclusive total.
+
+This second pass has already recovered/corrected cases such as wrong internal links, missing canonical IDs and historical PVP values that had been documented in notes but not materialized in `Precio final (€)`. See `BUSINESS_LOGIC.md` for the detailed precedence and conflict rules.
 
 ## Legacy Apps Script state
 
