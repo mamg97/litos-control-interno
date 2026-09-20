@@ -57,7 +57,7 @@ The website does not scrape Drive or Apps Script at runtime. M7 reads the privat
 
 ## Historical reconciliation status
 
-Historical work is undergoing a second controlled reconciliation pass, working backwards through the archive in small chronological blocks. The current review frontier has reached **March 2021**.
+Historical work is undergoing a second controlled reconciliation pass, working backwards through the archive in small chronological blocks. The current review frontier has reached **January 2021**. This means the 2021 historical block has now been fully reviewed month by month.
 
 For each historical month the process closes the full chain:
 
