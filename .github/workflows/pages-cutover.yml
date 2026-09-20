@@ -1,4 +1,5 @@
 name: LITOS M7 Pages Cutover
+# April 2024 full-block propagation audit.
 # May 2024 full-block propagation audit.
 # June 2024 full-block propagation audit.
 # July 2024 full-block propagation audit.
@@ -1005,6 +1006,58 @@ jobs:
               f"validated={len(expected_may_2024)} "
               f"conflict_7539={record_7539.get('deliveryReviewStatus')} "
               f"missing_7551={record_7551.get('deliveryReviewStatus')}"
+          )
+
+          expected_apr_2024 = {
+              "7461": ("2024-04-01", 233.47),
+              "7510": ("2024-04-01", 233.47),
+              "7502": ("2024-04-08", 243.57),
+              "7520": ("2024-04-08", 299.73),
+              "7521": ("2024-04-08", 241.70),
+              "7523": ("2024-04-11", 144.40),
+              "7494": ("2024-04-12", 300.36),
+              "7506": ("2024-04-16", 237.26),
+              "7525": ("2024-04-16", 304.48),
+              "7503": ("2024-04-19", 227.16),
+              "7514": ("2024-04-19", 620.75),
+              "7519": ("2024-04-19", 253.06),
+              "7530": ("2024-04-19", 44.17),
+              "7540": ("2024-04-19", 100.96),
+              "7492": ("2024-04-26", 494.63),
+              "7517": ("2024-04-26", 332.10),
+              "7518": ("2024-04-26", 205.71),
+              "7527": ("2024-04-26", 338.41),
+              "7528": ("2024-04-26", 333.05),
+              "7544": ("2024-04-26", 100.96),
+              "7545": ("2024-04-26", 151.44),
+          }
+          for work_id, (expected_date, expected_price) in expected_apr_2024.items():
+              matches = [record for record in payload["records"] if str(record.get("id")) == work_id]
+              assert len(matches) == 1, f"{work_id} expected once in feed, got {len(matches)}"
+              record = matches[0]
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} April-2024 delivery mismatch: {record.get('deliveryDocumentDate')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} April-2024 final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          record_7529 = by_id.get("7529")
+          assert record_7529 is not None, "7529 missing from staged public feed"
+          assert not record_7529.get("deliveryDocumentDate"), (
+              f"7529 unexpectedly has delivery date: {record_7529.get('deliveryDocumentDate')!r}"
+          )
+          assert record_7529.get("finalPrice") in (None, "", 0), (
+              f"7529 must not expose final price without definitive albaran: {record_7529.get('finalPrice')!r}"
+          )
+          assert "falta albarán definitivo" in str(record_7529.get("deliveryReviewStatus", "")).lower(), (
+              f"7529 status mismatch: {record_7529.get('deliveryReviewStatus')!r}"
+          )
+
+          print(
+              "M7_APR_2024_PHASE_OK "
+              f"validated={len(expected_apr_2024)} "
+              f"missing_7529={record_7529.get('deliveryReviewStatus')}"
           )
 
           expected_may_2025 = {
