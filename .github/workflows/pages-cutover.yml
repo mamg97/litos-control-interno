@@ -1702,6 +1702,50 @@ jobs:
           )
           print("M7_MAY_2023_PHASE_OK audited=8 validated_prices=8 date_conflicts=8")
 
+          expected_apr_2023 = {
+              "7342": 511.08,
+              "7351": 126.21,
+              "7350": 212.02,
+              "7352": 119.89,
+              "7341": 126.20,
+              "7348": 401.86,
+              "7357": 186.78,
+              "7362": 112.85,
+              "7365": 157.67,
+              "7369": 119.89,
+              "7373": 132.51,
+              "7374": 170.37,
+              "7367": 240.34,
+          }
+          for work_id, expected_price in expected_apr_2023.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert not record.get("deliveryDocumentDate"), (
+                  f"{work_id} April-2023 conflicting date must remain unresolved: "
+                  f"{record.get('deliveryDocumentDate')!r}"
+              )
+              assert "conflicto documental" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{work_id} April-2023 conflict status missing: "
+                  f"{record.get('deliveryReviewStatus')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} April-2023 final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          assert "1xmcarYP03VSd2XSPTTUQm5J--3w1BaNj" in str(by_id["7365"].get("invoiceFile", "")), (
+              f"7365 wrong canonical 2023 document: {by_id['7365'].get('invoiceFile')!r}"
+          )
+          assert "1NKkIsfAsn5uiEsFZMA4T3zJQROJzEXSi" not in str(by_id["7365"].get("invoiceFile", "")), (
+              f"7365 later 7465 document must not be canonical: {by_id['7365'].get('invoiceFile')!r}"
+          )
+          assert "1kpLU3uDV9DJHTQbIT0PgIaxcQZfXAGNh" in str(by_id["7369"].get("invoiceFile", "")), (
+              f"7369 reassigned internal-ID document missing: {by_id['7369'].get('invoiceFile')!r}"
+          )
+          assert not by_id["7373"].get("invoiceFile"), (
+              f"7373 must not keep the 7369 XLSX as canonical: {by_id['7373'].get('invoiceFile')!r}"
+          )
+          print("M7_APR_2023_PHASE_OK audited=13 resolved_prices=13 date_conflicts=13")
+
           expected_nov_2023 = {
               "7446": ("2023-11-06", 138.82),
               "7447": ("2023-11-10", 410.13),
