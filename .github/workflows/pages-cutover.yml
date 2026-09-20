@@ -1669,6 +1669,39 @@ jobs:
           )
           print("M7_JUN_2023_PHASE_OK audited=14 validated_prices=14 date_conflicts=14")
 
+          expected_may_2023 = {
+              "7355": 293.48,
+              "7344": 281.43,
+              "7371": 208.23,
+              "7354": 384.46,
+              "7366": 227.16,
+              "7376": 189.30,
+              "7377": 201.92,
+              "7356": 259.95,
+          }
+          for work_id, expected_price in expected_may_2023.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert not record.get("deliveryDocumentDate"), (
+                  f"{work_id} May-2023 conflicting date must remain unresolved: "
+                  f"{record.get('deliveryDocumentDate')!r}"
+              )
+              assert "conflicto documental" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{work_id} May-2023 conflict status missing: "
+                  f"{record.get('deliveryReviewStatus')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} May-2023 final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          assert "1o7Z-Gv6Bx84FFq95hoyQnAQFjYlQb9XT" in str(by_id["7371"].get("invoiceFile", "")), (
+              f"7371 wrong canonical 2023 document: {by_id['7371'].get('invoiceFile')!r}"
+          )
+          assert "1fyG1Ov1M5neaCTkJ-4i4w8ch05bqmtUj" not in str(by_id["7371"].get("invoiceFile", "")), (
+              f"7371 later 7471 document must not be canonical: {by_id['7371'].get('invoiceFile')!r}"
+          )
+          print("M7_MAY_2023_PHASE_OK audited=8 validated_prices=8 date_conflicts=8")
+
           expected_nov_2023 = {
               "7446": ("2023-11-06", 138.82),
               "7447": ("2023-11-10", 410.13),
