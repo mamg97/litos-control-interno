@@ -2262,6 +2262,68 @@ jobs:
           )
           print("M7_APR_2022_PHASE_OK audited=8 validated=7 conflicts=1")
 
+          expected_mar_2022 = {
+              "7198": ("2022-03-15", 269.64),
+              "7200": ("2022-03-15", 234.03),
+              "7203": ("2022-03-15", 268.81),
+              "7204": ("2022-03-15", 63.10),
+              "7208": ("2022-03-15", 126.20),
+              "7209": ("2022-03-15", 442.96),
+              "7210": ("2022-03-15", 396.13),
+              "7205": ("2022-03-31", 151.44),
+              "7212": ("2022-03-31", 315.50),
+              "7213": ("2022-03-31", 119.89),
+              "7214": ("2022-03-31", 227.16),
+              "7215": ("2022-03-31", 875.83),
+              "7219": ("2022-03-31", 182.99),
+              "7221": ("2022-03-31", 100.96),
+              "7222": ("2022-03-31", 100.96),
+              "7223": ("2022-03-31", 126.20),
+          }
+          for work_id, (expected_date, expected_price) in expected_mar_2022.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} March-2022 delivery mismatch: "
+                  f"{record.get('deliveryDocumentDate')!r}"
+              )
+              assert "conciliado" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{work_id} March-2022 reconciliation status missing: "
+                  f"{record.get('deliveryReviewStatus')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} March-2022 final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          record_7197 = by_id.get("7197")
+          assert record_7197 is not None, "7197 missing from staged public feed"
+          assert not record_7197.get("deliveryDocumentDate"), (
+              f"7197 March-2022 date must remain unresolved: "
+              f"{record_7197.get('deliveryDocumentDate')!r}"
+          )
+          assert "pendiente" in str(record_7197.get("deliveryReviewStatus", "")).lower(), (
+              f"7197 March-2022 pending status missing: "
+              f"{record_7197.get('deliveryReviewStatus')!r}"
+          )
+          assert abs(float(record_7197.get("finalPrice")) - 547.71) < 0.01, (
+              f"7197 March-2022 final price mismatch: {record_7197.get('finalPrice')!r}"
+          )
+
+          record_7207 = by_id.get("7207")
+          assert record_7207 is not None, "7207 missing from staged public feed"
+          assert not record_7207.get("deliveryDocumentDate"), (
+              f"7207 March-2022 conflicting date must remain unresolved: "
+              f"{record_7207.get('deliveryDocumentDate')!r}"
+          )
+          assert "conflicto documental" in str(record_7207.get("deliveryReviewStatus", "")).lower(), (
+              f"7207 March-2022 conflict status missing: "
+              f"{record_7207.get('deliveryReviewStatus')!r}"
+          )
+          assert abs(float(record_7207.get("finalPrice")) - 126.20) < 0.01, (
+              f"7207 March-2022 final price mismatch: {record_7207.get('finalPrice')!r}"
+          )
+          print("M7_MAR_2022_PHASE_OK audited=18 validated=16 conflicts=1 pending=1")
+
           expected_nov_2023 = {
               "7446": ("2023-11-06", 138.82),
               "7447": ("2023-11-10", 410.13),
