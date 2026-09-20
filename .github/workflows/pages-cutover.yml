@@ -310,6 +310,48 @@ jobs:
               f"7923={record_7923.get('deliveryReviewStatus')}"
           )
 
+          records_7878 = [record for record in payload["records"] if str(record.get("id")) == "7878"]
+          assert len(records_7878) == 1, f"7878 expected once, got {len(records_7878)}"
+          record_7878 = records_7878[0]
+          assert not record_7878.get("deliveryDocumentDate"), (
+              f"7878 must not expose order date as delivery date: {record_7878.get('deliveryDocumentDate')!r}"
+          )
+          assert "sin fecha entrega diferenciada" in str(record_7878.get("deliveryReviewStatus", "")).lower(), (
+              f"7878 review status did not propagate: {record_7878.get('deliveryReviewStatus')!r}"
+          )
+          assert abs(float(record_7878.get("finalPrice")) - 119.89) < 0.01, (
+              f"7878 final price did not propagate: {record_7878.get('finalPrice')!r}"
+          )
+
+          records_7896 = [record for record in payload["records"] if str(record.get("id")) == "7896"]
+          assert len(records_7896) == 1, f"7896 expected once, got {len(records_7896)}"
+          record_7896 = records_7896[0]
+          assert record_7896.get("deliveryDocumentDate") == "2026-07-28", (
+              f"7896 delivery document date mismatch: {record_7896.get('deliveryDocumentDate')!r}"
+          )
+          assert record_7896.get("deliveredDate") == "2026-07-29", (
+              f"7896 estadillo delivery mismatch: {record_7896.get('deliveredDate')!r}"
+          )
+          assert abs(float(record_7896.get("finalPrice")) - 212.02) < 0.01, (
+              f"7896 final price mismatch: {record_7896.get('finalPrice')!r}"
+          )
+
+          records_7898 = [record for record in payload["records"] if str(record.get("id")) == "7898"]
+          assert len(records_7898) == 1, f"7898 duplicate remains in feed: {len(records_7898)} rows"
+          record_7898 = records_7898[0]
+          assert record_7898.get("deliveryDocumentDate") == "2026-07-28", (
+              f"7898 delivery document date mismatch: {record_7898.get('deliveryDocumentDate')!r}"
+          )
+          assert abs(float(record_7898.get("finalPrice")) - 275.18) < 0.01, (
+              f"7898 final price mismatch: {record_7898.get('finalPrice')!r}"
+          )
+          print(
+              "M7_JUNE_JULY_PHASE_OK "
+              f"7878={record_7878.get('deliveryReviewStatus')} "
+              f"7896={record_7896.get('deliveryDocumentDate')}/{record_7896.get('deliveredDate')} "
+              f"7898_count={len(records_7898)}"
+          )
+
           document_links = sum(
               1
               for record in payload['records']
