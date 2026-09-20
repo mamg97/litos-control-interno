@@ -416,6 +416,67 @@ jobs:
               f"7869={by_id['7869'].get('deliveryReviewStatus')}"
           )
 
+          record_7818 = by_id.get("7818")
+          assert record_7818 is not None, "7818 missing from staged public feed"
+          assert not record_7818.get("deliveryDocumentDate"), (
+              f"7818 unexpectedly has a delivery date: {record_7818.get('deliveryDocumentDate')!r}"
+          )
+          assert "falta albarán definitivo" in str(record_7818.get("deliveryReviewStatus", "")).lower(), (
+              f"7818 status mismatch: {record_7818.get('deliveryReviewStatus')!r}"
+          )
+          assert record_7818.get("finalPrice") in (None, "", 0), (
+              f"7818 must not expose a final price without definitive albarán: {record_7818.get('finalPrice')!r}"
+          )
+
+          record_7824 = by_id.get("7824")
+          assert record_7824 is not None, "7824 missing from staged public feed"
+          assert record_7824.get("deliveryDocumentDate") == "2026-02-03", (
+              f"7824 delivery date mismatch: {record_7824.get('deliveryDocumentDate')!r}"
+          )
+          assert abs(float(record_7824.get("finalPrice")) - 239.15) < 0.01, (
+              f"7824 final price mismatch: {record_7824.get('finalPrice')!r}"
+          )
+
+          record_7841 = by_id.get("7841")
+          assert record_7841 is not None, "7841 missing from staged public feed"
+          assert not record_7841.get("deliveryDocumentDate"), (
+              f"7841 must not expose invalid delivery date: {record_7841.get('deliveryDocumentDate')!r}"
+          )
+          assert "conflicto documental" in str(record_7841.get("deliveryReviewStatus", "")).lower(), (
+              f"7841 status mismatch: {record_7841.get('deliveryReviewStatus')!r}"
+          )
+          assert abs(float(record_7841.get("finalPrice")) - 151.44) < 0.01, (
+              f"7841 final price mismatch: {record_7841.get('finalPrice')!r}"
+          )
+
+          expected_q1_dates = {
+              "7822": ("2026-01-22", 100.96),
+              "7834": ("2026-02-16", 376.08),
+              "7847": ("2026-03-05", 361.55),
+              "7819": ("2026-01-16", 75.72),
+              "7831": ("2026-02-17", 208.23),
+              "7837": ("2026-03-11", 1055.03),
+              "7846": ("2026-03-30", 302.00),
+              "7849": ("2026-03-27", 100.96),
+          }
+          for work_id, (expected_date, expected_price) in expected_q1_dates.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} delivery date mismatch: {record.get('deliveryDocumentDate')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          print(
+              "M7_JAN_MAR_PHASE_OK "
+              f"7818={record_7818.get('deliveryReviewStatus')} "
+              f"7824={record_7824.get('deliveryDocumentDate')} "
+              f"7841={record_7841.get('deliveryReviewStatus')} "
+              f"7847={by_id['7847'].get('deliveryDocumentDate')}"
+          )
+
           document_links = sum(
               1
               for record in payload['records']
