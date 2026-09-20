@@ -2977,6 +2977,10 @@ jobs:
                   f"{work_id} must not expose a header-only August-2020 date as delivery: "
                   f"{record.get('deliveryDocumentDate')!r}"
               )
+              assert "cerrado histórico" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{work_id} August-2020 historical-close status missing: "
+                  f"{record.get('deliveryReviewStatus')!r}"
+              )
               assert "sin fecha de entrega documental" in str(record.get("deliveryReviewStatus", "")).lower(), (
                   f"{work_id} August-2020 no-delivery-date status missing: "
                   f"{record.get('deliveryReviewStatus')!r}"
@@ -2987,7 +2991,7 @@ jobs:
           assert "1uWIiwXKCCmHV1nGnLrq1kJXxAdzUW1IS" in str(by_id["7003"].get("invoiceFile", "")), (
               f"7003 must point to recovered combined final albaran: {by_id['7003'].get('invoiceFile')!r}"
           )
-          print("M7_AUG_2020_PHASE_OK audited=9 pvp_validated=9 no_delivery_date=9 corrected=2 second_pass=1")
+          print("M7_AUG_2020_PHASE_OK audited=9 pvp_validated=9 historical_closed=9 no_delivery_date=9 corrected=2 second_pass=2")
 
           july_2020_records = [
               record
