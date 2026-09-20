@@ -59,7 +59,9 @@ The website does not scrape Drive or Apps Script at runtime. M7 reads the privat
 
 Historical work is undergoing a second controlled reconciliation pass, working backwards through the archive in small chronological blocks. The current review frontier has reached **July 2020**. The 2021 historical block is fully reviewed month by month, and the controlled 2020 pass has now reached the start of the available master/estadillo history: no July-2020 records are present, while the first available 2020 orders are in August.
 
-A second-pass cleanup of unresolved historical dates is now in progress. August and December 2020 were re-inspected against the available XLSX contents, order folders and alternative-file search. The FECHA found in those files is the PEDIDO/header date and is not accepted as a differentiated delivery date. No PDF or alternative definitive version with a separate delivery FECHA was located. Those records therefore keep validated PVP/document provenance while both documentary-delivery fields stay blank with status `Revisión manual · sin fecha de entrega documental`.
+A second-pass cleanup of unresolved historical records is now in progress. August and December 2020 were re-inspected against the available XLSX contents, order folders and alternative-file search. The FECHA found in those files is the PEDIDO/header date and is not accepted as a differentiated delivery date. No PDF or alternative definitive version with a separate delivery FECHA was located. Those records therefore keep validated PVP/document provenance while both documentary-delivery fields stay blank with status `Revisión manual · sin fecha de entrega documental`.
+
+October 2020 was also rechecked. The previously pending 08/10/2020 row `JUNQUILLO CHAMPAGNE` (estadillo line 25, amount 0 €, no work ID) is confirmed to be a ledger-only movement already preserved in `Movimientos cliente`, not a canonical work order. It was removed from `Pedidos`. October therefore contains 22 real orders, all reconciled, and the ledger-only zero-value line remains only in the movements ledger.
 
 For each historical month the process closes the full chain:
 
