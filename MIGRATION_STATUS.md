@@ -64,7 +64,7 @@ September 2023 was then closed with **15 canonical work IDs audited and 15 valid
 
 The same pass also removed duplicate canonical `Pedidos` rows for **7202, 7207, 7342 and 7412**. Later ledger movements that reused those IDs remain in `Movimientos cliente`; they no longer create duplicate canonical work rows. M7 now hard-fails if the public feed contains a duplicate four-digit work ID.
 
-The next phased historical block is **August 2023**.
+That September-2023 checkpoint is historical and has been superseded by the completed 2021 pass and the 2020 review. Use the **Active handoff** in `PROJECT_CONTEXT.md` for the current single-month block and publication status.
 
 ## Safety and privacy
 

@@ -1177,7 +1177,13 @@ function tracePeriod(order) {
   return date ? (date.getFullYear() * 12 + date.getMonth()) : 0;
 }
 
+function isHistoricalDeliveryClosed(order) {
+  return normalize(order["Estado conciliación definitivo"]) ===
+    normalize("Cerrado histórico · sin fecha de entrega documental");
+}
+
 function deliveryDocumentReviewNeeded(order, now = new Date()) {
+  if (isHistoricalDeliveryClosed(order)) return false;
   if (parseDate(order["Fecha entrega albarán"])) return false;
   const entry = orderEntryDate(order);
   if (!entry) return false;
@@ -1187,10 +1193,11 @@ function deliveryDocumentReviewNeeded(order, now = new Date()) {
 }
 
 function deliveryDocumentReviewLabel(order, now = new Date()) {
+  if (isHistoricalDeliveryClosed(order)) return "Cerrado histórico · sin fecha documental";
   if (parseDate(order["Fecha entrega albarán"])) return "";
   const status = text(order["Estado conciliación definitivo"]).toLowerCase();
   if (status.includes("conflicto documental")) return "Conflicto documental";
-  if (status.includes("sin fecha entrega diferenciada")) return "Sin fecha de entrega en albarán";
+  if (status.includes("sin fecha entrega diferenciada") || status.includes("sin fecha de entrega documental")) return "Sin fecha de entrega en albarán";
   if (status.includes("falta albarán definitivo")) return "Falta albarán definitivo";
   if (status.includes("mes en curso")) return "Pendiente de albarán · mes en curso";
   return deliveryDocumentReviewNeeded(order, now) ? "Revisar documento" : "";
@@ -1297,7 +1304,7 @@ function renderTraceTable({ bodySelector, countSelector, searchSelector }) {
         if (reviewLabel) {
           const flag = document.createElement("small");
           const status = text(order["Estado conciliación definitivo"]).toLowerCase();
-          flag.className = status.includes("mes en curso") ? "trace-review current-month" : "trace-review";
+          flag.className = isHistoricalDeliveryClosed(order) || status.includes("mes en curso") ? "trace-review current-month" : "trace-review";
           flag.textContent = reviewLabel;
           cell.append(flag);
         }

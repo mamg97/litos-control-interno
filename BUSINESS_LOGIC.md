@@ -1,6 +1,6 @@
 # LITOS business logic
 
-Updated: 2026-09-19
+Updated: 2026-09-20
 
 This file records business semantics that must survive future code changes and conversation handoffs.
 
@@ -15,7 +15,7 @@ Important date concepts are distinct:
 - `Fecha recepción (email)`: when the authorized intake email was received.
 - `Fecha ficha`: order/work-sheet date from the source document.
 - `Fecha entrega (estadillo)`: date the work was delivered/posted to the private running account.
-- `Fecha entrega albarán`: the `FECHA` written in the validated definitive albarán/document itself. Once the work ID is validated, this documentary date is treated as the delivery date. It must remain separate from the running-account date; impossible/conflicting dates stay unresolved for review.
+- `Fecha entrega albarán`: an independently validated delivery date, differentiated from the order/NUM header. Internal-ID validation and coincidence with the estadillo date are not sufficient delivery evidence. A header-only FECHA stays out of both documentary-delivery fields, even when the workbook is titled ALBARAN. Preserve the source date and provenance separately.
 - `Fecha para dashboard`: canonical reporting date consumed by the website. If empty, feed code falls back to delivery, receipt, then fiche date.
 
 Do not collapse these into a single date.
@@ -39,7 +39,7 @@ Ordering rules:
 
 This means a job ordered in July but delivered in September appears in the September block, after September jobs that are still pending.
 
-A row with no `Fecha entrega albarán` whose entry month has already finished must be visually flagged for manual document review. The absence of a delivery date after the month closes is treated as an operational warning that the definitive document may be missing or unreconciled.
+A row with no `Fecha entrega albarán` whose entry month has already finished must be visually flagged for manual document review, except when its status is `Cerrado histórico · sin fecha de entrega documental`. A historical closure retains its limitation label without requesting repeated investigation. The absence of a delivery date after the month closes is treated as an operational warning that the definitive document may be missing or unreconciled.
 
 This ordering is independent from the economic/statistical reporting date.
 
@@ -83,7 +83,7 @@ Historical PVP recovery precedence:
 1. Use an explicit tax-inclusive `TOTAL` from a validated albarán when available.
 2. Otherwise use a validated albarán base and calculate `base × 1.262`.
 3. If the linked albarán is missing or internally belongs to another order, use the reliable `Importe trabajo / Debe (€)` base from the master/estadillo and calculate `base × 1.262`.
-4. Do not manufacture a PVP when the reliable base is zero/missing.
+4. Do not manufacture a PVP when the reliable base is missing. An explicitly validated documentary zero is a real zero PVP (for example 7041), not missing data.
 5. Record the source/calculation in `Observación de conciliación`.
 
 The website's `finalPrice` must always map to `Precio final (€)`, never directly to `Importe trabajo / Debe (€)`.

@@ -1,6 +1,6 @@
 # LITOS project context
 
-Updated: 2026-09-18
+Updated: 2026-09-20
 
 ## Purpose
 
@@ -63,7 +63,7 @@ A second-pass cleanup of unresolved historical records is now in progress. Augus
 
 October 2020 second-pass cleanup also recovered the previously orphaned 08/10/2020 ledger row as canonical order **7041**: `7041.xlsx` matches the concept (`junquillo de champagne`) and definitive base/SUMA of `0 €`. The header date `15/10/2020` is stored as `Fecha ficha`; no differentiated delivery date was found, so delivery-document fields remain blank while PVP is explicitly `0,00 €`.
 
-October 2020 was also rechecked. The previously pending 08/10/2020 row `JUNQUILLO CHAMPAGNE` (estadillo line 25, amount 0 €, no work ID) is confirmed to be a ledger-only movement already preserved in `Movimientos cliente`, not a canonical work order. It was removed from `Pedidos`. October therefore contains 22 real orders, all reconciled, and the ledger-only zero-value line remains only in the movements ledger.
+October contains **23 canonical orders**, including the single recovered 7041 row. The earlier 22-order/ledger-only interpretation was superseded by that document recovery; do not delete 7041 or recreate the orphan row. The original accounting movement remains in the private ledger.
 
 For each historical month the process closes the full chain:
 
@@ -76,6 +76,20 @@ For each historical month the process closes the full chain:
 The definitive document takes precedence over a rounded estadillo amount for PVP recovery. The working multiplier remains `base × 1.262` when the document contains a validated pre-tax base rather than a tax-inclusive total.
 
 This second pass has already recovered/corrected cases such as wrong internal links, missing canonical IDs and historical PVP values that had been documented in notes but not materialized in `Precio final (€)`. See `BUSINESS_LOGIC.md` for the detailed precedence and conflict rules.
+
+## Active handoff — audit and December 2020 block (2026-09-20)
+
+- Local `main` started clean at `07faad5`, 289 commits behind GitHub. It was advanced with `--ff-only` to `44fecc6`; no history rewrite, reset, clean or discarded working changes.
+- Confirmed remote work: `a748446` recovered 7041; `abdf2c3` documented recovery; `d18acdb` closed August; `44fecc6` documented August. Baseline M7 build/deploy succeeded in run `35530612966` and its public feed was checked.
+- Master audit: no duplicate four-digit work IDs; 7041 occurs once, PVP zero, both documentary-delivery dates blank. August has the exact nine historical-close statuses and materialized PVP, including 7003 = 372.06 and 7005 = 368.81. Do not reopen those nine limitations without new evidence.
+- December: all 11 linked XLSX were downloaded and inspected for internal NUM, worksheet dates, SUMA and DrawingML. Every file has only a NUM/header date; 7043 and 7053 are explicitly titled HOJA DE PEDIDO. No separate delivery date or drawing date was found. Each of the 11 order folders contains only that XLSX; an accessible-Drive filename search found no alternative document for those IDs.
+- December correction: remove header dates from `Fecha entrega documental` and `Fecha entrega albarán` for 7059, 7062, 7057, 7068, 7063, 7067, 7043, 7061 and 7053. 7060 and 7069 already had blanks. Retain all 11 validated `Precio final (€)` values and document links. All 11 use `Cerrado histórico · sin fecha de entrega documental`, with corrective provenance preserved in the private master. The date's agreement with the ledger is not independent delivery evidence.
+- M7 December guards now require 11 exact IDs, unchanged PVP, blank delivery dates and exact historical-close status. The web distinguishes historical closure from a pending review. Business date rules have been reconciled in BUSINESS_LOGIC.md.
+- Validation/publication of this correction: pending until the new commit's M7 build and deploy both succeed. Do not call the December block closed before that result is recorded here.
+- **Next block after successful December publication: November 2020 only**, six orders. Check the NUM/header-date provenance directly in the XLSX before relying on existing date guards. September/October guards currently match the feed, but that proves propagation, not independent date semantics. Do not redo 2021; its completed monthly review is retained.
+- Other audit findings left unchanged: `Total sheet (€)` disagrees with AJ in some earlier corrected orders (including the August combined document and 7045); 7003 has a pre-existing `P.V.P. (€)` formula error. Neither auxiliary column supplies public `finalPrice`. Review those with their source documents in a separate bounded block. The drawing-date fallback also accepts dates from comments and selects the last date without a delivery label; it needs a separate parser review before broad historical automation is rerun.
+
+Handoff protocol: after each single-month block, record evidence, changed fields, unresolved limitations, relevant commits, validation/deploy result and exactly one next block here. Read Git status/history and these MD files before writing. Keep private source contents and identifiers out of Git and Actions logs.
 
 ## Legacy Apps Script state
 

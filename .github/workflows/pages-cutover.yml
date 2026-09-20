@@ -2791,47 +2791,29 @@ jobs:
               )
           print("M7_JAN_2021_PHASE_OK audited=6 validated=6 conflicts=0 corrected=0")
 
+          # All December files contain only the NUM/header date, including
+          # the two HOJA DE PEDIDO templates. No differentiated delivery date.
           expected_dec_2020 = {
-              "7059": ("2020-12-03", 301.25),
-              "7062": ("2020-12-03", 148.92),
-              "7057": ("2020-12-15", 282.23),
-              "7068": ("2020-12-15", 126.20),
-              "7063": ("2020-12-17", 113.58),
-              "7067": ("2020-12-17", 55.23),
-              "7043": ("2020-12-22", 601.02),
-              "7061": ("2020-12-22", 186.28),
-              "7053": ("2020-12-28", 283.02),
+              "7059": 301.25, "7062": 148.92, "7060": 365.98,
+              "7057": 282.23, "7068": 126.20, "7069": 37.86,
+              "7063": 113.58, "7067": 55.23, "7043": 601.02,
+              "7061": 186.28, "7053": 283.02,
           }
-          for work_id, (expected_date, expected_price) in expected_dec_2020.items():
-              record = by_id.get(work_id)
-              assert record is not None, f"{work_id} missing from staged public feed"
-              assert record.get("deliveryDocumentDate") == expected_date, (
-                  f"{work_id} December-2020 delivery mismatch: "
-                  f"{record.get('deliveryDocumentDate')!r}"
-              )
-              assert "conciliado" in str(record.get("deliveryReviewStatus", "")).lower(), (
-                  f"{work_id} December-2020 reconciliation status missing: "
-                  f"{record.get('deliveryReviewStatus')!r}"
-              )
-              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
-                  f"{work_id} December-2020 final price mismatch: {record.get('finalPrice')!r}"
-              )
-
-          for work_id, expected_price in {"7060": 365.98, "7069": 37.86}.items():
-              record = by_id.get(work_id)
-              assert record is not None, f"{work_id} missing from staged public feed"
+          december_records = [r for r in payload["records"]
+                              if str(r.get("deliveredDate", "")).startswith("2020-12")]
+          assert len(december_records) == 11
+          assert {str(r.get("id")) for r in december_records} == set(expected_dec_2020)
+          for work_id, expected_price in expected_dec_2020.items():
+              record = by_id[work_id]
               assert not record.get("deliveryDocumentDate"), (
-                  f"{work_id} must not expose a header-only date as delivery: "
-                  f"{record.get('deliveryDocumentDate')!r}"
+                  f"{work_id} must not expose the NUM/header date as delivery"
               )
-              assert "sin fecha de entrega documental" in str(record.get("deliveryReviewStatus", "")).lower(), (
-                  f"{work_id} December-2020 no-delivery-date status missing: "
-                  f"{record.get('deliveryReviewStatus')!r}"
-              )
-              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
-                  f"{work_id} December-2020 final price mismatch: {record.get('finalPrice')!r}"
-              )
-          print("M7_DEC_2020_PHASE_OK audited=11 validated=9 no_delivery_date=2 corrected=0 second_pass=1")
+              assert record.get("deliveryReviewStatus") == (
+                  "Cerrado histórico · sin fecha de entrega documental"
+              ), f"{work_id} December historical-close status mismatch"
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01
+              assert record.get("invoiceFile"), f"{work_id} documentary evidence link missing"
+          print("M7_DEC_2020_PHASE_OK audited=11 pvp_validated=11 historical_closed=11 no_delivery_date=11 header_dates_removed=9")
 
           expected_nov_2020 = {
               "7049": ("2020-11-10", 276.13),
