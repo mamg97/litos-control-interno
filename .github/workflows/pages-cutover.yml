@@ -1453,6 +1453,38 @@ jobs:
               )
           print(f"M7_SEP_2023_BATCH2_OK records={len(expected_sep_2023_batch2)}")
 
+          expected_sep_2023_batch3 = {
+              "7417": ("2023-09-22", 271.33),
+              "7419": ("2023-09-22", 252.40),
+              "7406": ("2023-09-28", 218.33),
+              "7425": ("2023-09-28", 230.95),
+              "7428": ("2023-09-28", 339.23),
+          }
+          for work_id, (expected_date, expected_price) in expected_sep_2023_batch3.items():
+              matches = [record for record in payload["records"] if str(record.get("id")) == work_id]
+              assert len(matches) == 1, f"{work_id} expected once in feed, got {len(matches)}"
+              record = matches[0]
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} September-2023 batch3 delivery mismatch: {record.get('deliveryDocumentDate')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} September-2023 batch3 final price mismatch: {record.get('finalPrice')!r}"
+              )
+          print(f"M7_SEP_2023_BATCH3_OK records={len(expected_sep_2023_batch3)}")
+
+          sep_2023_audited_ids = (
+              set(expected_sep_2023_batch1)
+              | set(expected_sep_2023_batch2)
+              | set(expected_sep_2023_batch3)
+          )
+          assert len(sep_2023_audited_ids) == 15, (
+              f"September-2023 audit coverage mismatch: {len(sep_2023_audited_ids)} IDs"
+          )
+          print(
+              "M7_SEP_2023_PHASE_OK "
+              f"audited={len(sep_2023_audited_ids)} validated=15 conflicts=0"
+          )
+
           expected_nov_2023 = {
               "7446": ("2023-11-06", 138.82),
               "7447": ("2023-11-10", 410.13),
