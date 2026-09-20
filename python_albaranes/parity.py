@@ -163,14 +163,6 @@ def _is_variant_candidate(name: str, order_id: str) -> bool:
     return bool(re.match(r"\s*[-_]\s*\d+(?:\D|$)", tail))
 
 
-def _prefer_candidate(candidate: DriveFile, existing: DriveFile, order_id: str) -> bool:
-    candidate_variant = _is_variant_candidate(candidate.name, order_id)
-    existing_variant = _is_variant_candidate(existing.name, order_id)
-    if candidate_variant != existing_variant:
-        return not candidate_variant
-    return candidate.modified_time > existing.modified_time
-
-
 def scan_albaranes(drive) -> dict[str, dict[str, DriveFile]]:
     index: dict[str, dict[str, DriveFile]] = {}
     visited: set[str] = set()
@@ -202,6 +194,11 @@ def scan_albaranes(drive) -> dict[str, dict[str, DriveFile]]:
                 continue
 
             order_id = match.group(1)
+            # Fail closed: BIS/replacement/revision files must never be promoted
+            # automatically to the canonical work document. Historical and current
+            # folders can contain a reused four-digit ID for a later variant.
+            if _is_variant_candidate(name, order_id):
+                continue
             kind = "draft" if DRAFT_RE.search(lower) else "invoice"
             candidate = DriveFile(
                 file_id=item_id,
@@ -212,7 +209,7 @@ def scan_albaranes(drive) -> dict[str, dict[str, DriveFile]]:
             )
             entry = index.setdefault(order_id, {})
             existing = entry.get(kind)
-            if existing is None or _prefer_candidate(candidate, existing, order_id):
+            if existing is None or candidate.modified_time > existing.modified_time:
                 entry[kind] = candidate
 
     return index
