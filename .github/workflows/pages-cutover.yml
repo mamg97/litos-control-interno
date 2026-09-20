@@ -1968,6 +1968,74 @@ jobs:
           )
           print("M7_NOV_2022_PHASE_OK audited=5 validated=2 conflicts=3")
 
+          expected_oct_2022_validated = {
+              "7281": ("2022-10-05", 745.37),
+              "7282": ("2022-10-09", 157.75),
+              "7274": ("2022-10-10", 331.91),
+              "7279": ("2022-10-17", 1071.84),
+              "7296": ("2022-10-17", 100.96),
+              "7261": ("2022-10-19", 248.61),
+              "7286": ("2022-10-19", 223.37),
+              "7297": ("2022-10-19", 192.83),
+              "7287": ("2022-10-29", 256.19),
+              "7288": ("2022-10-29", 338.22),
+              "7289": ("2022-10-29", 574.65),
+              "7290": ("2022-10-29", 516.93),
+              "7292": ("2022-10-29", 271.33),
+              "7294": ("2022-10-29", 252.40),
+              "7298": ("2022-10-29", 455.57),
+              "7299": ("2022-10-29", 208.79),
+          }
+          for work_id, (expected_date, expected_price) in expected_oct_2022_validated.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} October-2022 delivery mismatch: "
+                  f"{record.get('deliveryDocumentDate')!r}"
+              )
+              assert "conciliado" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{work_id} October-2022 reconciliation status missing: "
+                  f"{record.get('deliveryReviewStatus')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} October-2022 final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          expected_oct_2022_conflicts = {
+              "7280": 243.57,
+              "7285": 233.47,
+              "7283": 100.96,
+              "7295": 119.89,
+          }
+          for work_id, expected_price in expected_oct_2022_conflicts.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert not record.get("deliveryDocumentDate"), (
+                  f"{work_id} conflicting October-2022 date must remain unresolved: "
+                  f"{record.get('deliveryDocumentDate')!r}"
+              )
+              assert "conflicto documental" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{work_id} October-2022 conflict status missing: "
+                  f"{record.get('deliveryReviewStatus')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} October-2022 final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          assert "1Fmt85dJ79N74r_C1sjm69lj3_MXiOGgq" in str(by_id["7280"].get("invoiceFile", "")), (
+              f"7280 review document mismatch: {by_id['7280'].get('invoiceFile')!r}"
+          )
+          assert "18L7hRY6DEKVM9RkPMeFJ44dU9fY7NeWA" in str(by_id["7285"].get("invoiceFile", "")), (
+              f"7285 audit document mismatch: {by_id['7285'].get('invoiceFile')!r}"
+          )
+          assert "1nTH0-QUbNtznIGqUTCE8he_8QZAo1ilz" in str(by_id["7283"].get("invoiceFile", "")), (
+              f"7283 audit document mismatch: {by_id['7283'].get('invoiceFile')!r}"
+          )
+          assert "12R7R23s8Cbe6Xf8XtgXvMVYPt2s3mDOG" in str(by_id["7295"].get("invoiceFile", "")), (
+              f"7295 audit document mismatch: {by_id['7295'].get('invoiceFile')!r}"
+          )
+          print("M7_OCT_2022_PHASE_OK audited=20 validated=16 conflicts=4")
+
           expected_nov_2023 = {
               "7446": ("2023-11-06", 138.82),
               "7447": ("2023-11-10", 410.13),
