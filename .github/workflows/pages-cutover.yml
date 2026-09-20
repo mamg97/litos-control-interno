@@ -1276,6 +1276,25 @@ jobs:
               )
           print(f"M7_OCT_2023_BATCH1_OK records={len(expected_oct_2023_batch1)}")
 
+          expected_oct_2023_batch2 = {
+              "7431": ("2023-10-09", 282.77),
+              "7432": ("2023-10-09", 239.78),
+              "7433": ("2023-10-09", 25.24),
+              "7434": ("2023-10-09", 302.88),
+              "7435": ("2023-10-09", 301.16),
+          }
+          for work_id, (expected_date, expected_price) in expected_oct_2023_batch2.items():
+              matches = [record for record in payload["records"] if str(record.get("id")) == work_id]
+              assert len(matches) == 1, f"{work_id} expected once in feed, got {len(matches)}"
+              record = matches[0]
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} October-2023 batch2 delivery mismatch: {record.get('deliveryDocumentDate')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} October-2023 batch2 final price mismatch: {record.get('finalPrice')!r}"
+              )
+          print(f"M7_OCT_2023_BATCH2_OK records={len(expected_oct_2023_batch2)}")
+
           expected_nov_2023 = {
               "7446": ("2023-11-06", 138.82),
               "7447": ("2023-11-10", 410.13),
