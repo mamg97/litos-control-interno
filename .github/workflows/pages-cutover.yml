@@ -1504,6 +1504,40 @@ jobs:
               )
           print(f"M7_AUG_2023_BATCH1_OK records={len(expected_aug_2023_batch1)}")
 
+          expected_aug_2023_batch2 = {
+              "7398": ("2023-08-16", 169.71),
+              "7399": ("2023-08-16", 144.61),
+              "7403": ("2023-08-16", 279.60),
+              "7408": ("2023-08-23", 189.30),
+          }
+          for work_id, (expected_date, expected_price) in expected_aug_2023_batch2.items():
+              matches = [record for record in payload["records"] if str(record.get("id")) == work_id]
+              assert len(matches) == 1, f"{work_id} expected once in feed, got {len(matches)}"
+              record = matches[0]
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} August-2023 batch2 delivery mismatch: {record.get('deliveryDocumentDate')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} August-2023 batch2 final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          record_7407 = by_id.get("7407")
+          assert record_7407 is not None, "7407 missing from staged public feed"
+          assert not record_7407.get("deliveryDocumentDate"), (
+              f"7407 must not expose date from non-concordant 7399 document: {record_7407.get('deliveryDocumentDate')!r}"
+          )
+          assert record_7407.get("finalPrice") in (None, "", 0), (
+              f"7407 must not expose ledger estimate as final PVP: {record_7407.get('finalPrice')!r}"
+          )
+          assert "conflicto documental" in str(record_7407.get("deliveryReviewStatus", "")).lower(), (
+              f"7407 conflict status missing: {record_7407.get('deliveryReviewStatus')!r}"
+          )
+          print(
+              "M7_AUG_2023_BATCH2_OK "
+              f"records={len(expected_aug_2023_batch2)} "
+              f"conflict_7407={record_7407.get('deliveryReviewStatus')}"
+          )
+
           expected_nov_2023 = {
               "7446": ("2023-11-06", 138.82),
               "7447": ("2023-11-10", 410.13),
