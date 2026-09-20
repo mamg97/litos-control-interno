@@ -43,6 +43,7 @@ name: LITOS M7 Pages Cutover
 # Final 2026 trace refresh after delivery-link and date validation.
 # Refresh after M6 link sanitation and operational-month trace fix.
 # Refresh after phased historical delivery-date repair and native-Sheets support.
+# Repair propagation after historical final-price materialization.
 
 on:
   pull_request:
