@@ -2436,6 +2436,27 @@ jobs:
               )
           print("M7_DEC_2021_PHASE_OK audited=10 validated=10 conflicts=0 corrected=0")
 
+          expected_nov_2021 = {
+              "7167": ("2021-11-16", 236.64),
+              "7169": ("2021-11-25", 450.63),
+              "7170": ("2021-11-25", 303.35),
+          }
+          for work_id, (expected_date, expected_price) in expected_nov_2021.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} November-2021 delivery mismatch: "
+                  f"{record.get('deliveryDocumentDate')!r}"
+              )
+              assert "conciliado" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{work_id} November-2021 reconciliation status missing: "
+                  f"{record.get('deliveryReviewStatus')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} November-2021 final price mismatch: {record.get('finalPrice')!r}"
+              )
+          print("M7_NOV_2021_PHASE_OK audited=3 validated=3 conflicts=0 corrected=0")
+
           expected_nov_2023 = {
               "7446": ("2023-11-06", 138.82),
               "7447": ("2023-11-10", 410.13),
