@@ -2821,17 +2821,17 @@ jobs:
               record = by_id.get(work_id)
               assert record is not None, f"{work_id} missing from staged public feed"
               assert not record.get("deliveryDocumentDate"), (
-                  f"{work_id} must not expose conflicting delivery date: "
+                  f"{work_id} must not expose a header-only date as delivery: "
                   f"{record.get('deliveryDocumentDate')!r}"
               )
-              assert "conflicto documental" in str(record.get("deliveryReviewStatus", "")).lower(), (
-                  f"{work_id} December-2020 conflict status missing: "
+              assert "sin fecha de entrega documental" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{work_id} December-2020 no-delivery-date status missing: "
                   f"{record.get('deliveryReviewStatus')!r}"
               )
               assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
                   f"{work_id} December-2020 final price mismatch: {record.get('finalPrice')!r}"
               )
-          print("M7_DEC_2020_PHASE_OK audited=11 validated=9 conflicts=2 corrected=0")
+          print("M7_DEC_2020_PHASE_OK audited=11 validated=9 no_delivery_date=2 corrected=0 second_pass=1")
 
           expected_nov_2020 = {
               "7049": ("2020-11-10", 276.13),
@@ -2928,7 +2928,7 @@ jobs:
               )
           print("M7_SEP_2020_PHASE_OK audited=13 validated=13 conflicts=0 corrected=1")
 
-          aug_2020_conflicts = {
+          aug_2020_no_delivery_date = {
               "7003": 372.06,
               "7005": 368.81,
               "7007": 276.38,
@@ -2939,15 +2939,15 @@ jobs:
               "7015": 265.02,
               "7025": 142.61,
           }
-          for work_id, expected_price in aug_2020_conflicts.items():
+          for work_id, expected_price in aug_2020_no_delivery_date.items():
               record = by_id.get(work_id)
               assert record is not None, f"{work_id} missing from staged public feed"
               assert not record.get("deliveryDocumentDate"), (
-                  f"{work_id} must not expose conflicting August-2020 delivery date: "
+                  f"{work_id} must not expose a header-only August-2020 date as delivery: "
                   f"{record.get('deliveryDocumentDate')!r}"
               )
-              assert "conflicto documental" in str(record.get("deliveryReviewStatus", "")).lower(), (
-                  f"{work_id} August-2020 conflict status missing: "
+              assert "sin fecha de entrega documental" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{work_id} August-2020 no-delivery-date status missing: "
                   f"{record.get('deliveryReviewStatus')!r}"
               )
               assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
@@ -2956,7 +2956,7 @@ jobs:
           assert "1uWIiwXKCCmHV1nGnLrq1kJXxAdzUW1IS" in str(by_id["7003"].get("invoiceFile", "")), (
               f"7003 must point to recovered combined final albaran: {by_id['7003'].get('invoiceFile')!r}"
           )
-          print("M7_AUG_2020_PHASE_OK audited=9 validated=0 conflicts=9 corrected=2")
+          print("M7_AUG_2020_PHASE_OK audited=9 pvp_validated=9 no_delivery_date=9 corrected=2 second_pass=1")
 
           july_2020_records = [
               record
