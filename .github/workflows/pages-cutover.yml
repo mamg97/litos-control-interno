@@ -1,4 +1,5 @@
 name: LITOS M7 Pages Cutover
+# April 2025 doc-sheet-web phase audit.
 # May 2025 doc-sheet-web phase audit.
 # June 2025 doc-sheet-web phase audit.
 # October 2025 full-block propagation audit.
@@ -653,6 +654,44 @@ jobs:
               f"validated={len(expected_may_2025)} "
               f"missing_7705={record_7705.get('deliveryReviewStatus')} "
               f"reassigned_7715={record_7715.get('deliveryReviewStatus')}"
+          )
+
+          expected_apr_2025 = {
+              "7661": ("2025-04-02", 920.25),
+              "7680": ("2025-04-02", 429.18),
+              "7653": ("2025-04-21", 548.97),
+              "7668": ("2025-04-21", 287.74),
+              "7675": ("2025-04-21", 291.52),
+              "7698": ("2025-04-21", 176.52),
+              "7683": ("2025-04-24", 263.76),
+              "7693": ("2025-04-25", 208.23),
+          }
+          for work_id, (expected_date, expected_price) in expected_apr_2025.items():
+              matches = [record for record in payload["records"] if str(record.get("id")) == work_id]
+              assert len(matches) == 1, f"{work_id} expected once in feed, got {len(matches)}"
+              record = matches[0]
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} April-2025 delivery mismatch: {record.get('deliveryDocumentDate')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} April-2025 final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          record_7682 = by_id.get("7682")
+          assert record_7682 is not None, "7682 missing from staged public feed"
+          assert not record_7682.get("deliveryDocumentDate"), (
+              f"7682 must not expose invalid 2024 visual date: {record_7682.get('deliveryDocumentDate')!r}"
+          )
+          assert "conflicto documental" in str(record_7682.get("deliveryReviewStatus", "")).lower(), (
+              f"7682 review status mismatch: {record_7682.get('deliveryReviewStatus')!r}"
+          )
+          assert abs(float(record_7682.get("finalPrice")) - 361.56) < 0.01, (
+              f"7682 final price mismatch: {record_7682.get('finalPrice')!r}"
+          )
+          print(
+              "M7_APR_2025_PHASE_OK "
+              f"validated={len(expected_apr_2025)} "
+              f"conflict_7682={record_7682.get('deliveryReviewStatus')}"
           )
 
           expected_nov_2025 = {
