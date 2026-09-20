@@ -2895,7 +2895,23 @@ jobs:
               assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
                   f"{work_id} October-2020 final price mismatch: {record.get('finalPrice')!r}"
               )
-          print("M7_OCT_2020_PHASE_OK audited=23 validated=22 conflicts=0 pending=1 corrected=1")
+          oct_2020_records = [
+              record
+              for record in payload["records"]
+              if str(record.get("deliveredDate", "")).startswith("2020-10")
+          ]
+          assert len(oct_2020_records) == 22, (
+              f"October-2020 public feed must contain exactly 22 canonical orders, got "
+              f"{len(oct_2020_records)}"
+          )
+          assert all(
+              str(record.get("id", "")).strip().isdigit()
+              and len(str(record.get("id", "")).strip()) == 4
+              for record in oct_2020_records
+          ), (
+              "October-2020 contains a non-canonical/ledger-only row in the public feed"
+          )
+          print("M7_OCT_2020_PHASE_OK audited=22 validated=22 conflicts=0 pending=0 corrected=1 ledger_only_removed=1")
 
           expected_sep_2020 = {
               "7006": ("2020-09-01", 212.02),
