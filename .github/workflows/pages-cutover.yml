@@ -1,4 +1,5 @@
 name: LITOS M7 Pages Cutover
+# October 2024 full-block propagation audit.
 # November 2024 full-block propagation audit.
 # December 2024 full-block propagation audit.
 # January 2025 full-block propagation audit.
@@ -745,6 +746,62 @@ jobs:
                   f"{work_id} November-2024 final price mismatch: {record.get('finalPrice')!r}"
               )
           print(f"M7_NOV_2024_PHASE_OK records={len(expected_nov_2024)}")
+
+          expected_oct_2024 = {
+              "7611": ("2024-10-01", 302.44),
+              "7599": ("2024-10-07", 458.11),
+              "7614": ("2024-10-07", 22.16),
+              "7591": ("2024-10-14", 304.14),
+              "7596": ("2024-09-20", 300.36),
+              "7605": ("2024-10-14", 447.57),
+              "7607": ("2024-10-14", 233.47),
+              "7609": ("2024-10-14", 368.81),
+              "7613": ("2024-10-14", 271.68),
+              "7608": ("2024-10-16", 220.85),
+              "7612": ("2024-10-17", 56.79),
+              "7617": ("2024-10-17", 44.17),
+              "7610": ("2024-10-18", 268.81),
+              "7624": ("2024-10-18", 88.34),
+              "7620": ("2024-10-24", 199.65),
+              "7623": ("2024-10-24", 75.72),
+              "7606": ("2024-10-25", 266.94),
+              "7619": ("2024-10-24", 119.89),
+              "7622": ("2024-10-28", 232.33),
+          }
+          for work_id, (expected_date, expected_price) in expected_oct_2024.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} October-2024 delivery mismatch: {record.get('deliveryDocumentDate')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} October-2024 final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          record_7618 = by_id.get("7618")
+          assert record_7618 is not None, "7618 missing from staged public feed"
+          assert not record_7618.get("deliveryDocumentDate"), (
+              f"7618 must not expose malformed documentary date: {record_7618.get('deliveryDocumentDate')!r}"
+          )
+          assert "conflicto documental" in str(record_7618.get("deliveryReviewStatus", "")).lower(), (
+              f"7618 conflict status mismatch: {record_7618.get('deliveryReviewStatus')!r}"
+          )
+          assert abs(float(record_7618.get("finalPrice")) - 199.27) < 0.01, (
+              f"7618 final price mismatch: {record_7618.get('finalPrice')!r}"
+          )
+
+          records_7626 = [record for record in payload["records"] if str(record.get("id")) == "7626"]
+          assert len(records_7626) == 1, f"7626 duplicate remains in feed: {len(records_7626)}"
+          assert records_7626[0].get("deliveryDocumentDate") == "2024-11-12", (
+              f"7626 canonical delivery mismatch: {records_7626[0].get('deliveryDocumentDate')!r}"
+          )
+
+          print(
+              "M7_OCT_2024_PHASE_OK "
+              f"validated={len(expected_oct_2024)} "
+              f"conflict_7618={record_7618.get('deliveryReviewStatus')} "
+              f"canonical_7626_count={len(records_7626)}"
+          )
 
           expected_may_2025 = {
               "7678": ("2025-05-05", 445.49),
