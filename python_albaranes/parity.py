@@ -281,7 +281,7 @@ def read_link_column(
             ranges=[f"'{SHEET_NAME}'!{letter}{first_body_row_one_based}:{letter}{last_row}"],
             includeGridData=True,
             fields=(
-                "sheets.data.rowData.values(formattedValue,hyperlink,textFormatRuns,userEnteredFormat.textFormat.link,userEnteredValue.formulaValue)"
+                "sheets.data.rowData.values(formattedValue,hyperlink,textFormatRuns,userEnteredFormat,userEnteredValue)"
             ),
         )
         .execute()
