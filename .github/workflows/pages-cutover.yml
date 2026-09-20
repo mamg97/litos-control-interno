@@ -1869,6 +1869,52 @@ jobs:
           )
           print("M7_JAN_2023_PHASE_OK audited=10 validated=10 conflicts=0")
 
+          expected_dec_2022 = {
+              "7293": ("2022-12-05", 308.11),
+              "7308": ("2022-12-12", 119.89),
+              "7309": ("2022-12-12", 182.84),
+              "7305": ("2022-12-13", 138.94),
+              "7310": ("2022-12-13", 63.10),
+              "7307": ("2022-12-22", 309.51),
+              "7311": ("2022-12-22", 151.44),
+              "7312": ("2022-12-22", 214.54),
+              "7315": ("2022-12-22", 270.48),
+              "7316": ("2022-12-22", 100.96),
+          }
+          for work_id, (expected_date, expected_price) in expected_dec_2022.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} December-2022 delivery mismatch: "
+                  f"{record.get('deliveryDocumentDate')!r}"
+              )
+              assert "conciliado" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{work_id} December-2022 reconciliation status missing: "
+                  f"{record.get('deliveryReviewStatus')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} December-2022 final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          record_7306 = by_id.get("7306")
+          assert record_7306 is not None, "7306 missing from staged public feed"
+          assert not record_7306.get("deliveryDocumentDate"), (
+              f"7306 must remain without documentary delivery date: "
+              f"{record_7306.get('deliveryDocumentDate')!r}"
+          )
+          assert abs(float(record_7306.get("finalPrice")) - 146.39) < 0.01, (
+              f"7306 final price mismatch: {record_7306.get('finalPrice')!r}"
+          )
+          assert "conflicto documental" in str(record_7306.get("deliveryReviewStatus", "")).lower(), (
+              f"7306 missing-document review status mismatch: "
+              f"{record_7306.get('deliveryReviewStatus')!r}"
+          )
+          assert not record_7306.get("invoiceFile"), (
+              f"7306 must not expose a non-existent canonical invoice: "
+              f"{record_7306.get('invoiceFile')!r}"
+          )
+          print("M7_DEC_2022_PHASE_OK audited=11 validated=10 conflicts=1")
+
           expected_nov_2023 = {
               "7446": ("2023-11-06", 138.82),
               "7447": ("2023-11-10", 410.13),
