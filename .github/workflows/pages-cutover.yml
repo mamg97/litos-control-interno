@@ -2324,6 +2324,47 @@ jobs:
           )
           print("M7_MAR_2022_PHASE_OK audited=18 validated=16 conflicts=1 pending=1")
 
+          expected_feb_2022 = {
+              "7187": ("2022-02-01", 126.20),
+              "7196": ("2022-02-01", 570.08),
+              "7189": ("2022-02-08", 327.50),
+              "7202": ("2022-02-09", 370.93),
+              "7206": ("2022-02-09", 99.84),
+              "7199": ("2022-02-10", 145.13),
+              "7186": ("2022-02-11", 205.71),
+              "7194": ("2022-02-14", 628.71),
+              "7188": ("2022-02-17", 265.65),
+              "7191": ("2022-02-17", 25.24),
+              "7192": ("2022-02-17", 275.12),
+              "7195": ("2022-02-17", 365.92),
+              "7201": ("2022-02-21", 261.87),
+          }
+          for work_id, (expected_date, expected_price) in expected_feb_2022.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} February-2022 delivery mismatch: "
+                  f"{record.get('deliveryDocumentDate')!r}"
+              )
+              assert "conciliado" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{work_id} February-2022 reconciliation status missing: "
+                  f"{record.get('deliveryReviewStatus')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} February-2022 final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          record_7202 = by_id.get("7202")
+          assert record_7202 is not None, "7202 missing from staged public feed"
+          assert "1Cl9QxA93oAWEzF9LIv-_R4-mrS09Hhig" in str(record_7202.get("invoiceFile", "")), (
+              f"7202 must point to original February albaran, not reposicion: "
+              f"{record_7202.get('invoiceFile')!r}"
+          )
+          assert "14caQL5uXIyXTMZbIJLDJ0hcyhzYVV2Wz" not in str(record_7202.get("invoiceFile", "")), (
+              f"7202 still points to reposicion document: {record_7202.get('invoiceFile')!r}"
+          )
+          print("M7_FEB_2022_PHASE_OK audited=13 validated=13 conflicts=0 corrected=1")
+
           expected_nov_2023 = {
               "7446": ("2023-11-06", 138.82),
               "7447": ("2023-11-10", 410.13),
