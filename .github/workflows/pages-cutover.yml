@@ -1,4 +1,5 @@
 name: LITOS M7 Pages Cutover
+# December 2025 full propagation guard.
 # November 2025 full propagation guard.
 # October 2025 full propagation guard.
 # Force refresh after 7771 historical repair.
@@ -569,6 +570,66 @@ jobs:
               f"validated={len(expected_nov_2025)} "
               f"conflict_7754={record_7754.get('deliveryReviewStatus')} "
               f"7792_price={by_id['7792'].get('finalPrice')}"
+          )
+
+          expected_dec_2025 = {
+              "7794": ("2025-12-02", 290.26),
+              "7795": ("2025-12-02", 375.45),
+              "7797": ("2025-12-02", 388.56),
+              "7801": ("2025-12-02", 157.75),
+              "7810": ("2025-12-02", 64.61),
+              "7800": ("2025-12-16", 239.78),
+              "7803": ("2025-12-16", 593.77),
+              "7804": ("2025-12-16", 12.62),
+              "7805": ("2025-12-16", 221.88),
+              "7812": ("2025-12-16", 155.23),
+              "7807": ("2025-12-19", 237.26),
+              "7813": ("2025-12-19", 470.10),
+              "7796": ("2025-12-29", 499.08),
+              "7814": ("2025-12-31", 323.07),
+          }
+          for work_id, (expected_date, expected_price) in expected_dec_2025.items():
+              matches = [record for record in payload["records"] if str(record.get("id")) == work_id]
+              assert len(matches) == 1, f"{work_id} expected once in feed, got {len(matches)}"
+              record = matches[0]
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} December-2025 delivery mismatch: {record.get('deliveryDocumentDate')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} December-2025 final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          record_7815 = by_id.get("7815")
+          assert record_7815 is not None, "7815 missing from staged public feed"
+          assert record_7815.get("deliveryDocumentDate") == "2025-12-16", (
+              f"7815 delivery mismatch: {record_7815.get('deliveryDocumentDate')!r}"
+          )
+          assert abs(float(record_7815.get("finalPrice")) - 268.81) < 0.01, (
+              f"7815 final price mismatch: {record_7815.get('finalPrice')!r}"
+          )
+          assert "1TCqqaMNI_dK0OEvAU2pk4pKKhyoLNdgy" in str(record_7815.get("invoiceFile", "")), (
+              f"7815 wrong definitive document link: {record_7815.get('invoiceFile')!r}"
+          )
+
+          for conflict_id, expected_price in (("7787", 412.18), ("7798", 348.74)):
+              record = by_id.get(conflict_id)
+              assert record is not None, f"{conflict_id} missing from staged public feed"
+              assert not record.get("deliveryDocumentDate"), (
+                  f"{conflict_id} must not expose stale-template delivery date: {record.get('deliveryDocumentDate')!r}"
+              )
+              assert "conflicto documental" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{conflict_id} status mismatch: {record.get('deliveryReviewStatus')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{conflict_id} final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          print(
+              "M7_DEC_2025_PHASE_OK "
+              f"validated={len(expected_dec_2025)} "
+              f"7815={record_7815.get('deliveryDocumentDate')}/{record_7815.get('finalPrice')} "
+              f"7787={by_id['7787'].get('deliveryReviewStatus')} "
+              f"7798={by_id['7798'].get('deliveryReviewStatus')}"
           )
 
           document_links = sum(
