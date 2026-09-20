@@ -1190,6 +1190,7 @@ function deliveryDocumentReviewLabel(order, now = new Date()) {
   if (parseDate(order["Fecha entrega albarán"])) return "";
   const status = text(order["Estado conciliación definitivo"]).toLowerCase();
   if (status.includes("conflicto documental")) return "Conflicto documental";
+  if (status.includes("sin fecha entrega diferenciada")) return "Sin fecha de entrega en albarán";
   if (status.includes("falta albarán definitivo")) return "Falta albarán definitivo";
   return deliveryDocumentReviewNeeded(order, now) ? "Revisar documento" : "";
 }
