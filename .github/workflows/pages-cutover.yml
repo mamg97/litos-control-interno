@@ -1,4 +1,5 @@
 name: LITOS M7 Pages Cutover
+# August 2024 full-block propagation audit.
 # September 2024 full-block propagation audit.
 # October 2024 full-block propagation audit.
 # November 2024 full-block propagation audit.
@@ -836,6 +837,47 @@ jobs:
               f"7602 template exception status missing: {by_id['7602'].get('deliveryReviewStatus')!r}"
           )
           print(f"M7_SEP_2024_PHASE_OK records={len(expected_sep_2024)}")
+
+          expected_aug_2024 = {
+              "7569": ("2024-08-05", 419.60),
+              "7575": ("2024-08-05", 294.05),
+              "7578": ("2024-08-09", 395.01),
+              "7580": ("2024-08-09", 265.58),
+              "7582": ("2024-08-09", 119.89),
+              "7558": ("2024-08-16", 312.98),
+              "7559": ("2024-08-16", 443.47),
+              "7577": ("2024-08-16", 242.78),
+              "7583": ("2024-08-23", 319.29),
+              "7584": ("2024-08-23", 287.74),
+              "7585": ("2024-08-23", 0.00),
+              "7586": ("2024-08-23", 362.67),
+          }
+          for work_id, (expected_date, expected_price) in expected_aug_2024.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} August-2024 delivery mismatch: {record.get('deliveryDocumentDate')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} August-2024 final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          record_7579 = by_id.get("7579")
+          assert record_7579 is not None, "7579 missing from staged public feed"
+          assert not record_7579.get("deliveryDocumentDate"), (
+              f"7579 unexpectedly has delivery date: {record_7579.get('deliveryDocumentDate')!r}"
+          )
+          assert record_7579.get("finalPrice") in (None, "", 0), (
+              f"7579 must not expose undocumented final price: {record_7579.get('finalPrice')!r}"
+          )
+          assert "falta albarán definitivo" in str(record_7579.get("deliveryReviewStatus", "")).lower(), (
+              f"7579 missing-albaran status mismatch: {record_7579.get('deliveryReviewStatus')!r}"
+          )
+          print(
+              "M7_AUG_2024_PHASE_OK "
+              f"validated={len(expected_aug_2024)} "
+              f"missing_7579={record_7579.get('deliveryReviewStatus')}"
+          )
 
           expected_may_2025 = {
               "7678": ("2025-05-05", 445.49),
