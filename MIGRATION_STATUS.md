@@ -54,6 +54,16 @@ Do not:
 
 A rollback to Apps Script requires a deliberate documented decision.
 
+## Targeted historical document re-audit
+
+As of 2026-09-20, the post-migration document-to-master-to-feed re-audit has been re-certified through **October 2023**. This re-audit was triggered after confirming that some historical XLSX delivery dates live in DrawingML/text-box objects rather than ordinary worksheet cells.
+
+October 2023 was closed in micro-batches with **26 canonical work IDs audited**: **24** have validated documentary delivery dates and final PVP values, while **7424** and **7436** remain explicitly classified as document conflicts because the files carrying those filenames contain different internal `PEDIDO Nº` values. Their non-matching document dates/totals are not promoted to canonical delivery dates or final PVP.
+
+The same pass also removed duplicate canonical `Pedidos` rows for **7202, 7207, 7342 and 7412**. Later ledger movements that reused those IDs remain in `Movimientos cliente`; they no longer create duplicate canonical work rows. M7 now hard-fails if the public feed contains a duplicate four-digit work ID.
+
+The next phased historical block is **September 2023**.
+
 ## Safety and privacy
 
 - Repository is public.
