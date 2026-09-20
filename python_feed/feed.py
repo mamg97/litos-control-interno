@@ -33,6 +33,7 @@ FIELDS = {
     "receiptDate": "Fecha recepción (email)",
     "deliveredDate": "Fecha entrega (estadillo)",
     "deliveryDocumentDate": "Fecha entrega albarán",
+    "deliveryReviewStatus": "Estado conciliación definitivo",
     "amount": "Importe trabajo / Debe (€)",
     "finalPrice": "Precio final (€)",  # PVP final: IVA y recargo de equivalencia incluidos.
     "materialCost": "Coste material est. (€)",
@@ -282,6 +283,7 @@ def read_operational_records(sheets) -> list[dict]:
             "receiptDate": normalize_date(receipt_date),
             "deliveredDate": normalize_date(delivered_date),
             "deliveryDocumentDate": normalize_date(_read(row, columns, FIELDS["deliveryDocumentDate"])),
+            "deliveryReviewStatus": _read(row, columns, FIELDS["deliveryReviewStatus"]),
             "amount": number_or_none(_read(row, columns, FIELDS["amount"])),
             "finalPrice": number_or_none(_read(row, columns, FIELDS["finalPrice"])),
             "materialCost": number_or_none(_read(row, columns, FIELDS["materialCost"])),
