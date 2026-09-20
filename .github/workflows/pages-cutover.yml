@@ -2900,18 +2900,33 @@ jobs:
               for record in payload["records"]
               if str(record.get("deliveredDate", "")).startswith("2020-10")
           ]
-          assert len(oct_2020_records) == 22, (
-              f"October-2020 public feed must contain exactly 22 canonical orders, got "
+          assert len(oct_2020_records) == 23, (
+              f"October-2020 public feed must contain exactly 23 canonical orders, got "
               f"{len(oct_2020_records)}"
           )
           assert all(
               str(record.get("id", "")).strip().isdigit()
               and len(str(record.get("id", "")).strip()) == 4
               for record in oct_2020_records
-          ), (
-              "October-2020 contains a non-canonical/ledger-only row in the public feed"
+          ), "October-2020 contains a non-canonical row in the public feed"
+
+          record_7041 = by_id.get("7041")
+          assert record_7041 is not None, "7041 missing from staged public feed"
+          assert not record_7041.get("deliveryDocumentDate"), (
+              f"7041 must not expose header/fiche date as delivery: "
+              f"{record_7041.get('deliveryDocumentDate')!r}"
           )
-          print("M7_OCT_2020_PHASE_OK audited=22 validated=22 conflicts=0 pending=0 corrected=1 ledger_only_removed=1")
+          assert "sin fecha de entrega documental" in str(record_7041.get("deliveryReviewStatus", "")).lower(), (
+              f"7041 no-delivery-date status missing: "
+              f"{record_7041.get('deliveryReviewStatus')!r}"
+          )
+          assert abs(float(record_7041.get("finalPrice")) - 0.0) < 0.01, (
+              f"7041 final price mismatch: {record_7041.get('finalPrice')!r}"
+          )
+          assert "1UsQSeiIxuXbgdHrZ8M_QMLLEd0ItLo1I" in str(record_7041.get("invoiceFile", "")), (
+              f"7041 recovered albaran link missing: {record_7041.get('invoiceFile')!r}"
+          )
+          print("M7_OCT_2020_PHASE_OK audited=23 validated=22 no_delivery_date=1 pending=0 corrected=2 recovered=7041")
 
           expected_sep_2020 = {
               "7006": ("2020-09-01", 212.02),
