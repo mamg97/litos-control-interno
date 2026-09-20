@@ -61,6 +61,8 @@ Historical work is undergoing a second controlled reconciliation pass, working b
 
 A second-pass cleanup of unresolved historical records is now in progress. August and December 2020 were re-inspected against the available XLSX contents, order folders and alternative-file search. The FECHA found in those files is the PEDIDO/header date and is not accepted as a differentiated delivery date. No PDF or alternative definitive version with a separate delivery FECHA was located. Those records therefore keep validated PVP/document provenance while both documentary-delivery fields stay blank with status `Revisión manual · sin fecha de entrega documental`.
 
+October 2020 second-pass cleanup also recovered the previously orphaned 08/10/2020 ledger row as canonical order **7041**: `7041.xlsx` matches the concept (`junquillo de champagne`) and definitive base/SUMA of `0 €`. The header date `15/10/2020` is stored as `Fecha ficha`; no differentiated delivery date was found, so delivery-document fields remain blank while PVP is explicitly `0,00 €`.
+
 October 2020 was also rechecked. The previously pending 08/10/2020 row `JUNQUILLO CHAMPAGNE` (estadillo line 25, amount 0 €, no work ID) is confirmed to be a ledger-only movement already preserved in `Movimientos cliente`, not a canonical work order. It was removed from `Pedidos`. October therefore contains 22 real orders, all reconciled, and the ledger-only zero-value line remains only in the movements ledger.
 
 For each historical month the process closes the full chain:
