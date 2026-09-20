@@ -2653,6 +2653,77 @@ jobs:
               )
           print("M7_MAY_2021_PHASE_OK audited=12 validated=12 conflicts=0 corrected=0")
 
+          expected_apr_2021 = {
+              "7085": ("2021-04-14", 275.12),
+              "7087": ("2021-04-14", 230.95),
+              "7090": ("2021-04-14", 213.33),
+              "7095": ("2021-04-14", 495.96),
+              "7097": ("2021-04-14", 341.59),
+              "7104": ("2021-04-14", 157.75),
+              "7098": ("2021-04-28", 75.72),
+              "7100": ("2021-04-28", 296.57),
+              "7102": ("2021-04-28", 119.89),
+          }
+          for work_id, (expected_date, expected_price) in expected_apr_2021.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} April-2021 delivery mismatch: "
+                  f"{record.get('deliveryDocumentDate')!r}"
+              )
+              assert "conciliado" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{work_id} April-2021 reconciliation status missing: "
+                  f"{record.get('deliveryReviewStatus')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} April-2021 final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          for work_id, expected_price in {"7088": 37.86, "7096": 0.00}.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert not record.get("deliveryDocumentDate"), (
+                  f"{work_id} must not expose date from wrong-ID document: "
+                  f"{record.get('deliveryDocumentDate')!r}"
+              )
+              assert "conflicto documental" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{work_id} April-2021 conflict status missing: "
+                  f"{record.get('deliveryReviewStatus')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} April-2021 final price mismatch: {record.get('finalPrice')!r}"
+              )
+          print("M7_APR_2021_PHASE_OK audited=11 validated=9 conflicts=2 corrected=0")
+
+          expected_mar_2021 = {
+              "7076": ("2021-03-05", 344.00),
+              "7078": ("2021-03-05", 224.64),
+              "7081": ("2021-03-05", 218.87),
+              "7082": ("2021-03-05", 385.22),
+              "7077": ("2021-03-15", 515.75),
+              "7084": ("2021-03-15", 271.33),
+              "7091": ("2021-03-19", 307.40),
+              "7093": ("2021-03-26", 414.79),
+              "7089": ("2021-03-29", 261.83),
+              "7092": ("2021-03-29", 475.02),
+              "7099": ("2021-03-29", 214.54),
+          }
+          for work_id, (expected_date, expected_price) in expected_mar_2021.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} March-2021 delivery mismatch: "
+                  f"{record.get('deliveryDocumentDate')!r}"
+              )
+              assert "conciliado" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{work_id} March-2021 reconciliation status missing: "
+                  f"{record.get('deliveryReviewStatus')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} March-2021 final price mismatch: {record.get('finalPrice')!r}"
+              )
+          print("M7_MAR_2021_PHASE_OK audited=11 validated=11 conflicts=0 corrected=0")
+
           expected_nov_2023 = {
               "7446": ("2023-11-06", 138.82),
               "7447": ("2023-11-10", 410.13),
