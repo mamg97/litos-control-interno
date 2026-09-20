@@ -110,6 +110,8 @@ The four-digit internal work/order ID is the canonical reconciliation key across
 
 Names, customer text, materials, email subjects and filename text beyond the ID are secondary evidence only.
 
+`Pedidos` and the public feed must contain exactly one canonical row per four-digit work ID. A later reform, repair, replacement, inscription/date adjustment or other ledger movement that reuses an existing ID remains a separate `Movimientos cliente` entry and may be documented on the canonical work, but it must not create a second `Pedidos` row. A duplicate canonical work ID in the public feed is a hard M7 validation failure and must block GitHub Pages deployment.
+
 - If an attachment carries an explicit work ID, route it only to that ID.
 - A multi-order email must be partitioned attachment by attachment; never assign the whole email to the first detected ID.
 - If several IDs exist and an attachment has no explicit ID, leave that attachment unresolved rather than guessing.

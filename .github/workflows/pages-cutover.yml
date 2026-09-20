@@ -287,6 +287,20 @@ jobs:
 
           # Phase-2026 propagation guard: verify the private-master correction
           # actually reaches the public feed consumed by the website.
+          from collections import Counter
+          work_id_counts = Counter(
+              str(record.get("id"))
+              for record in payload["records"]
+              if record.get("id") not in (None, "")
+          )
+          duplicate_work_ids = sorted(
+              work_id for work_id, count in work_id_counts.items() if count > 1
+          )
+          assert not duplicate_work_ids, (
+              f"Duplicate work IDs in staged public feed: {duplicate_work_ids}"
+          )
+          print(f"M7_UNIQUE_WORK_IDS_OK records={len(work_id_counts)}")
+
           by_id = {str(record.get("id")): record for record in payload["records"]}
           record_7903 = by_id.get("7903")
           assert record_7903 is not None, "7903 missing from staged public feed"
