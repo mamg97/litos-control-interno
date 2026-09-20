@@ -1,4 +1,5 @@
 name: LITOS M7 Pages Cutover
+# February 2025 full-block propagation audit.
 # March 2025 full-block propagation audit.
 # June 2025 full-block propagation audit.
 # April 2025 doc-sheet-web phase audit.
@@ -631,6 +632,36 @@ jobs:
               f"7679 template exception status missing: {by_id['7679'].get('deliveryReviewStatus')!r}"
           )
           print(f"M7_MAR_2025_PHASE_OK records={len(expected_mar_2025)}")
+
+          expected_feb_2025 = {
+              "7650": ("2025-02-03", 231.78),
+              "7656": ("2025-02-05", 432.87),
+              "7652": ("2025-02-10", 391.85),
+              "7654": ("2025-02-10", 331.62),
+              "7659": ("2025-02-10", 182.99),
+              "7655": ("2025-02-17", 391.59),
+              "7663": ("2025-02-19", 407.63),
+              "7649": ("2025-02-20", 349.15),
+              "7670": ("2025-02-21", 206.97),
+              "7671": ("2025-02-21", 151.44),
+              "7635": ("2025-02-28", 205.17),
+              "7644": ("2025-02-28", 306.04),
+              "7664": ("2025-02-28", 195.61),
+              "7665": ("2025-02-28", 348.03),
+          }
+          for work_id, (expected_date, expected_price) in expected_feb_2025.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} February-2025 delivery mismatch: {record.get('deliveryDocumentDate')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} February-2025 final price mismatch: {record.get('finalPrice')!r}"
+              )
+          assert "documento correcto recuperado" in str(by_id["7654"].get("deliveryReviewStatus", "")).lower(), (
+              f"7654 corrected-document status missing: {by_id['7654'].get('deliveryReviewStatus')!r}"
+          )
+          print(f"M7_FEB_2025_PHASE_OK records={len(expected_feb_2025)}")
 
           expected_may_2025 = {
               "7678": ("2025-05-05", 445.49),
