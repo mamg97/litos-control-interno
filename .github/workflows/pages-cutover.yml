@@ -1,4 +1,5 @@
 name: LITOS M7 Pages Cutover
+# November 2025 full propagation guard.
 # October 2025 full propagation guard.
 # Force refresh after 7771 historical repair.
 # Retry after delivery-date regression guard.
@@ -532,6 +533,42 @@ jobs:
               f"records={len(expected_oct_2025)} "
               f"first={by_id['7768'].get('deliveryDocumentDate')} "
               f"last={by_id['7786'].get('deliveryDocumentDate')}"
+          )
+
+          expected_nov_2025 = {
+              "7788": ("2025-11-10", 176.68),
+              "7789": ("2025-11-10", 164.06),
+              "7790": ("2025-11-10", 313.13),
+              "7792": ("2025-11-10", 482.24),
+              "7791": ("2025-11-13", 281.43),
+          }
+          for work_id, (expected_date, expected_price) in expected_nov_2025.items():
+              matches = [record for record in payload["records"] if str(record.get("id")) == work_id]
+              assert len(matches) == 1, f"{work_id} expected once in feed, got {len(matches)}"
+              record = matches[0]
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} November-2025 delivery mismatch: {record.get('deliveryDocumentDate')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} November-2025 final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          record_7754 = by_id.get("7754")
+          assert record_7754 is not None, "7754 missing from staged public feed"
+          assert not record_7754.get("deliveryDocumentDate"), (
+              f"7754 must not expose the impossible 2024 delivery date: {record_7754.get('deliveryDocumentDate')!r}"
+          )
+          assert "conflicto documental" in str(record_7754.get("deliveryReviewStatus", "")).lower(), (
+              f"7754 review status mismatch: {record_7754.get('deliveryReviewStatus')!r}"
+          )
+          assert abs(float(record_7754.get("finalPrice")) - 542.51) < 0.01, (
+              f"7754 final price mismatch: {record_7754.get('finalPrice')!r}"
+          )
+          print(
+              "M7_NOV_2025_PHASE_OK "
+              f"validated={len(expected_nov_2025)} "
+              f"conflict_7754={record_7754.get('deliveryReviewStatus')} "
+              f"7792_price={by_id['7792'].get('finalPrice')}"
           )
 
           document_links = sum(
