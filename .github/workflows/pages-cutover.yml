@@ -2928,6 +2928,47 @@ jobs:
               )
           print("M7_SEP_2020_PHASE_OK audited=13 validated=13 conflicts=0 corrected=1")
 
+          aug_2020_conflicts = {
+              "7003": 372.06,
+              "7005": 368.81,
+              "7007": 276.38,
+              "7009": 388.70,
+              "7010": 164.06,
+              "7004": 244.83,
+              "7011": 310.48,
+              "7015": 265.02,
+              "7025": 142.61,
+          }
+          for work_id, expected_price in aug_2020_conflicts.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert not record.get("deliveryDocumentDate"), (
+                  f"{work_id} must not expose conflicting August-2020 delivery date: "
+                  f"{record.get('deliveryDocumentDate')!r}"
+              )
+              assert "conflicto documental" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{work_id} August-2020 conflict status missing: "
+                  f"{record.get('deliveryReviewStatus')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} August-2020 final price mismatch: {record.get('finalPrice')!r}"
+              )
+          assert "1uWIiwXKCCmHV1nGnLrq1kJXxAdzUW1IS" in str(by_id["7003"].get("invoiceFile", "")), (
+              f"7003 must point to recovered combined final albaran: {by_id['7003'].get('invoiceFile')!r}"
+          )
+          print("M7_AUG_2020_PHASE_OK audited=9 validated=0 conflicts=9 corrected=2")
+
+          july_2020_records = [
+              record
+              for record in payload["records"]
+              if str(record.get("deliveredDate", "")).startswith("2020-07")
+          ]
+          assert not july_2020_records, (
+              f"Unexpected July-2020 records in staged feed: "
+              f"{[record.get('id') for record in july_2020_records]}"
+          )
+          print("M7_JUL_2020_PHASE_OK audited=0 no_records=1")
+
           expected_nov_2023 = {
               "7446": ("2023-11-06", 138.82),
               "7447": ("2023-11-10", 410.13),
