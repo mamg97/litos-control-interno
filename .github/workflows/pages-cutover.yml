@@ -2562,6 +2562,36 @@ jobs:
               )
           print("M7_AUG_2021_PHASE_OK audited=6 validated=5 conflicts=0 pending=1")
 
+          expected_jul_2021 = {
+              "7116": ("2021-07-03", 253.78),
+              "7130": ("2021-07-07", 302.88),
+              "7132": ("2021-07-07", 145.13),
+              "7128": ("2021-07-12", 380.61),
+              "7134": ("2021-07-13", 394.09),
+              "7129": ("2021-07-16", 358.29),
+              "7122": ("2021-07-19", 205.71),
+              "7124": ("2021-07-19", 27.28),
+              "7125": ("2021-07-26", 164.06),
+              "7126": ("2021-07-26", 386.42),
+              "7133": ("2021-07-26", 256.38),
+              "7135": ("2021-07-26", 334.99),
+          }
+          for work_id, (expected_date, expected_price) in expected_jul_2021.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} July-2021 delivery mismatch: "
+                  f"{record.get('deliveryDocumentDate')!r}"
+              )
+              assert "conciliado" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{work_id} July-2021 reconciliation status missing: "
+                  f"{record.get('deliveryReviewStatus')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} July-2021 final price mismatch: {record.get('finalPrice')!r}"
+              )
+          print("M7_JUL_2021_PHASE_OK audited=12 validated=12 conflicts=0 corrected=0")
+
           expected_nov_2023 = {
               "7446": ("2023-11-06", 138.82),
               "7447": ("2023-11-10", 410.13),
