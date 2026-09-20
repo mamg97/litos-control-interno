@@ -1,4 +1,5 @@
 name: LITOS M7 Pages Cutover
+# Auto-rebuild after master-writing workflows.
 # Force rebuild after 7903 master correction.
 # Refresh after 2026 final-price integrity audit.
 # Refresh after canonical 7917 master reconciliation.
@@ -36,6 +37,13 @@ on:
   workflow_run:
     workflows:
       - 'LITOS Draft Sync'
+      - 'LITOS M6 Albaranes Cutover'
+      - 'LITOS Delivery Date Repair · 2026 Focus'
+      - 'LITOS Final Price Audit · 2026'
+      - 'LITOS Delivery Date Repair · Historical Phases'
+      - 'LITOS 2026 Sent Recovery + Delivery Reconcile'
+      - 'LITOS Client Intake'
+      - 'LITOS M5 Organize Folders'
     types:
       - completed
     branches:
@@ -165,7 +173,7 @@ jobs:
           fi
 
   build:
-    if: ${{ github.event_name != 'pull_request' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'schedule' && github.event.workflow_run.head_branch == 'main' && vars.LITOS_PUBLIC_FEED_KILL_SWITCH == 'false')) }}
+    if: ${{ github.event_name != 'pull_request' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && vars.LITOS_PUBLIC_FEED_KILL_SWITCH == 'false')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
