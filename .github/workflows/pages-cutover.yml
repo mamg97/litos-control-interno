@@ -1,4 +1,5 @@
 name: LITOS M7 Pages Cutover
+# November 2023 full-block propagation audit.
 # December 2023 full-block propagation audit.
 # January 2024 full-block propagation audit.
 # February 2024 full-block propagation audit.
@@ -1239,6 +1240,45 @@ jobs:
           print(
               "M7_DEC_2023_PHASE_OK "
               f"validated={len(expected_dec_2023)} missing_7470={record_7470.get('deliveryReviewStatus')}"
+          )
+
+          expected_nov_2023 = {
+              "7446": ("2023-11-06", 138.82),
+              "7447": ("2023-11-10", 410.13),
+              "7450": ("2023-11-20", 357.15),
+              "7451": ("2023-11-23", 262.50),
+              "7453": ("2023-11-23", 237.96),
+              "7458": ("2023-11-23", 311.76),
+              "7448": ("2023-11-24", 296.57),
+              "7455": ("2023-11-27", 195.61),
+              "7457": ("2023-11-27", 24.10),
+          }
+          for work_id, (expected_date, expected_price) in expected_nov_2023.items():
+              matches = [record for record in payload["records"] if str(record.get("id")) == work_id]
+              assert len(matches) == 1, f"{work_id} expected once in feed, got {len(matches)}"
+              record = matches[0]
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} November-2023 delivery mismatch: {record.get('deliveryDocumentDate')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} November-2023 final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          record_7454 = by_id.get("7454")
+          assert record_7454 is not None, "7454 missing from staged public feed"
+          assert not record_7454.get("deliveryDocumentDate"), (
+              f"7454 unexpectedly has delivery date: {record_7454.get('deliveryDocumentDate')!r}"
+          )
+          assert record_7454.get("finalPrice") in (None, "", 0), (
+              f"7454 must not expose final price without definitive albaran: {record_7454.get('finalPrice')!r}"
+          )
+          assert "falta albarán definitivo" in str(record_7454.get("deliveryReviewStatus", "")).lower(), (
+              f"7454 status mismatch: {record_7454.get('deliveryReviewStatus')!r}"
+          )
+
+          print(
+              "M7_NOV_2023_PHASE_OK "
+              f"validated={len(expected_nov_2023)} missing_7454={record_7454.get('deliveryReviewStatus')}"
           )
 
           expected_may_2025 = {
