@@ -1824,6 +1824,51 @@ jobs:
           )
           print("M7_FEB_2023_PHASE_OK audited=8 validated=1 conflicts=7")
 
+          expected_jan_2023 = {
+              "7314": ("2023-01-09", 258.93),
+              "7321": ("2023-01-09", 256.89),
+              "7317": ("2023-01-11", 481.68),
+              "7323": ("2023-01-11", 100.96),
+              "7318": ("2023-01-16", 208.43),
+              "7313": ("2023-01-18", 477.44),
+              "7320": ("2023-01-18", 310.65),
+              "7324": ("2023-01-18", 84.05),
+              "7319": ("2023-01-20", 138.44),
+              "7322": ("2023-01-24", 315.51),
+          }
+          for work_id, (expected_date, expected_price) in expected_jan_2023.items():
+              record = by_id.get(work_id)
+              assert record is not None, f"{work_id} missing from staged public feed"
+              assert record.get("deliveryDocumentDate") == expected_date, (
+                  f"{work_id} January-2023 delivery mismatch: "
+                  f"{record.get('deliveryDocumentDate')!r}"
+              )
+              assert "conciliado" in str(record.get("deliveryReviewStatus", "")).lower(), (
+                  f"{work_id} January-2023 reconciliation status missing: "
+                  f"{record.get('deliveryReviewStatus')!r}"
+              )
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
+                  f"{work_id} January-2023 final price mismatch: {record.get('finalPrice')!r}"
+              )
+
+          assert "1eHglgM0swoPOQafR0Wij7GSyG5MlQoRG" in str(by_id["7320"].get("invoiceFile", "")), (
+              f"7320 final canonical document mismatch: {by_id['7320'].get('invoiceFile')!r}"
+          )
+          assert "1det_qYJLZkYzaKhk1jQb2Vc0E1jq9H8U" not in str(by_id["7320"].get("invoiceFile", "")), (
+              f"7320 old draft must not be canonical: {by_id['7320'].get('invoiceFile')!r}"
+          )
+          assert "1QHhtxYToQ4Wx0LncL4Ya6MRd5VzZBA7o" not in str(by_id["7320"].get("invoiceFile", "")), (
+              f"7320 old junquillos draft must not be canonical: {by_id['7320'].get('invoiceFile')!r}"
+          )
+
+          assert "1kxgZUxWgFcEIsiebdMYbrwhv9mloPj80" in str(by_id["7322"].get("invoiceFile", "")), (
+              f"7322 canonical document mismatch: {by_id['7322'].get('invoiceFile')!r}"
+          )
+          assert "1lvbOrB6xs8K9uz0jhXhqeRbJJHfMD1vj" not in str(by_id["7322"].get("invoiceFile", "")), (
+              f"7322 stale 7317 template must not be canonical: {by_id['7322'].get('invoiceFile')!r}"
+          )
+          print("M7_JAN_2023_PHASE_OK audited=10 validated=10 conflicts=0")
+
           expected_nov_2023 = {
               "7446": ("2023-11-06", 138.82),
               "7447": ("2023-11-10", 410.13),
