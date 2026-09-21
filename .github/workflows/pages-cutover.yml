@@ -44,6 +44,7 @@ name: LITOS M7 Pages Cutover
 # Refresh after M6 link sanitation and operational-month trace fix.
 # Refresh after phased historical delivery-date repair and native-Sheets support.
 # Repair propagation after historical final-price materialization.
+# Refresh after the latest authoritative private-master reconciliation.
 
 on:
   pull_request:

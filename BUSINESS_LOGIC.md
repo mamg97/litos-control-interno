@@ -66,6 +66,8 @@ Cash advances are movements of settlement, not additional revenue. Never add `EN
 
 A later accounting movement that reuses an existing work ID must not create a second `Pedidos` row. `Pedidos` has one canonical row per work ID. Subsequent reform, repair, adjustment or other accounting entries that refer to that same historical ID remain separate rows in `Movimientos cliente` and may be documented on the canonical work, but they do not clone the order master row.
 
+When a newly supplied estadillo is declared to contain the current real balance, reconcile its identifiable work and payment lines into `Movimientos cliente` in source order and carry the exact running balance shown by the source. Do not insert an opaque balancing entry when the detailed movements explain the difference. If an unexplained residual remains after all identifiable lines are recorded, add one explicit `AJUSTE / OTRO` movement with the evidence date, signed amount, prior balance, resulting authoritative balance, source and reason. An adjustment affects the running account only; it is not revenue and never creates or duplicates a `Pedidos` row.
+
 For financial views, delivered-work value drives recorded revenue; advances only affect the running account balance.
 
 ## 3. Final sale price / PVP
