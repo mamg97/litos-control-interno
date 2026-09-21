@@ -652,9 +652,6 @@ function performanceSeries(year, granularity = "year") {
   // Las magnitudes económicas mantienen la fecha operativa/contable.
   const annualFinancialRows = rowsForYear(year);
   const finance = calculateFinance(annualFinancialRows, year);
-  const ledger = expenseLedgerForYear(year);
-  const localManual = finance.manual.filter((entry) => !ledger.totals.has(entry.label));
-  const recurringCosts = finance.consumables + localManual.reduce((total, entry) => total + entry.value, 0);
   const share = periods.length ? 1 / periods.length : 0;
 
   return periods.map(({ label, months }) => {
@@ -672,16 +669,10 @@ function performanceSeries(year, granularity = "year") {
         0
       ) + finance.otherIncome * share;
 
-    const ledgerCosts = [...ledger.totals.keys()].reduce(
-      (total, category) =>
-        total + monthlyLedgerAmount(year, months, category),
-      0
-    );
-
-    const costs =
-      estimateMaterial(financialRows).amount +
-      recurringCosts * share +
-      ledgerCosts;
+    // Annual KPIs and monthly/quarterly charts share the same cost engine.
+    // Direct supplier costs replace job estimates; general real expenses enter
+    // operating cost; stock, stock credits and pending links stay outside profit.
+    const costs = operatingCostBreakdown(financialRows, Number(year), months).total;
 
     return {
       label,
@@ -1464,12 +1455,113 @@ function isSupplierExpense(expense) {
   return normalize(expense?.nature).startsWith("factura proveedor");
 }
 
-function monthlyLedgerAmount(year, months, category) {
-  return state.expenses
-    .filter((expense) => !isSupplierExpense(expense))
-    .filter((expense) => expense.category === category && expense.month.startsWith(`${year}-`))
-    .filter((expense) => months.includes(Number(expense.month.slice(5, 7)) - 1))
-    .reduce((total, expense) => total + expense.amount, 0);
+function isSupplierCredit(expense) {
+  return normalize(expense?.nature).startsWith("abono proveedor");
+}
+
+function isSupplierDirectCostExpense(expense) {
+  const nature = normalize(expense?.nature);
+  return nature.startsWith("factura proveedor") && nature.includes("coste directo");
+}
+
+function isSupplierStockExpense(expense) {
+  const nature = normalize(expense?.nature);
+  return (nature.startsWith("factura proveedor") || nature.startsWith("abono proveedor")) &&
+    nature.includes("stock");
+}
+
+function isSupplierPendingExpense(expense) {
+  const nature = normalize(expense?.nature);
+  return nature.startsWith("factura proveedor") && nature.includes("pendiente");
+}
+
+function isSupplierGeneralExpense(expense) {
+  const nature = normalize(expense?.nature);
+  return nature.startsWith("factura proveedor") && nature.includes("gasto general");
+}
+
+function isConsumablesExpense(expense) {
+  const category = normalize(expense?.category);
+  return category.includes("consumibles") || category.includes("abrasivos") || category.includes("ferreteria");
+}
+
+function isOperatingLedgerExpense(expense) {
+  if (isSupplierDirectCostExpense(expense)) return false;
+  if (isSupplierStockExpense(expense)) return false;
+  if (isSupplierPendingExpense(expense)) return false;
+  if (isSupplierCredit(expense)) return false;
+  if (isSupplierExpense(expense)) return isSupplierGeneralExpense(expense);
+  return true;
+}
+
+const FINANCE_MANUAL_EXPENSES = Object.freeze([
+  ["Electricidad", "financeElectricity", "fixed"],
+  ["Agua y residuos", "financeWaterWaste", "fixed"],
+  ["Internet", "financeInternet", "fixed"],
+  ["Letras", "financeLetters", "direct"],
+  ["Transporte y colocación", "financeTransport", "direct"],
+  ["Mano de obra / autónomos", "financeLabour", "labour"],
+  ["Otros gastos", "financeOtherCosts", "fixed"]
+]);
+
+const KNOWN_CONSUMABLES_TOTAL = Object.values(KNOWN_CONSUMABLES)
+  .reduce((total, value) => total + value, 0);
+
+function expenseMonthIndex(expense) {
+  const month = Number(String(expense?.month || "").slice(5, 7));
+  return Number.isInteger(month) && month >= 1 && month <= 12 ? month - 1 : null;
+}
+
+function operatingCostBreakdown(rows, year, months = Array.from({ length: 12 }, (_, month) => month)) {
+  const monthSet = new Set(months);
+  const annualExpenses = expenseRowsForYear(year);
+  const annualOperating = annualExpenses.filter(isOperatingLedgerExpense);
+  const periodOperating = annualOperating.filter((expense) => monthSet.has(expenseMonthIndex(expense)));
+  const manualLabels = new Set(FINANCE_MANUAL_EXPENSES.map(([label]) => label));
+
+  const manual = FINANCE_MANUAL_EXPENSES.map(([label, field, tone]) => {
+    const annualRows = annualOperating.filter((expense) => expense.category === label);
+    const imported = annualRows.length > 0;
+    const value = imported
+      ? periodOperating
+          .filter((expense) => expense.category === label)
+          .reduce((total, expense) => total + expense.amount, 0)
+      : financeValue(field) * (months.length / 12);
+    return {
+      label,
+      value,
+      tone,
+      imported,
+      sourceNote: imported ? importedExpenseLabel(label, expenseLedgerForYear(year)) : ""
+    };
+  });
+
+  const annualConsumableRows = annualOperating.filter(isConsumablesExpense);
+  const periodConsumableRows = periodOperating.filter(isConsumablesExpense);
+  const annualConsumablesReal = annualConsumableRows.reduce((total, expense) => total + expense.amount, 0);
+  const periodConsumablesReal = periodConsumableRows.reduce((total, expense) => total + expense.amount, 0);
+  const annualConsumablesResidual = Math.max(0, KNOWN_CONSUMABLES_TOTAL - annualConsumablesReal);
+  const consumablesEstimated = annualConsumablesResidual * (months.length / 12);
+  const consumables = periodConsumablesReal + consumablesEstimated;
+
+  const otherOperatingRows = periodOperating.filter(
+    (expense) => !manualLabels.has(expense.category) && !isConsumablesExpense(expense)
+  );
+  const otherOperating = otherOperatingRows.reduce((total, expense) => total + expense.amount, 0);
+  const material = estimateMaterial(rows);
+  const manualTotal = manual.reduce((total, entry) => total + entry.value, 0);
+
+  return {
+    material,
+    manual,
+    manualTotal,
+    consumables,
+    consumablesReal: periodConsumablesReal,
+    consumablesEstimated,
+    otherOperating,
+    otherOperatingRows,
+    total: material.amount + consumables + manualTotal + otherOperating
+  };
 }
 
 function estimatedMaterialCostFor(row) {
@@ -1515,20 +1607,9 @@ function calculateFinance(rows, year = null) {
   const otherIncome = financeValue("financeOtherIncome");
   const reportYear = Number(year) || dashboardDate(rows[0])?.getFullYear() || Number($("#financeYear")?.value) || new Date().getFullYear();
   const ledger = expenseLedgerForYear(reportYear);
-  const material = estimateMaterial(rows);
-  const consumables = Object.values(KNOWN_CONSUMABLES).reduce((total, value) => total + value, 0);
-  const manual = [
-    ["Electricidad", "financeElectricity", "fixed"],
-    ["Agua y residuos", "financeWaterWaste", "fixed"],
-    ["Internet", "financeInternet", "fixed"],
-    ["Letras", "financeLetters", "direct"],
-    ["Transporte y colocación", "financeTransport", "direct"],
-    ["Mano de obra / autónomos", "financeLabour", "labour"],
-    ["Otros gastos", "financeOtherCosts", "fixed"]
-  ].map(([label, field, tone]) => {
-    const imported = ledger.totals.get(label);
-    return { label, value: imported ?? financeValue(field), tone, imported: imported !== undefined, sourceNote: importedExpenseLabel(label, ledger) };
-  });
+  const operating = operatingCostBreakdown(rows, reportYear);
+  const { material, consumables, manual, otherOperating } = operating;
+
   // The Estadillo's Debe is the value of the delivered work. Cash advances
   // are tracked separately in the private movements ledger and must not be
   // added here a second time. Only still-unpriced orders use the explicit
@@ -1537,14 +1618,13 @@ function calculateFinance(rows, year = null) {
   const estimatedIncomeRows = rows.length - recordedIncomeRows;
   const revenueOrders = rows.reduce((total, row) => total + revenueFor(row, averagePrice), 0);
   const revenue = revenueOrders + otherIncome;
-  const costs = material.amount + consumables + manual.reduce((total, entry) => total + entry.value, 0);
+  const costs = operating.total;
   const margin = revenue - costs;
   const outputs = [
     { label: "Coste directo / material", value: material.amount, tone: "material" },
-    { label: "Abrasivos y lijas", value: KNOWN_CONSUMABLES.abrasives, tone: "consumables" },
-    { label: "Plantillas", value: KNOWN_CONSUMABLES.templates, tone: "consumables" },
-    { label: "Pintura, silicona y masilla", value: KNOWN_CONSUMABLES.finishing, tone: "consumables" },
+    { label: "Consumibles", value: consumables, tone: "consumables" },
     ...manual,
+    ...(otherOperating > 0 ? [{ label: "Otros gastos reales", value: otherOperating, tone: "fixed" }] : []),
     ...(margin >= 0 ? [{ label: "Margen disponible", value: margin, tone: "margin" }] : [])
   ];
   return {
@@ -1552,9 +1632,11 @@ function calculateFinance(rows, year = null) {
     reportYear,
     otherIncome,
     ledger,
+    operating,
     material,
     consumables,
     manual,
+    otherOperating,
     revenueOrders,
     recordedIncomeRows,
     estimatedIncomeRows,
@@ -1698,13 +1780,30 @@ function ledgerDescription(finance) {
   if (!finance.ledger.rows.length) return "Sin gastos importados todavía: los campos de suministro siguen siendo una referencia local.";
   const factured = finance.ledger.rows.filter((row) => row.nature !== "Estimado · media disponible").length;
   const estimated = finance.ledger.rows.length - factured;
-  return `Libro maestro: ${factured} meses respaldados por factura o prorrateo y ${estimated} meses estimados por media. Los campos de luz, agua y residuos e internet se bloquean para evitar doble contabilización.`;
+  const supplierRows = expenseRowsForYear(finance.reportYear);
+  const stockNet = supplierRows
+    .filter(isSupplierStockExpense)
+    .reduce((total, expense) => total + expense.amount, 0);
+  const pending = supplierRows
+    .filter(isSupplierPendingExpense)
+    .reduce((total, expense) => total + expense.amount, 0);
+  return `Libro maestro: ${factured} registros respaldados por factura/prorrateo y ${estimated} estimados. Los gastos generales reales entran en el resultado; coste directo sustituye estimación. Stock neto ${formatMoney(stockNet)} y pendientes ${formatMoney(pending)} se muestran aparte y no alteran el beneficio hasta consumo/vinculación validada.`;
 }
 
 function supplierExpensesForYear(year) {
   return expenseRowsForYear(year)
-    .filter(isSupplierExpense)
+    .filter((expense) => isSupplierExpense(expense) || isSupplierCredit(expense))
     .sort((left, right) => String(right.invoiceDate || right.month).localeCompare(String(left.invoiceDate || left.month)));
+}
+
+function supplierExpenseStatus(expense) {
+  const nature = normalize(expense.nature);
+  if (isSupplierCredit(expense)) return "Abono de stock";
+  if (nature.includes("pendiente")) return "Pendiente de vincular";
+  if (nature.includes("stock")) return "Compra de stock";
+  if (nature.includes("gasto general")) return "Gasto general";
+  if (nature.includes("coste directo")) return "Vinculado a trabajo";
+  return "Registrado";
 }
 
 function renderSupplierExpenses(year) {
@@ -1718,7 +1817,7 @@ function renderSupplierExpenses(year) {
     const td = document.createElement("td");
     td.colSpan = 9;
     td.className = "empty-state";
-    td.textContent = "No hay facturas de proveedores registradas para este año.";
+    td.textContent = "No hay facturas o abonos de proveedores registrados para este año.";
     tr.append(td);
     body.append(tr);
     if (total) total.textContent = "0 € registrados";
@@ -1726,12 +1825,11 @@ function renderSupplierExpenses(year) {
   }
   rows.forEach((expense) => {
     const tr = document.createElement("tr");
-    const nature = normalize(expense.nature);
-    const status = nature.includes("pendiente") ? "Pendiente de vincular" : nature.includes("stock") ? "Compra de stock" : "Vinculado a trabajo";
+    const status = supplierExpenseStatus(expense);
     const plainValues = [
       formatOperationalDate(expense.invoiceDate || `${expense.month}-01`),
       expense.source || "Proveedor",
-      expense.category.replace(/^Compra proveedor ·\s*/i, ""),
+      expense.category.replace(/^(Compra|Abono) proveedor ·\s*/i, ""),
       expense.reference || "—",
       status,
       formatMoney(expense.amount)
@@ -1739,7 +1837,10 @@ function renderSupplierExpenses(year) {
     plainValues.forEach((value, index) => {
       const td = document.createElement("td");
       td.textContent = value;
-      if (index === 4) td.className = normalize(status).includes("pendiente") ? "supplier-status pending" : "supplier-status active";
+      if (index === 4) {
+        const normalizedStatus = normalize(status);
+        td.className = normalizedStatus.includes("pendiente") ? "supplier-status pending" : "supplier-status active";
+      }
       tr.append(td);
     });
     [
@@ -1766,7 +1867,9 @@ function renderSupplierExpenses(year) {
   });
   if (total) {
     const amount = rows.reduce((sum, expense) => sum + expense.amount, 0);
-    total.textContent = `${formatMoney(amount)} · ${rows.length} ${rows.length === 1 ? "factura" : "facturas"}`;
+    const invoices = rows.filter(isSupplierExpense).length;
+    const credits = rows.filter(isSupplierCredit).length;
+    total.textContent = `${formatMoney(amount)} netos · ${invoices} ${invoices === 1 ? "factura" : "facturas"}${credits ? ` · ${credits} ${credits === 1 ? "abono" : "abonos"}` : ""}`;
   }
 }
 
@@ -1791,7 +1894,7 @@ function renderFinance() {
   renderEstadilloLedger(year);
   renderSupplierExpenses(year);
   drawFinancialSummaryChart(performanceSeries(year, granularity));
-  $("#financeChartScope").textContent = `Resultado ${granularity === "quarter" ? "por trimestre" : "por mes"}: ingresos reales cuando constan, coste directo real por trabajo cuando está vinculado y estimación solo donde falta. Las compras de stock se muestran aparte y no se duplican en el coste de los pedidos.`;
+  $("#financeChartScope").textContent = `Resultado ${granularity === "quarter" ? "por trimestre" : "por mes"}: usa la misma lógica que el KPI anual. El coste directo real sustituye la estimación; los gastos generales reales entran en resultado; stock, abonos de stock y pendientes de vincular se muestran aparte hasta que exista consumo o asignación validada.`;
   renderFinanceSankey(finance, sankeyIncomeByModel(rows, finance));
   syncImportedSupplyInputs(finance);
   const ledgerNote = $("#financeLedgerNote");
