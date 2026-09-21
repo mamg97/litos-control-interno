@@ -119,6 +119,15 @@ def patch_mobile_styles(index_path: Path) -> None:
 def patch_mobile_chart_runtime(source: str) -> str:
     replacements = (
         (
+            '  const { ctx, width, height } = setupCanvas(canvas);\n'
+            '  if (width < 2 || height < 2) return;\n'
+            '  const left = 56, right = 12, top = 28, bottom = 33;',
+            '  const { ctx, width, height } = setupCanvas(canvas);\n'
+            '  if (width < 2 || height < 2) return;\n'
+            '  const compact = width < 520;\n'
+            '  const left = 56, right = 12, top = 28, bottom = 33;',
+        ),
+        (
             '  const left = metric === "orders" ? 38 : 58, right = 12, top = 28, bottom = 33;',
             '  const compact = width < 520;\n'
             '  const left = metric === "orders" ? (compact ? 24 : 38) : (compact ? 42 : 58), '
@@ -147,6 +156,8 @@ def patch_mobile_chart_runtime(source: str) -> str:
         if count < 1:
             raise RuntimeError(f"Mobile chart patch target missing: {old[:72]}")
         source = source.replace(old, new, 1)
+    if source.count("const compact = width < 520;") != 2:
+        raise RuntimeError("Expected compact chart mode in orders and financial charts")
     return source
 
 
