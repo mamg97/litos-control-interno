@@ -2886,21 +2886,27 @@ jobs:
               "7029": ("2020-09-24", 119.89),
               "7030": ("2020-09-24", 100.96),
           }
+          sep_2020_records = [
+              record
+              for record in payload["records"]
+              if str(record.get("deliveredDate", "")).startswith("2020-09")
+          ]
+          assert len(sep_2020_records) == 13
+          assert {str(record.get("id")) for record in sep_2020_records} == set(expected_sep_2020)
           for work_id, (expected_date, expected_price) in expected_sep_2020.items():
               record = by_id.get(work_id)
               assert record is not None, f"{work_id} missing from staged public feed"
-              assert record.get("deliveryDocumentDate") == expected_date, (
-                  f"{work_id} September-2020 delivery mismatch: "
-                  f"{record.get('deliveryDocumentDate')!r}"
+              assert record.get("deliveredDate") == expected_date, (
+                  f"{work_id} September-2020 operational date mismatch: "
+                  f"{record.get('deliveredDate')!r}"
               )
-              assert "conciliado" in str(record.get("deliveryReviewStatus", "")).lower(), (
-                  f"{work_id} September-2020 reconciliation status missing: "
-                  f"{record.get('deliveryReviewStatus')!r}"
-              )
+              assert not record.get("deliveryDocumentDate"), f"{work_id} header date must not be delivery"
+              assert record.get("deliveryReviewStatus") == "Cerrado histórico · sin fecha de entrega documental"
               assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
                   f"{work_id} September-2020 final price mismatch: {record.get('finalPrice')!r}"
               )
-          print("M7_SEP_2020_PHASE_OK audited=13 validated=13 conflicts=0 corrected=1")
+              assert record.get("invoiceFile"), f"{work_id} documentary link missing"
+          print("M7_SEP_2020_PHASE_OK audited=13 pvp_validated=13 historical_closed=13")
 
           aug_2020_no_delivery_date = {
               "7003": 372.06,
