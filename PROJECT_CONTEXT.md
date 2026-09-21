@@ -79,6 +79,8 @@ This second pass has already recovered/corrected cases such as wrong internal li
 
 ## Active handoff — audit and December 2020 block (2026-09-20)
 
+- M6 incident corrected on 2026-09-21: scheduled bridge synchronization itself completed, but post-bridge parity repeatedly exited 2 after 116 successful document reads because `parity_v2.py` omitted the MIME type when downloading one native Google Sheet. The verifier now passes `file.mime_type`, matching the production synchronizer, and M6 code changes trigger a formula-aware read-only parity run.
+
 - Current block: **SEP 2020**, 13 documents inspected by internal NUM, worksheet dates, SUMA and drawing/media inventory; only header dates, no alternative files in order folders or exact filename search. All PVP validated and preserved. Both documentary-delivery columns are cleared and exact historical-close status is required. Publication pending; next block after successful deployment: **AUG 2020 final verification**.
 
 - Current block: **OCT 2020**, 23 documents inspected by internal NUM, worksheet dates, SUMA and drawing/media inventory; only header dates, no alternative files in order folders or filename search. All PVP validated and preserved. Both documentary-delivery columns are cleared and exact historical-close status is required. Publication pending; next block after successful deployment: **SEP 2020**.

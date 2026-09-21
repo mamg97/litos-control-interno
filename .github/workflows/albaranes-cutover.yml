@@ -6,6 +6,9 @@ on:
   push:
     paths:
       - 'python_albaranes/sync.py'
+      - 'python_albaranes/parity.py'
+      - 'python_albaranes/parity_v2.py'
+      - 'python_albaranes/total_parser.py'
       - 'python_albaranes/history_backfill.py'
       - 'python_albaranes/pvp_backfill.py'
       - 'python_albaranes/delivery_date_backfill.py'
@@ -14,6 +17,9 @@ on:
   pull_request:
     paths:
       - 'python_albaranes/sync.py'
+      - 'python_albaranes/parity.py'
+      - 'python_albaranes/parity_v2.py'
+      - 'python_albaranes/total_parser.py'
       - 'python_albaranes/history_backfill.py'
       - 'python_albaranes/pvp_backfill.py'
       - 'python_albaranes/delivery_date_backfill.py'
@@ -91,6 +97,11 @@ jobs:
         env:
           LITOS_DELIVERY_SCAN_UNLINKED: 'true'
         run: python python_albaranes/delivery_date_backfill.py --dry-run
+
+      - name: Formula-aware read-only parity
+        if: ${{ github.event_name == 'push' }}
+        working-directory: python_albaranes
+        run: python parity_v2.py
 
       - name: One-time delivery-date historical backfill
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[LITOS-DELIVERY-DATE-BACKFILL]') }}
