@@ -2852,7 +2852,7 @@ jobs:
               "7042": ("2020-10-26", 227.16),
               "7046": ("2020-10-26", 160.02),
               "7034": ("2020-10-28", 616.59),
-              "7041": ("2020-10-15", 0.00),
+              "7041": ("2020-10-08", 0.00),
           }
           month_records = [r for r in payload["records"] if str(r.get("deliveredDate", "")).startswith("2020-10")]
           assert len(month_records) == 23
