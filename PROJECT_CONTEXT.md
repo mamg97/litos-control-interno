@@ -79,6 +79,8 @@ This second pass has already recovered/corrected cases such as wrong internal li
 
 ## Active handoff — audit and December 2020 block (2026-09-20)
 
+- Current block: **NOV 2020**, 6 documents inspected by internal NUM, worksheet dates, SUMA and drawing/media inventory; only header dates, no alternative files in order folders or filename search. All PVP validated and preserved. Both documentary-delivery columns are cleared and exact historical-close status is required. Publication pending; next block after successful deployment: **OCT 2020**.
+
 - Local `main` started clean at `07faad5`, 289 commits behind GitHub. It was advanced with `--ff-only` to `44fecc6`; no history rewrite, reset, clean or discarded working changes.
 - Confirmed remote work: `a748446` recovered 7041; `abdf2c3` documented recovery; `d18acdb` closed August; `44fecc6` documented August. Baseline M7 build/deploy succeeded in run `35530612966` and its public feed was checked.
 - Master audit: no duplicate four-digit work IDs; 7041 occurs once, PVP zero, both documentary-delivery dates blank. August has the exact nine historical-close statuses and materialized PVP, including 7003 = 372.06 and 7005 = 368.81. Do not reopen those nine limitations without new evidence.
