@@ -353,4 +353,14 @@ Supplier invoices and job costs are related but not identical concepts:
 
 The finance dashboard must expose supplier invoices as a separate real-expense table and visibly distinguish real job costs from estimated job costs.
 
+Profitability treatment is deterministic and shared by annual and period views:
+
+- validated direct supplier cost linked to a job replaces that job's estimate and is not added a second time as a general expense;
+- validated supplier general expenses enter operating cost;
+- validated non-supplier general expenses (for example a real postal/service invoice) also enter operating cost;
+- stock purchases and stock credit notes remain outside operating profit until consumption/allocation is validated; they remain visible in the supplier register as cash/stock movements;
+- supplier invoices pending a safe link remain visible but do not alter a job or operating profit until classified;
+- real consumable invoices replace the equivalent portion of the standing consumables estimate. The unreconciled residual estimate remains only as fallback, so real and estimated consumables are never stacked on top of each other;
+- annual KPI, monthly/quarterly chart and Sankey must use the same cost-classification engine. Their annual totals must reconcile by construction.
+
 The public feed may expose only the minimum fields required for that table: invoice date, neutral supplier/source name, category, document reference, amount, reconciliation status, private-Drive folder/document navigation links and a neutral email-evidence label. Supplier-expense traceability should retain the private email-source link in the master, but the Outlook/Gmail message URL itself must never be published. Private notes, invoice contents, addresses and bank details must never be published.
