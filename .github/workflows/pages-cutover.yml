@@ -45,6 +45,7 @@ name: LITOS M7 Pages Cutover
 # Refresh after phased historical delivery-date repair and native-Sheets support.
 # Repair propagation after historical final-price materialization.
 # Refresh after the latest authoritative private-master reconciliation.
+# Refresh after the complete two-mailbox supplier-expense audit.
 
 on:
   pull_request:
@@ -305,6 +306,30 @@ jobs:
           print(f"M7_UNIQUE_WORK_IDS_OK records={len(work_id_counts)}")
 
           by_id = {str(record.get("id")): record for record in payload["records"]}
+
+          # End-to-end supplier-expense checkpoint: both authorized workshop
+          # mailboxes have been reconciled into the private master.
+          assert len(payload["expenses"]) == 275, (
+              f"Expected 275 expenses after mailbox reconciliation, got {len(payload['expenses'])}"
+          )
+          expense_document_links = sum(
+              1 for expense in payload["expenses"] if expense.get("documentUrl")
+          )
+          assert expense_document_links >= 35, (
+              f"Expected at least 35 archived expense documents, got {expense_document_links}"
+          )
+          record_7869 = by_id.get("7869")
+          assert record_7869 is not None, "7869 missing from staged public feed"
+          assert abs(float(record_7869.get("directCostActual")) - 384.85) < 0.01, (
+              f"7869 direct cost did not propagate: {record_7869.get('directCostActual')!r}"
+          )
+          print(
+              "M7_SUPPLIER_EXPENSES_OK "
+              f"expenses={len(payload['expenses'])} "
+              f"documents={expense_document_links} "
+              f"direct_cost_7869={record_7869.get('directCostActual')}"
+          )
+
           record_7903 = by_id.get("7903")
           assert record_7903 is not None, "7903 missing from staged public feed"
           assert record_7903.get("deliveryDocumentDate") == "2026-08-31", (
