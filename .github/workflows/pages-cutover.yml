@@ -2828,6 +2828,7 @@ jobs:
               assert record.get("invoiceFile"), f"{work_id} documentary link missing"
           print("M7_NOV_2020_PHASE_OK audited=6 pvp_validated=6 historical_closed=6")
 
+          # Validated document NUM and SUMA; header-only dates are not delivery.
           expected_oct_2020 = {
               "7012": ("2020-10-01", 237.26),
               "7044": ("2020-10-07", 173.16),
@@ -2851,53 +2852,24 @@ jobs:
               "7042": ("2020-10-26", 227.16),
               "7046": ("2020-10-26", 160.02),
               "7034": ("2020-10-28", 616.59),
+              "7041": ("2020-10-15", 0.00),
           }
+          month_records = [r for r in payload["records"] if str(r.get("deliveredDate", "")).startswith("2020-10")]
+          assert len(month_records) == 23
+          assert {str(r.get("id")) for r in month_records} == set(expected_oct_2020)
           for work_id, (expected_date, expected_price) in expected_oct_2020.items():
-              record = by_id.get(work_id)
-              assert record is not None, f"{work_id} missing from staged public feed"
-              assert record.get("deliveryDocumentDate") == expected_date, (
-                  f"{work_id} October-2020 delivery mismatch: "
-                  f"{record.get('deliveryDocumentDate')!r}"
+              record = by_id[work_id]
+              assert record.get("deliveredDate") == expected_date, (
+                  f"{work_id} October-2020 operational date mismatch: "
+                  f"{record.get('deliveredDate')!r}"
               )
-              assert "conciliado" in str(record.get("deliveryReviewStatus", "")).lower(), (
-                  f"{work_id} October-2020 reconciliation status missing: "
-                  f"{record.get('deliveryReviewStatus')!r}"
-              )
-              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01, (
-                  f"{work_id} October-2020 final price mismatch: {record.get('finalPrice')!r}"
-              )
-          oct_2020_records = [
-              record
-              for record in payload["records"]
-              if str(record.get("deliveredDate", "")).startswith("2020-10")
-          ]
-          assert len(oct_2020_records) == 23, (
-              f"October-2020 public feed must contain exactly 23 canonical orders, got "
-              f"{len(oct_2020_records)}"
-          )
-          assert all(
-              str(record.get("id", "")).strip().isdigit()
-              and len(str(record.get("id", "")).strip()) == 4
-              for record in oct_2020_records
-          ), "October-2020 contains a non-canonical row in the public feed"
+              assert not record.get("deliveryDocumentDate"), f"{work_id} header date must not be delivery"
+              assert record.get("deliveryReviewStatus") == "Cerrado histórico · sin fecha de entrega documental"
+              assert abs(float(record.get("finalPrice")) - expected_price) < 0.01
+              assert record.get("invoiceFile"), f"{work_id} documentary link missing"
+          print("M7_OCT_2020_PHASE_OK audited=23 pvp_validated=23 historical_closed=23")
 
-          record_7041 = by_id.get("7041")
-          assert record_7041 is not None, "7041 missing from staged public feed"
-          assert not record_7041.get("deliveryDocumentDate"), (
-              f"7041 must not expose header/fiche date as delivery: "
-              f"{record_7041.get('deliveryDocumentDate')!r}"
-          )
-          assert "sin fecha de entrega documental" in str(record_7041.get("deliveryReviewStatus", "")).lower(), (
-              f"7041 no-delivery-date status missing: "
-              f"{record_7041.get('deliveryReviewStatus')!r}"
-          )
-          assert abs(float(record_7041.get("finalPrice")) - 0.0) < 0.01, (
-              f"7041 final price mismatch: {record_7041.get('finalPrice')!r}"
-          )
-          assert "1UsQSeiIxuXbgdHrZ8M_QMLLEd0ItLo1I" in str(record_7041.get("invoiceFile", "")), (
-              f"7041 recovered albaran link missing: {record_7041.get('invoiceFile')!r}"
-          )
-          print("M7_OCT_2020_PHASE_OK audited=23 validated=22 no_delivery_date=1 pending=0 corrected=2 recovered=7041")
+          assert "1UsQSeiIxuXbgdHrZ8M_QMLLEd0ItLo1I" in by_id["7041"].get("invoiceFile", "")
 
           expected_sep_2020 = {
               "7006": ("2020-09-01", 212.02),
