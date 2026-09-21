@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import shutil
@@ -9,6 +10,7 @@ from pathlib import Path
 from feed import payload_hash
 
 DATA_URL_RE = re.compile(r'const DATA_FEED_URL = "([^"]+)";')
+APP_SCRIPT_RE = re.compile(r'(src="\./dist/app\.js)(?:\?v=[^"]*)?("\s*></script>)')
 NETWORK_BLOCK_RE = re.compile(
     r"function feedConfigured\(\) \{.*?\n\}\n\nfunction switchView\(view\) \{",
     re.DOTALL,
@@ -178,6 +180,16 @@ def patch_runtime(app_path: Path) -> None:
     app_path.write_text(marker + source, encoding="utf-8")
 
 
+def version_app_script(index_path: Path, app_path: Path) -> str:
+    version = hashlib.sha256(app_path.read_bytes()).hexdigest()[:12]
+    source = index_path.read_text(encoding="utf-8")
+    source, count = APP_SCRIPT_RE.subn(rf'\1?v={version}\2', source, count=1)
+    if count != 1:
+        raise RuntimeError(f"Expected one app.js script tag, got {count}")
+    index_path.write_text(source, encoding="utf-8")
+    return version
+
+
 def build_pages(output: Path, feed_file: Path) -> dict:
     if not feed_file.is_file():
         raise RuntimeError(f"Feed file does not exist: {feed_file}")
@@ -195,6 +207,7 @@ def build_pages(output: Path, feed_file: Path) -> dict:
     copy_public_source(output)
     patch_mobile_styles(output / "index.html")
     patch_runtime(output / "dist" / "app.js")
+    app_version = version_app_script(output / "index.html", output / "dist" / "app.js")
     data_dir = output / "data"
     data_dir.mkdir(parents=True)
     shutil.copy2(feed_file, data_dir / "feed.json")
@@ -207,6 +220,7 @@ def build_pages(output: Path, feed_file: Path) -> dict:
         "expenses": len(payload["expenses"]),
         "movements": len(payload["movements"]),
         "payload_hash": payload_hash(payload),
+        "app_version": app_version,
         "static_feed_path": "data/feed.json",
         "mobile_stylesheets": [
             "dist/mobile.css",
