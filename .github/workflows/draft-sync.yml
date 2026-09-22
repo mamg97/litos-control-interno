@@ -125,3 +125,15 @@ jobs:
           LITOS_KILL_SWITCH: "false"
           LITOS_WRITE_ENABLED: "true"
         run: python runner.py --sync
+
+      - name: One-off scoped repair for 7930
+        if: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, 'Run scoped repair 7930') }}
+        env:
+          LITOS_KILL_SWITCH: "false"
+          LITOS_WRITE_ENABLED: "true"
+          LITOS_DRAFT_ONLY_ORDER: "7930"
+        run: python runner.py --sync
+
+      - name: Diagnose remaining draft drift after 7930 repair
+        if: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, 'Run scoped repair 7930') }}
+        run: python runner.py --dry-run
