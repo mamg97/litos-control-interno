@@ -70,7 +70,8 @@ on:
       - 'oauth/**'
   workflow_run:
     workflows:
-      - 'LITOS Draft Sync'
+      # Draft Sync is intentionally not a direct M7 trigger: on scheduled
+      # production runs M6 must reconcile/link documents first, then M7 publishes.
       - 'LITOS M6 Albaranes Cutover'
       - 'LITOS Delivery Date Repair · 2026 Focus'
       - 'LITOS Final Price Audit · 2026'
