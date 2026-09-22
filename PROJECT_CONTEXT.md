@@ -127,3 +127,14 @@ Therefore:
 The public Git history was rewritten to a privacy-safe neutral baseline on 2026-09-18. Current and future commits must not add personal identifiers.
 
 Any local clone created before that history rewrite must be re-synchronized or freshly cloned before it is allowed to push again. Do not merge or push an old local history back into the sanitized repository.
+
+
+## 2026-09-22 · Pedidos 7930/7932 y robustez de la cadena automática
+
+- El pedido 7930 quedó validado con material confirmado por el usuario: `Mármol blanco Italia`. Se aplicó al maestro la lectura M4 ya extraída (fecha 21/08/2026, Tapa nicho, 98×76, base 98×18, remate 95, texto y croquis) y se registró la confirmación humana en `Lecturas manuscritas`.
+- El diccionario privado aprendió los alias `IT` e `Italiano` -> `Mármol blanco Italia` con el coste canónico existente de 62 €/m². M4 también reconoce `Italia`, `Italiano` e `IT`, incluida la evidencia `CORTE=ITALIA` / piezas marcadas `IT`.
+- `7930_borrador.xlsx` fue generado de forma segura en la carpeta exacta del pedido y su enlace quedó escrito en `Pedidos!AM`. Se verificó el XLSX: pedido 7930, fecha 21/08/2026, concepto TAPA NICHO, material MARMOL ITALIANO, 0,98×0,76 m, precio catálogo 90 €/m², observación N:20/escalones, inscripción y fórmulas de total/IVA/RE.
+- El bloqueo `Mutation cap exceeded: 10 > 8` se resolvió sin elevar el límite global: 7930 se reparó con alcance unitario y los 9 borradores desalineados restantes (7919, 7910, 7914, 7920, 7904, 7921, 7923, 7924, 7926) se reconciliaron en lotes 8+1, con backup previo por archivo. El dry-run completo final quedó en `mutable=0`.
+- El ejecutor M2 admite ahora alcance de reparación fail-closed mediante `LITOS_DRAFT_ONLY_ORDER` o `LITOS_DRAFT_ONLY_ORDERS`, siempre respetando `MAX_MUTATIONS=8`; la producción programada no cambia cuando esas variables no existen.
+- Se eliminó el disparo directo `LITOS Draft Sync -> M7`. En producción programada la secuencia queda determinista: `Draft Sync -> M6 Albaranes -> M7 Pages`, evitando que la web publique durante unos minutos un estado intermedio sin enlaces recién reconciliados.
+- Último despliegue M7 verificado: ejecución 35754572957, build y deploy correctos. El feed desplegado contiene 7930 con `invoiceDraftFile` apuntando al borrador y material/coste estimado propagados correctamente.
