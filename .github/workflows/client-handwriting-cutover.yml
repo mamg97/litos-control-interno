@@ -39,6 +39,7 @@ on:
 
 permissions:
   contents: read
+  actions: write
 
 concurrency:
   group: litos-m3-m4-cutover
@@ -178,11 +179,113 @@ jobs:
         run: python sync_safe.py --max-items 4
 
       - name: M3 hardened scheduled production sync
+        id: m3_scheduled_sync
         if: ${{ github.event_name == 'schedule' }}
         working-directory: python_client_intake
         env:
           LITOS_CLIENT_WRITE_ENABLED: "true"
-        run: python intake_sync_safe.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$(python intake_sync_safe.py)"
+          printf '%s\n' "$output"
+          json_line="$(printf '%s\n' "$output" | grep -E '^\{.*\}
+
+      - name: M3 archive sent definitive documents scheduled
+        if: ${{ github.event_name == 'schedule' }}
+        working-directory: python_client_intake
+        env:
+          LITOS_CLIENT_WRITE_ENABLED: "true"
+        run: python intake_sync.py --delivery-batches-only
+
+      - name: Scheduled handwriting sync blocked by kill switch
+        if: ${{ github.event_name == 'schedule' && github.event.schedule == '7 7,11,15,19 * * *' && vars.LITOS_HANDWRITING_KILL_SWITCH == 'true' }}
+        run: echo "Scheduled M4 handwriting sync is disabled by its repository kill switch."
+
+      - name: M4 hardened scheduled production sync
+        id: m4_scheduled_sync
+        if: ${{ github.event_name == 'schedule' && github.event.schedule == '7 7,11,15,19 * * *' && vars.LITOS_HANDWRITING_KILL_SWITCH != 'true' }}
+        working-directory: python_handwriting
+        env:
+          LITOS_HANDWRITING_WRITE_ENABLED: "true"
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$(python sync_safe.py --max-items 4)"
+          printf '%s\n' "$output"
+          json_line="$(printf '%s\n' "$output" | grep -E '^\{.*\}
+
+      - name: Post-M3 read-only verification
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'sync') || github.event_name == 'schedule' }}
+        run: (cd python_client_intake && python runner.py --dry-run)
+
+      - name: Post-M4 read-only verification
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'sync') || (github.event_name == 'schedule' && github.event.schedule == '7 7,11,15,19 * * *' && vars.LITOS_HANDWRITING_KILL_SWITCH != 'true') }}
+        run: (cd python_handwriting && python runner.py --dry-run)
+
+      - name: Publish web after scheduled data change
+        if: ${{ github.event_name == 'schedule' && (steps.m3_scheduled_sync.outputs.changed == 'true' || steps.m4_scheduled_sync.outputs.changed == 'true') }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh workflow run pages-cutover.yml --ref main -f mode=deploy -f confirm=CUTOVER_M7
+          echo "M7 Pages deployment requested after a real M3/M4 data mutation."
+ | tail -n 1)"
+          writes="$(printf '%s\n' "$json_line" | python -c 'import json,sys; print(int(json.load(sys.stdin).get("write_operations", 0)))')"
+          if [ "$writes" -gt 0 ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: M3 archive sent definitive documents scheduled
+        if: ${{ github.event_name == 'schedule' }}
+        working-directory: python_client_intake
+        env:
+          LITOS_CLIENT_WRITE_ENABLED: "true"
+        run: python intake_sync.py --delivery-batches-only
+
+      - name: Scheduled handwriting sync blocked by kill switch
+        if: ${{ github.event_name == 'schedule' && github.event.schedule == '7 7,11,15,19 * * *' && vars.LITOS_HANDWRITING_KILL_SWITCH == 'true' }}
+        run: echo "Scheduled M4 handwriting sync is disabled by its repository kill switch."
+
+      - name: M4 hardened scheduled production sync
+        if: ${{ github.event_name == 'schedule' && github.event.schedule == '7 7,11,15,19 * * *' && vars.LITOS_HANDWRITING_KILL_SWITCH != 'true' }}
+        working-directory: python_handwriting
+        env:
+          LITOS_HANDWRITING_WRITE_ENABLED: "true"
+        run: python sync_safe.py --max-items 4
+
+      - name: Post-M3 read-only verification
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'sync') || github.event_name == 'schedule' }}
+        run: (cd python_client_intake && python runner.py --dry-run)
+
+      - name: Post-M4 read-only verification
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'sync') || (github.event_name == 'schedule' && github.event.schedule == '7 7,11,15,19 * * *' && vars.LITOS_HANDWRITING_KILL_SWITCH != 'true') }}
+        run: (cd python_handwriting && python runner.py --dry-run)
+ | tail -n 1)"
+          writes="$(printf '%s\n' "$json_line" | python -c 'import json,sys; print(int(json.load(sys.stdin).get("write_operations", 0)))')"
+          if [ "$writes" -gt 0 ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Post-M3 read-only verification
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'sync') || github.event_name == 'schedule' }}
+        run: (cd python_client_intake && python runner.py --dry-run)
+
+      - name: Post-M4 read-only verification
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'sync') || (github.event_name == 'schedule' && github.event.schedule == '7 7,11,15,19 * * *' && vars.LITOS_HANDWRITING_KILL_SWITCH != 'true') }}
+        run: (cd python_handwriting && python runner.py --dry-run)
+ | tail -n 1)"
+          writes="$(printf '%s\n' "$json_line" | python -c 'import json,sys; print(int(json.load(sys.stdin).get("write_operations", 0)))')"
+          if [ "$writes" -gt 0 ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: M3 archive sent definitive documents scheduled
         if: ${{ github.event_name == 'schedule' }}
