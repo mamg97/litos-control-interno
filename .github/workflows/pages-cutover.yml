@@ -46,6 +46,7 @@ name: LITOS M7 Pages Cutover
 # Repair propagation after historical final-price materialization.
 # Refresh after the latest authoritative private-master reconciliation.
 # Refresh after the complete two-mailbox supplier-expense audit.
+# Refresh after deterministic Draft Sync -> M6 -> M7 sequencing repair.
 
 on:
   pull_request:
