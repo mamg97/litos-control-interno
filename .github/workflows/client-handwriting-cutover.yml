@@ -12,6 +12,12 @@ on:
       - 'python_handwriting/**'
       - '.github/workflows/client-handwriting-cutover.yml'
   schedule:
+    # M3 intake: poll the authorized workshop mailbox every 15 minutes.
+    # Offset from Draft Sync (:05/:20/:35/:50) so master writes normally land
+    # before the next downstream rebuild.
+    - cron: '2,17,32,47 * * * *'
+      timezone: 'Europe/Madrid'
+    # M4 handwriting remains intentionally less frequent.
     - cron: '7 7,11,15,19 * * *'
       timezone: 'Europe/Madrid'
   workflow_dispatch:
@@ -89,13 +95,19 @@ jobs:
           (cd python_client_intake && python runner.py --preflight)
           (cd python_handwriting && python runner.py --preflight)
 
-      - name: Require private credentials
+      - name: Require Google intake credential
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
         shell: bash
         run: |
           test -n "$GOOGLE_OAUTH_CLIENT_JSON"
+          echo "OK: private Google intake credential present."
+
+      - name: Require Gemini credential for handwriting
+        if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && github.event.schedule == '7 7,11,15,19 * * *') }}
+        shell: bash
+        run: |
           test -n "$GEMINI_API_KEY"
-          echo "OK: private credentials present."
+          echo "OK: private Gemini credential present."
 
       - name: Read-only M3+M4 dry-run
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run' }}
@@ -165,33 +177,35 @@ jobs:
           LITOS_HANDWRITING_WRITE_ENABLED: "true"
         run: python sync_safe.py --max-items 4
 
-      - name: Scheduled handwriting sync blocked by kill switch
-        if: ${{ github.event_name == 'schedule' && vars.LITOS_HANDWRITING_KILL_SWITCH == 'true' }}
-        run: echo "Scheduled M4 handwriting sync is disabled by its repository kill switch."
-
       - name: M3 hardened scheduled production sync
-        if: ${{ github.event_name == 'schedule' && vars.LITOS_HANDWRITING_KILL_SWITCH != 'true' }}
+        if: ${{ github.event_name == 'schedule' }}
         working-directory: python_client_intake
         env:
           LITOS_CLIENT_WRITE_ENABLED: "true"
         run: python intake_sync_safe.py
 
       - name: M3 archive sent definitive documents scheduled
-        if: ${{ github.event_name == 'schedule' && vars.LITOS_HANDWRITING_KILL_SWITCH != 'true' }}
+        if: ${{ github.event_name == 'schedule' }}
         working-directory: python_client_intake
         env:
           LITOS_CLIENT_WRITE_ENABLED: "true"
         run: python intake_sync.py --delivery-batches-only
 
+      - name: Scheduled handwriting sync blocked by kill switch
+        if: ${{ github.event_name == 'schedule' && github.event.schedule == '7 7,11,15,19 * * *' && vars.LITOS_HANDWRITING_KILL_SWITCH == 'true' }}
+        run: echo "Scheduled M4 handwriting sync is disabled by its repository kill switch."
+
       - name: M4 hardened scheduled production sync
-        if: ${{ github.event_name == 'schedule' && vars.LITOS_HANDWRITING_KILL_SWITCH != 'true' }}
+        if: ${{ github.event_name == 'schedule' && github.event.schedule == '7 7,11,15,19 * * *' && vars.LITOS_HANDWRITING_KILL_SWITCH != 'true' }}
         working-directory: python_handwriting
         env:
           LITOS_HANDWRITING_WRITE_ENABLED: "true"
         run: python sync_safe.py --max-items 4
 
-      - name: Post-sync read-only verification
-        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'sync') || (github.event_name == 'schedule' && vars.LITOS_HANDWRITING_KILL_SWITCH != 'true') }}
-        run: |
-          (cd python_client_intake && python runner.py --dry-run)
-          (cd python_handwriting && python runner.py --dry-run)
+      - name: Post-M3 read-only verification
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'sync') || github.event_name == 'schedule' }}
+        run: (cd python_client_intake && python runner.py --dry-run)
+
+      - name: Post-M4 read-only verification
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'sync') || (github.event_name == 'schedule' && github.event.schedule == '7 7,11,15,19 * * *' && vars.LITOS_HANDWRITING_KILL_SWITCH != 'true') }}
+        run: (cd python_handwriting && python runner.py --dry-run)
