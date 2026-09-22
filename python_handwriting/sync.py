@@ -173,7 +173,7 @@ def normalize_material(value: str) -> str:
         return "Mármol blanco macael"
     if re.search(r"\b(negro\s+)?absoluto\b", n):
         return "Granito negro absoluto"
-    if re.search(r"\bitalia(no)?\b", n):
+    if re.search(r"\bitalia(no)?\b|\bit\b", n):
         return "Mármol blanco Italia"
     if re.search(r"\bchampan|champagne\b", n):
         return "Granito blanco champán"
@@ -261,7 +261,7 @@ def prompt() -> str:
         "Extrae únicamente valores visibles. No inventes, no completes por contexto y deja vacío o null lo ilegible.",
         "FECHA: fecha manuscrita del recuadro superior, en DD/MM/AAAA.",
         "MODELO: normaliza Tapenucho/Tapanicho como Tapa nicho y Columbetino como Columbario.",
-        "MATERIAL: Blanco o Blanco AB significa Mármol blanco macael; Absoluto o Negro absoluto significa Granito negro absoluto; Suyo significa material existente o aportado por M.S.",
+        "MATERIAL: Blanco o Blanco AB significa Mármol blanco macael; Absoluto o Negro absoluto significa Granito negro absoluto; Suyo significa material existente o aportado por M.S.; Italia, Italiano o la abreviatura IT significa Mármol blanco Italia. En las fichas del taller, si no hay un campo MATERIAL explícito pero CORTE figura como ITALIA o varias piezas aparecen marcadas como IT, usa Mármol blanco Italia y cita esa evidencia en dudas/especificaciones.",
         "MEDIDAS TOTALES: el rectángulo inferior izquierdo contiene ancho y alto originales. Copia ambos sin descontar 4 cm; el descuento se calcula fuera de esta lectura.",
         "POSICIÓN: la marca junto a 4,3,2,1 es la fila/altura del nicho. Inclúyela literalmente en medidasYCroquis.",
         "Nº: es la posición identificativa en la pared del cementerio. Inclúyela literalmente en medidasYCroquis.",
