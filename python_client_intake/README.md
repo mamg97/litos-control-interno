@@ -9,7 +9,7 @@ The client's real identity is deliberately absent from this public repository. P
 - Gmail is read with `gmail.readonly`.
 - The authorized sender is read from the private `Configuracion privada` sheet; intake no longer depends on a client-identifying Gmail label.
 - Drive and Sheets materialize order folders, attachments and master-sheet fields.
-- Production execution is scheduled together with M4 handwriting processing.
+- Production M3 intake polls the authorized mailbox every 15 minutes at minute 02/17/32/47 Europe/Madrid. M4 handwriting remains on the lower-frequency 07:07/11:07/15:07/19:07 schedule. M3 is deliberately independent of the handwriting kill switch and Gemini credential so email intake cannot be blocked by M4.
 - Public Actions logs must not print sender addresses, subjects, attachment names, Gmail IDs, Drive IDs or private message contents.
 
 ## Private authentication
