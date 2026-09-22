@@ -291,14 +291,28 @@ def build_plan(services):
     scope = _scope_rows(pedidos)
 
     # Optional fail-closed scope for targeted repairs. Scheduled production
-    # remains unchanged when the variable is absent.
+    # remains unchanged when neither variable is present.
     only_order = os.environ.get("LITOS_DRAFT_ONLY_ORDER", "").strip()
+    only_orders_raw = os.environ.get("LITOS_DRAFT_ONLY_ORDERS", "").strip()
+    if only_order and only_orders_raw:
+        raise RuntimeError("Use only one of LITOS_DRAFT_ONLY_ORDER or LITOS_DRAFT_ONLY_ORDERS")
+    requested_orders = []
     if only_order:
-        if not re.fullmatch(r"\d{4}", only_order):
-            raise RuntimeError(f"Invalid LITOS_DRAFT_ONLY_ORDER: {only_order!r}")
-        scope = [row for row in scope if _clean(row.get("Pedido")) == only_order]
-        if len(scope) != 1:
-            raise RuntimeError(f"Scoped order {only_order} not found exactly once in current-quarter plan")
+        requested_orders = [only_order]
+    elif only_orders_raw:
+        requested_orders = [part.strip() for part in only_orders_raw.split(",") if part.strip()]
+    if requested_orders:
+        if len(requested_orders) != len(set(requested_orders)):
+            raise RuntimeError(f"Duplicate scoped orders: {requested_orders}")
+        if len(requested_orders) > MAX_MUTATIONS:
+            raise RuntimeError(f"Scoped batch exceeds mutation cap: {len(requested_orders)} > {MAX_MUTATIONS}")
+        if any(not re.fullmatch(r"\d{4}", pedido) for pedido in requested_orders):
+            raise RuntimeError(f"Invalid scoped order list: {requested_orders}")
+        wanted = set(requested_orders)
+        scope = [row for row in scope if _clean(row.get("Pedido")) in wanted]
+        found = {_clean(row.get("Pedido")) for row in scope}
+        if found != wanted:
+            raise RuntimeError(f"Scoped orders mismatch: requested={sorted(wanted)} found={sorted(found)}")
 
     drive_index = _index_scope_drive(services.drive, [_clean(r.get("Pedido")) for r in scope])
     template_bytes = _export_xlsx(services.drive, TEMPLATE_ID)
