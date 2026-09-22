@@ -289,6 +289,17 @@ def build_plan(services):
     pedidos = _sheet_rows(services.sheets)
     catalog = _catalog(services.sheets)
     scope = _scope_rows(pedidos)
+
+    # Optional fail-closed scope for targeted repairs. Scheduled production
+    # remains unchanged when the variable is absent.
+    only_order = os.environ.get("LITOS_DRAFT_ONLY_ORDER", "").strip()
+    if only_order:
+        if not re.fullmatch(r"\d{4}", only_order):
+            raise RuntimeError(f"Invalid LITOS_DRAFT_ONLY_ORDER: {only_order!r}")
+        scope = [row for row in scope if _clean(row.get("Pedido")) == only_order]
+        if len(scope) != 1:
+            raise RuntimeError(f"Scoped order {only_order} not found exactly once in current-quarter plan")
+
     drive_index = _index_scope_drive(services.drive, [_clean(r.get("Pedido")) for r in scope])
     template_bytes = _export_xlsx(services.drive, TEMPLATE_ID)
     plan = []
