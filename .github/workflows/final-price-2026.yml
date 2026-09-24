@@ -1,10 +1,6 @@
 name: LITOS Final Price Audit · 2026
 
 on:
-  push:
-    paths:
-      - 'python_albaranes/final_price_2026.py'
-      - '.github/workflows/final-price-2026.yml'
   workflow_dispatch:
 
 permissions:
