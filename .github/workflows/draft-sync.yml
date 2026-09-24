@@ -53,7 +53,7 @@ jobs:
       LITOS_SPREADSHEET_ID: "1ZS-L0eJmfukNr0rmc8ZvC3UxdVKw7Rnggx5TlRydZ2Q"
       LITOS_DRAFT_ROOT_FOLDER_ID: "1eUAupqLzfBhkiEexWqpI3JtYReT8c9A_"
       LITOS_BACKUP_FOLDER_ID: "1weWKeCLjQnrL2Qg2rPt1BYHGJhfZtKrv"
-      GOOGLE_OAUTH_USER_JSON: ${{ secrets.GOOGLE_OAUTH_USER_JSON }}
+      GOOGLE_OAUTH_USER_JSON: ${{ secrets.GOOGLE_OAUTH_CLIENT_JSON }}
 
     steps:
       - name: Checkout
