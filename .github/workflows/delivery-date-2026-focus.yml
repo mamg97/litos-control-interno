@@ -23,7 +23,7 @@ jobs:
       LITOS_FREE_ONLY: "true"
       LITOS_DELIVERY_READ_WORKERS: "8"
       LITOS_DELIVERY_SCAN_UNLINKED: "true"
-      GOOGLE_OAUTH_USER_JSON: ${{ secrets.GOOGLE_OAUTH_USER_JSON }}
+      GOOGLE_OAUTH_USER_JSON: ${{ secrets.GOOGLE_OAUTH_CLIENT_JSON }}
 
     steps:
       - uses: actions/checkout@v4
