@@ -2,9 +2,6 @@ name: LITOS Delivery Date Repair · Historical Phases
 # PAUSED while 2026 phase is being validated.
 
 on:
-  push:
-    paths:
-      - '.github/workflows/delivery-date-historical-repair.yml'
   workflow_dispatch:
 
 permissions:
