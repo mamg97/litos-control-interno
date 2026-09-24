@@ -132,6 +132,13 @@ function recordedFinalPrice(row) {
   return optionalNumberAt(row, "Precio final (€)");
 }
 
+function recordedEstimatedPrice(row) {
+  // A provisional selling price is valid for display only when there is a
+  // draft document. It never overrides a definitive/final price.
+  if (!text(row?.["Factura borrador (XLSX)"])) return null;
+  return optionalNumberAt(row, "Precio estimado (€)");
+}
+
 function recordedRevenue(row) {
   const finalPrice = recordedFinalPrice(row);
   if (finalPrice !== null) return finalPrice;
@@ -311,6 +318,7 @@ function mapPublicRows(records) {
     "Fecha para dashboard": text(record.date),
     "Importe trabajo / Debe (€)": record.amount ?? "",
     "Precio final (€)": record.finalPrice ?? record.pvp ?? "",
+    "Precio estimado (€)": record.estimatedPrice ?? "",
     "Coste material est. (€)": record.materialCost ?? "",
     "Coste directo real (€)": record.directCostActual ?? "",
     "Estado pedido": text(record.status),
@@ -1303,8 +1311,19 @@ function renderTraceTable({ bodySelector, countSelector, searchSelector }) {
       row.append(cell);
     });
     const finalPrice = recordedFinalPrice(order);
+    const estimatedPrice = finalPrice === null ? recordedEstimatedPrice(order) : null;
     const priceCell = document.createElement("td");
-    priceCell.textContent = finalPrice === null ? "—" : formatMoney(finalPrice);
+    if (finalPrice !== null) {
+      priceCell.textContent = formatMoney(finalPrice);
+    } else if (estimatedPrice !== null) {
+      priceCell.textContent = formatMoney(estimatedPrice);
+      const source = document.createElement("small");
+      source.className = "cost-source estimated";
+      source.textContent = "estimado";
+      priceCell.append(source);
+    } else {
+      priceCell.textContent = "—";
+    }
     row.append(priceCell);
 
     const cost = jobCostFor(order);
