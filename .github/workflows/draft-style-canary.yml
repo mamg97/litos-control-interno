@@ -30,7 +30,7 @@ jobs:
         working-directory: python_drafts
     env:
       PYTHONUNBUFFERED: '1'
-      GOOGLE_OAUTH_USER_JSON: ${{ secrets.GOOGLE_OAUTH_USER_JSON }}
+      GOOGLE_OAUTH_USER_JSON: ${{ secrets.GOOGLE_OAUTH_CLIENT_JSON }}
 
     steps:
       - name: Checkout
