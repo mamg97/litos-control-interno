@@ -3,10 +3,6 @@ name: LITOS 2026 Sent Recovery + Delivery Reconcile
 # Phase 1: August-September 2026.
 
 on:
-  push:
-    paths:
-      - '.github/workflows/recover-sent-2026.yml'
-      - 'python_client_intake/recover_sent_2026.py'
   workflow_dispatch:
 
 permissions:
