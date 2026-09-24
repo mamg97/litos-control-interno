@@ -138,3 +138,18 @@ Any local clone created before that history rewrite must be re-synchronized or f
 - El ejecutor M2 admite ahora alcance de reparación fail-closed mediante `LITOS_DRAFT_ONLY_ORDER` o `LITOS_DRAFT_ONLY_ORDERS`, siempre respetando `MAX_MUTATIONS=8`; la producción programada no cambia cuando esas variables no existen.
 - Se eliminó el disparo directo `LITOS Draft Sync -> M7`. En producción programada la secuencia queda determinista: `Draft Sync -> M6 Albaranes -> M7 Pages`, evitando que la web publique durante unos minutos un estado intermedio sin enlaces recién reconciliados.
 - Último despliegue M7 verificado: ejecución 35754572957, build y deploy correctos. El feed desplegado contiene 7930 con `invoiceDraftFile` apuntando al borrador y material/coste estimado propagados correctamente.
+
+
+## 2026-09-24 · GitHub Actions failure storm resolved
+
+- Repeated scheduled failures had two independent causes:
+  - M3 completed its protected intake successfully, then the immediate post-sync Gmail dry-run exceeded Gmail API per-user query-cost quota and marked the whole run failed.
+  - The historical neutral `GOOGLE_OAUTH_USER_JSON` refresh token had expired/revoked, causing `invalid_grant` in Draft Sync and M5 and preventing downstream OAuth-dependent work.
+- M3 keeps the frequent inbound mailbox poll, but the redundant scheduled post-M3 Gmail dry-run was removed. Sent-mail definitive-document archival now runs only on the lower-frequency 07:07/11:07/15:07/19:07 production clock, reducing Gmail API pressure.
+- Active Drive/Sheets workflows now receive the valid Gmail+Drive+Sheets `GOOGLE_OAUTH_CLIENT_JSON` secret through their existing `GOOGLE_OAUTH_USER_JSON` runtime variable. No secret contents are stored in the repository.
+- The OAuth bridge was applied to Draft Sync, M5, M6, M7, M6 parity/audit, catalog/public-feed audits and the manual repair workflows that use Drive/Sheets.
+- M6 formula-aware parity after the credential repair completed successfully: 119 files indexed, 119 rows matched, 0 draft-link mismatches, 0 invoice-link mismatches, 0 parse errors and 0 total mismatches.
+- The earlier M6 parse failure is no longer present after the draft reconciliation: current parity reports `parse_errors=0`.
+- One-time repair workflows for 2020/2026 delivery dates, final-price repair and sent-recovery are now manual-only; ordinary source/workflow pushes can no longer launch those write-capable repair jobs.
+- During the credential migration, the legacy 2020 backfill workflow produced one transitional failed run because historical writes are intentionally paused while the active phase is 2026. Its dry-run had `planned_rows=0` and the write step aborted before any mutation. Other transitional 2026 repair runs were idempotent and reported 0 writes.
+- A subsequent M7 Pages deployment completed successfully after the migration.
