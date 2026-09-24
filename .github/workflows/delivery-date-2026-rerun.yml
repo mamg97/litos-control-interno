@@ -1,9 +1,6 @@
 name: LITOS Delivery Date Audit · 2026 Corrected Parser
 
 on:
-  push:
-    paths:
-      - '.github/workflows/delivery-date-2026-rerun.yml'
   workflow_dispatch:
 
 permissions:
