@@ -44,7 +44,7 @@ jobs:
     env:
       PYTHONUNBUFFERED: "1"
       LITOS_FREE_ONLY: "true"
-      GOOGLE_OAUTH_USER_JSON: ${{ secrets.GOOGLE_OAUTH_USER_JSON }}
+      GOOGLE_OAUTH_USER_JSON: ${{ secrets.GOOGLE_OAUTH_CLIENT_JSON }}
       LITOS_ORGANIZE_KILL_SWITCH: ${{ vars.LITOS_ORGANIZE_KILL_SWITCH }}
 
     steps:
