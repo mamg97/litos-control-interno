@@ -2,9 +2,6 @@ name: LITOS Delivery Date Repair · 2026 Focus
 # Final idempotence verification for 2026.
 
 on:
-  push:
-    paths:
-      - '.github/workflows/delivery-date-2026-focus.yml'
   workflow_dispatch:
 
 permissions:
