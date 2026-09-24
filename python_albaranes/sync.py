@@ -90,6 +90,7 @@ def build_plan(*, links_only: bool = False) -> tuple[Any, Any, list[RowPlan], di
 
     parsed_by_file: dict[str, float | None] = {}
     parse_errors = 0
+    parse_error_orders: list[str] = []
     rows_matched = 0
     plans: list[RowPlan] = []
 
@@ -116,8 +117,10 @@ def build_plan(*, links_only: bool = False) -> tuple[Any, Any, list[RowPlan], di
                 expected_total = parsed_by_file[active.file_id]
             except Exception:
                 # Fail closed: never write a partial plan if an active workbook
-                # could not be interpreted.
+                # could not be interpreted. Keep diagnostics privacy-safe by
+                # logging only the four-digit work ID, never document contents.
                 parse_errors += 1
+                parse_error_orders.append(order_id)
                 continue
 
             total_col = columns[p.HEADERS["total"]]
@@ -153,8 +156,10 @@ def build_plan(*, links_only: bool = False) -> tuple[Any, Any, list[RowPlan], di
         )
 
     if parse_errors:
+        unique_orders = sorted(set(parse_error_orders))
         raise RuntimeError(
-            f"Aborted before writes: {parse_errors} active workbook(s) could not be parsed"
+            f"Aborted before writes: {parse_errors} active workbook(s) could not be parsed; "
+            f"orders={','.join(unique_orders)}"
         )
 
     changed = [plan for plan in plans if plan.changed]
