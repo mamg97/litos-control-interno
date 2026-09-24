@@ -36,6 +36,7 @@ FIELDS = {
     "deliveryReviewStatus": "Estado conciliación definitivo",
     "amount": "Importe trabajo / Debe (€)",
     "finalPrice": "Precio final (€)",  # PVP final: IVA y recargo de equivalencia incluidos.
+    "estimatedPrice": "Total sheet (€)",  # Total provisional del borrador; nunca sustituye al precio final.
     "materialCost": "Coste material est. (€)",
     "directCostActual": "Coste directo real (€)",
     "status": "Estado pedido",
@@ -293,6 +294,7 @@ def read_operational_records(sheets) -> list[dict]:
             "deliveryReviewStatus": _read(row, columns, FIELDS["deliveryReviewStatus"]),
             "amount": number_or_none(_read(row, columns, FIELDS["amount"])),
             "finalPrice": number_or_none(_read(row, columns, FIELDS["finalPrice"])),
+            "estimatedPrice": number_or_none(_read(row, columns, FIELDS["estimatedPrice"])),
             "materialCost": number_or_none(_read(row, columns, FIELDS["materialCost"])),
             "directCostActual": number_or_none(_read(row, columns, FIELDS["directCostActual"])),
             "status": _read(row, columns, FIELDS["status"]),
