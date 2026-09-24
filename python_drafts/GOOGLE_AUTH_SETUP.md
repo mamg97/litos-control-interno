@@ -38,3 +38,12 @@ The initial cutover validation has already been completed and `LITOS Draft Sync`
 For credential re-bootstrap or troubleshooting, run the workflow manually in `dry-run` before any write-enabled execution. The dry-run must remain fail-closed and report no write operations.
 
 The same `GOOGLE_OAUTH_USER_JSON` credential is the standard non-Gmail OAuth for M2, M5, M6, M7 and M8. Do not create client-named or legacy-named replacements for these components.
+
+
+## Operational credential state · 2026-09-24
+
+The historical repository secret `GOOGLE_OAUTH_USER_JSON` is currently revoked/expired and must not be used by production workflows.
+
+Production non-Gmail workflows currently receive the still-valid `GOOGLE_OAUTH_CLIENT_JSON` secret through the runtime environment name `GOOGLE_OAUTH_USER_JSON`. That credential was originally authorized for Gmail + Drive + Sheets; the non-Gmail Python components still request only their own Drive/Sheets scopes and do not call Gmail.
+
+This bridge avoids duplicated refresh-token failure points and restores M2/M5/M6/M7/M8 without exposing credential contents. If a least-privilege neutral Drive/Sheets credential is re-authorized later, it can replace the bridge after a dry-run validation.
