@@ -101,7 +101,7 @@ This second pass has already recovered/corrected cases such as wrong internal li
 
 Handoff protocol: after each single-month block, record evidence, changed fields, unresolved limitations, relevant commits, validation/deploy result and exactly one next block here. Read Git status/history and these MD files before writing. Keep private source contents and identifiers out of Git and Actions logs.
 
-## Legacy Apps Script state
+- Mobile traceability UI update on 2026-09-25: the jobs list now remains a horizontally scrollable table on phones, with the work ID sticky and Albarán immediately after ID. M7 now content-versions all mobile CSS assets in the generated Pages HTML so iOS/browser caches cannot keep serving stale card-layout styles after a deploy. Commit pending this handoff entry; verify the matching M7 Pages run before closing the change.\n\n## Legacy Apps Script state
 
 As of 2026-09-18:
 

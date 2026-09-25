@@ -15,10 +15,10 @@ NETWORK_BLOCK_RE = re.compile(
     r"function feedConfigured\(\) \{.*?\n\}\n\nfunction switchView\(view\) \{",
     re.DOTALL,
 )
-MOBILE_STYLESHEETS = (
-    '<link rel="stylesheet" href="./dist/mobile.css" />',
-    '<link rel="stylesheet" href="./dist/mobile-chart.css" />',
-    '<link rel="stylesheet" href="./dist/mobile-links.css" />',
+MOBILE_STYLESHEET_NAMES = (
+    "mobile.css",
+    "mobile-chart.css",
+    "mobile-links.css",
 )
 
 RUNTIME_BLOCK = r'''function feedConfigured() {
@@ -108,14 +108,33 @@ def copy_public_source(output: Path) -> None:
         shutil.copytree("oauth", output / "oauth")
 
 
-def patch_mobile_styles(index_path: Path) -> None:
+def patch_mobile_styles(index_path: Path, dist_dir: Path) -> dict[str, str]:
     source = index_path.read_text(encoding="utf-8")
     if "</head>" not in source:
         raise RuntimeError("Could not find </head> while adding mobile stylesheets")
-    for stylesheet in MOBILE_STYLESHEETS:
+
+    versions: dict[str, str] = {}
+    for file_name in MOBILE_STYLESHEET_NAMES:
+        stylesheet_path = dist_dir / file_name
+        if not stylesheet_path.is_file():
+            raise RuntimeError(f"Required mobile stylesheet missing: {file_name}")
+        version = hashlib.sha256(stylesheet_path.read_bytes()).hexdigest()[:12]
+        versions[file_name] = version
+        stylesheet = f'<link rel="stylesheet" href="./dist/{file_name}?v={version}" />'
+        source = source.replace(
+            f'<link rel="stylesheet" href="./dist/{file_name}" />',
+            stylesheet,
+        )
+        source = re.sub(
+            rf'<link rel="stylesheet" href="\.\/dist\/{re.escape(file_name)}\?v=[^"]+"\s*\/?>',
+            stylesheet,
+            source,
+        )
         if stylesheet not in source:
             source = source.replace("</head>", f"    {stylesheet}\n  </head>", 1)
+
     index_path.write_text(source, encoding="utf-8")
+    return versions
 
 
 def patch_mobile_chart_runtime(source: str) -> str:
@@ -205,7 +224,7 @@ def build_pages(output: Path, feed_file: Path) -> dict:
         shutil.rmtree(output)
     output.mkdir(parents=True)
     copy_public_source(output)
-    patch_mobile_styles(output / "index.html")
+    mobile_style_versions = patch_mobile_styles(output / "index.html", output / "dist")
     patch_runtime(output / "dist" / "app.js")
     app_version = version_app_script(output / "index.html", output / "dist" / "app.js")
     data_dir = output / "data"
@@ -223,9 +242,8 @@ def build_pages(output: Path, feed_file: Path) -> dict:
         "app_version": app_version,
         "static_feed_path": "data/feed.json",
         "mobile_stylesheets": [
-            "dist/mobile.css",
-            "dist/mobile-chart.css",
-            "dist/mobile-links.css",
+            f"dist/{file_name}?v={mobile_style_versions[file_name]}"
+            for file_name in MOBILE_STYLESHEET_NAMES
         ],
         "legacy_rollback_configured": False,
         "source_git_data_snapshot_created": False,
