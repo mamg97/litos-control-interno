@@ -1,38 +1,24 @@
-/* Restore traceability document actions on mobile without changing desktop. */
+/* Compact document actions inside the horizontally scrollable mobile trace table. */
 @media (max-width: 760px) {
-  .trace-table td:nth-child(n + 9) {
-    display: block !important;
-  }
-
-  .trace-table td:nth-child(9)::before { content: "Albarán"; }
-  .trace-table td:nth-child(10)::before { content: "Corel"; }
-  .trace-table td:nth-child(11)::before { content: "Notas"; }
-  .trace-table td:nth-child(12)::before { content: "Imágenes"; }
-
-  .trace-table td:nth-child(n + 9) a {
+  .trace-table td a {
     display: inline-flex;
-    min-height: 30px;
+    min-height: 28px;
     align-items: center;
     justify-content: center;
-    padding: .32rem .58rem;
+    padding: .3rem .52rem;
     border: 1px solid #cfe0de;
     border-radius: 7px;
     background: white;
     color: var(--teal);
-    font-size: .68rem;
+    font-size: .65rem;
     font-weight: 800;
     line-height: 1;
     text-decoration: none;
   }
 
-  .trace-table td:nth-child(n + 9) a:hover,
-  .trace-table td:nth-child(n + 9) a:focus-visible {
+  .trace-table td a:hover,
+  .trace-table td a:focus-visible {
     border-color: var(--teal);
     background: var(--teal-light);
-  }
-
-  .trace-table td:nth-child(n + 9) {
-    color: #8da09f;
-    font-size: .66rem !important;
   }
 }

@@ -1285,31 +1285,65 @@ function renderTraceTable({ bodySelector, countSelector, searchSelector }) {
     table.append(row);
     return;
   }
+
   rows.forEach((order) => {
     const row = document.createElement("tr");
-    [
-      order.Pedido,
-      formatOperationalDate(order["Fecha entrega albarán"]),
-      formatOperationalDate(order["Fecha recepción (email)"]),
-      formatOperationalDate(order["Fecha ficha"]),
-      familyFor(order.Modelo),
-      materialFor(order),
-      sizeFor(order) || "Sin medida completa"
-    ].forEach((value, index) => {
+
+    const appendTextCell = (value, { deliveryReview = false } = {}) => {
       const cell = document.createElement("td");
       cell.textContent = value;
-      if (index === 1) {
+      if (deliveryReview) {
         const reviewLabel = deliveryDocumentReviewLabel(order);
         if (reviewLabel) {
           const flag = document.createElement("small");
           const status = text(order["Estado conciliación definitivo"]).toLowerCase();
-          flag.className = isHistoricalDeliveryClosed(order) || status.includes("mes en curso") ? "trace-review current-month" : "trace-review";
+          flag.className = isHistoricalDeliveryClosed(order) || status.includes("mes en curso")
+            ? "trace-review current-month"
+            : "trace-review";
           flag.textContent = reviewLabel;
           cell.append(flag);
         }
       }
       row.append(cell);
-    });
+    };
+
+    const appendDocumentCell = (url, label, { draft = false } = {}) => {
+      const cell = document.createElement("td");
+      if (url) {
+        const link = document.createElement("a");
+        link.href = url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = label;
+        if (draft) {
+          link.dataset.documentStatus = "draft";
+          link.title = "Borrador: al quitar _borrador del nombre, se reclasifica automáticamente como definitivo (máximo 5 min).";
+        }
+        cell.append(link);
+      } else {
+        cell.textContent = "No disponible";
+      }
+      row.append(cell);
+    };
+
+    // Keep the operational action closest to the work ID. This also makes the
+    // most useful mobile columns visible before horizontal scrolling.
+    appendTextCell(order.Pedido);
+    const invoiceUrl = order["Archivo factura / albarán (XLSX)"];
+    const draftInvoiceUrl = order["Factura borrador (XLSX)"];
+    appendDocumentCell(
+      invoiceUrl || draftInvoiceUrl,
+      invoiceUrl ? "Abrir" : draftInvoiceUrl ? "Abrir borrador" : "",
+      { draft: !invoiceUrl && Boolean(draftInvoiceUrl) }
+    );
+
+    appendTextCell(formatOperationalDate(order["Fecha entrega albarán"]), { deliveryReview: true });
+    appendTextCell(formatOperationalDate(order["Fecha recepción (email)"]));
+    appendTextCell(formatOperationalDate(order["Fecha ficha"]));
+    appendTextCell(familyFor(order.Modelo));
+    appendTextCell(materialFor(order));
+    appendTextCell(sizeFor(order) || "Sin medida completa");
+
     const finalPrice = recordedFinalPrice(order);
     const estimatedPrice = finalPrice === null ? recordedEstimatedPrice(order) : null;
     const priceCell = document.createElement("td");
@@ -1338,31 +1372,11 @@ function renderTraceTable({ bodySelector, countSelector, searchSelector }) {
       costCell.append(source);
     }
     row.append(costCell);
-  const invoiceUrl = order["Archivo factura / albarán (XLSX)"];
-  const draftInvoiceUrl = order["Factura borrador (XLSX)"];
-  [
-    { url: invoiceUrl || draftInvoiceUrl, label: invoiceUrl ? "Abrir" : draftInvoiceUrl ? "Abrir borrador" : "", draft: !invoiceUrl && Boolean(draftInvoiceUrl) },
-    { url: order["Archivo Corel (CDR)"], label: "Abrir" },
-    { url: order.Notas || order["Nota manuscrita"], label: "Abrir" },
-    { url: order["Imágenes anejas"], label: "Abrir" }
-  ].forEach((documentInfo) => {
-    const cell = document.createElement("td");
-    if (documentInfo.url) {
-      const link = document.createElement("a");
-      link.href = documentInfo.url;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      link.textContent = documentInfo.label;
-      if (documentInfo.draft) {
-        link.dataset.documentStatus = "draft";
-        link.title = "Borrador: al quitar _borrador del nombre, se reclasifica automáticamente como definitivo (máximo 5 min).";
-      }
-      cell.append(link);
-    } else {
-      cell.textContent = "No disponible";
-    }
-    row.append(cell);
-  });
+
+    appendDocumentCell(order["Archivo Corel (CDR)"], "Abrir");
+    appendDocumentCell(order.Notas || order["Nota manuscrita"], "Abrir");
+    appendDocumentCell(order["Imágenes anejas"], "Abrir");
+
     table.append(row);
   });
 }
