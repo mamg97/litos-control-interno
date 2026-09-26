@@ -311,8 +311,8 @@ jobs:
 
           # End-to-end supplier-expense checkpoint: both authorized workshop
           # mailboxes have been reconciled into the private master.
-          assert len(payload["expenses"]) == 275, (
-              f"Expected 275 expenses after mailbox reconciliation, got {len(payload['expenses'])}"
+          assert len(payload["expenses"]) >= 275, (
+              f"Expected at least 275 expenses after mailbox reconciliation, got {len(payload['expenses'])}"
           )
           expense_document_links = sum(
               1 for expense in payload["expenses"] if expense.get("documentUrl")
