@@ -125,9 +125,16 @@ def build_plan(*, links_only: bool = False) -> tuple[Any, Any, list[RowPlan], di
 
             total_col = columns[p.HEADERS["total"]]
             current_total = row[total_col] if total_col < len(row) else None
-            # Fail closed: an unparseable definitive document must never erase
-            # a previously validated total from the master.
-            total_update = expected_total is not None and not _total_matches(current_total, expected_total)
+            # Fail closed for definitive invoices: never erase a previously
+            # validated total merely because the document could not be parsed.
+            # A draft that explicitly declares missing measurements is different:
+            # its formula total is not a valid estimate, so clear any stale draft
+            # total that may have been published previously.
+            if expected_total is not None:
+                total_update = not _total_matches(current_total, expected_total)
+            elif invoice is None and draft is not None:
+                current_total_present = str(current_total if current_total is not None else "").strip() != ""
+                total_update = current_total_present
 
             # Precio final is a canonical business field consumed by M7.
             # Populate it only from a definitive invoice/albarán, never from a draft.
