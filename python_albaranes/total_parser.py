@@ -224,10 +224,24 @@ def _eval_cell(
     return result
 
 
+def _has_incomplete_measure_warning(formula_book) -> bool:
+    """A draft that explicitly says measurements are missing has no valid estimate."""
+    for sheet in formula_book.worksheets:
+        for row in sheet.iter_rows():
+            for cell in row:
+                text = _normalize(cell.value)
+                if "revisar datos" in text and "faltan medidas" in text:
+                    return True
+    return False
+
+
 def read_total_openxml(content: bytes) -> float | None:
     formula_book = openpyxl.load_workbook(io.BytesIO(content), read_only=False, data_only=False)
     value_book = openpyxl.load_workbook(io.BytesIO(content), read_only=False, data_only=True)
     try:
+        if _has_incomplete_measure_warning(formula_book):
+            return None
+
         memo: dict[tuple[str, str], Decimal | None] = {}
         for formula_sheet in formula_book.worksheets:
             for row in formula_sheet.iter_rows():
