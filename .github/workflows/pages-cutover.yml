@@ -48,6 +48,7 @@ name: LITOS M7 Pages Cutover
 # Refresh after the complete two-mailbox supplier-expense audit.
 # Refresh after deterministic Draft Sync -> M6 -> M7 sequencing repair.
 # Refresh after 7929 source validation and incomplete-estimate guard.
+# Refresh after M6 parity cleanup of incomplete draft estimates.
 
 on:
   pull_request:
