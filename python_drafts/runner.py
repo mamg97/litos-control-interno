@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import io
 import json
 import os
+import re
 import sys
+
+import openpyxl
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
@@ -19,6 +23,46 @@ EXPECTED_BACKUP_FOLDER_ID = "1weWKeCLjQnrL2Qg2rPt1BYHGJhfZtKrv"
 
 def _truthy(value: str | None) -> bool:
     return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _apply_declared_item_quantities(xlsx_bytes: bytes, source_row: dict) -> tuple[bytes, list[dict]]:
+    """Preserve explicit source quantities that the certified semantic builder can undercount."""
+    specs = str(source_row.get("Especificaciones", "") or "")
+    match = re.search(r"(?i)\\bflorero(?:s)?\\s*:\\s*(\\d+)\\s*(?:ud\\.?|uds\\.?|unidades?)\\b", specs)
+    if not match:
+        return xlsx_bytes, []
+
+    quantity = int(match.group(1))
+    if not 1 <= quantity <= 20:
+        raise RuntimeError(f"Declared FLORERO quantity outside guardrails: {quantity}")
+
+    workbook = openpyxl.load_workbook(io.BytesIO(xlsx_bytes))
+    try:
+        worksheet = workbook.active
+        matching_rows = [
+            row_idx
+            for row_idx in range(1, worksheet.max_row + 1)
+            if str(worksheet.cell(row=row_idx, column=1).value or "").strip().upper() == "FLORERO"
+        ]
+        if len(matching_rows) != 1:
+            raise RuntimeError(
+                f"Expected exactly one FLORERO row for explicit quantity {quantity}, got {matching_rows}"
+            )
+
+        row_idx = matching_rows[0]
+        quantity_cell = worksheet.cell(row=row_idx, column=5)
+        previous = quantity_cell.value
+        if previous == quantity:
+            return xlsx_bytes, []
+
+        quantity_cell.value = quantity
+        output = io.BytesIO()
+        workbook.save(output)
+        return output.getvalue(), [
+            {"concept": "FLORERO", "previous_quantity": previous, "source_quantity": quantity}
+        ]
+    finally:
+        workbook.close()
 
 
 @dataclass(frozen=True)
@@ -104,7 +148,7 @@ def _planner_api():
         def corporate_build_plan(services):
             private_profile = load_private_header_profile(services.sheets, executor_module.SPREADSHEET_ID)
 
-            def _styled_target(target: dict) -> dict:
+            def _styled_target(target: dict, source_row: dict) -> dict:
                 raw_bytes = target.get("xlsx_bytes")
                 if not isinstance(raw_bytes, (bytes, bytearray)) or not raw_bytes:
                     raise RuntimeError("Corporate production style: semantic builder returned no XLSX bytes")
@@ -114,11 +158,14 @@ def _planner_api():
                     customer=private_profile["customer"],
                     issuer=private_profile["issuer"],
                 )
+                styled, quantity_corrections = _apply_declared_item_quantities(styled, source_row)
                 out = dict(target)
                 out["xlsx_bytes"] = styled
                 out["style_version"] = STYLE_VERSION
                 out["logo_sha256"] = LOGO_SHA256
                 out["customer_profile_version"] = CUSTOMER_PROFILE_VERSION
+                if quantity_corrections:
+                    out["source_quantity_corrections"] = quantity_corrections
                 return out
 
             plan = original_build_plan(services)
@@ -128,7 +175,7 @@ def _planner_api():
                 if semantic_action not in {"created", "updated", "unchanged"} or not target:
                     continue
 
-                styled_target = _styled_target(target)
+                styled_target = _styled_target(target, item.get("row") or {})
 
                 if semantic_action == "created":
                     item["target"] = styled_target
