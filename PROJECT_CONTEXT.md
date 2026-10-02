@@ -101,7 +101,14 @@ This second pass has already recovered/corrected cases such as wrong internal li
 
 Handoff protocol: after each single-month block, record evidence, changed fields, unresolved limitations, relevant commits, validation/deploy result and exactly one next block here. Read Git status/history and these MD files before writing. Keep private source contents and identifiers out of Git and Actions logs.
 
-- Mobile traceability UI update on 2026-09-25: the jobs list now remains a horizontally scrollable table on phones, with the work ID sticky and Albarán immediately after ID. M7 now content-versions all mobile CSS assets in the generated Pages HTML so iOS/browser caches cannot keep serving stale card-layout styles after a deploy. Commit pending this handoff entry; verify the matching M7 Pages run before closing the change.\n\n## Legacy Apps Script state
+- Mobile traceability UI update on 2026-09-25: the jobs list now remains a horizontally scrollable table on phones, with the work ID sticky and Albarán immediately after ID. M7 now content-versions all mobile CSS assets in the generated Pages HTML so iOS/browser caches cannot keep serving stale card-layout styles after a deploy. Commit pending this handoff entry; verify the matching M7 Pages run before closing the change.\n\n## 2026-10-02 · Running-account payment update
+
+- A direct workshop confirmation records a new **1,000 €** `ENTREGA A CUENTA` movement dated **2026-10-02** in the private `Movimientos cliente` ledger.
+- The previous authoritative running balance was **−737 €**; applying the payment as Haber yields the new authoritative balance **−1,737 €**, i.e. credit in favor of the external account/customer under the existing sign convention.
+- This movement is not tied to a canonical work ID and does not create or modify a `Pedidos` row. Its source is the direct workshop confirmation; the historical/raw XLSX estadillo source is preserved unchanged as evidence.
+- M7 publication is forced after the private-master write so the sanitized public feed and dashboard receive the new movement and closing balance.
+
+## Legacy Apps Script state
 
 As of 2026-09-18:
 

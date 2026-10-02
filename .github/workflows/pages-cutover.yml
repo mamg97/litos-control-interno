@@ -49,6 +49,7 @@ name: LITOS M7 Pages Cutover
 # Refresh after deterministic Draft Sync -> M6 -> M7 sequencing repair.
 # Refresh after 7929 source validation and incomplete-estimate guard.
 # Refresh after M6 parity cleanup of incomplete draft estimates.
+# Refresh after confirmed 1,000 EUR running-account payment on 2026-10-02.
 
 on:
   pull_request:
