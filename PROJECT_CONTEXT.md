@@ -106,7 +106,7 @@ Handoff protocol: after each single-month block, record evidence, changed fields
 - A direct workshop confirmation records a new **1,000 €** `ENTREGA A CUENTA` movement dated **2026-10-02** in the private `Movimientos cliente` ledger.
 - The previous authoritative running balance was **−737 €**; applying the payment as Haber yields the new authoritative balance **−1,737 €**, i.e. credit in favor of the external account/customer under the existing sign convention.
 - This movement is not tied to a canonical work ID and does not create or modify a `Pedidos` row. Its source is the direct workshop confirmation; the historical/raw XLSX estadillo source is preserved unchanged as evidence.
-- M7 publication is forced after the private-master write so the sanitized public feed and dashboard receive the new movement and closing balance.
+- M7 publication was forced after the private-master write and completed successfully in run **37035294501** from commit `40600ba`; the sanitized public feed/dashboard build therefore consumed the updated private master.
 
 ## Legacy Apps Script state
 
