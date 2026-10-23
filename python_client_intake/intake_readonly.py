@@ -256,7 +256,7 @@ def list_candidate_messages(gmail, allowed_sender: str) -> list[dict]:
             gmail.users()
             .threads()
             .list(userId="me", q=query, maxResults=100, pageToken=page_token)
-            .execute()
+            
         )
         threads.extend(response.get("threads", []))
         page_token = response.get("nextPageToken")
@@ -274,7 +274,7 @@ def list_candidate_messages(gmail, allowed_sender: str) -> list[dict]:
                 format="metadata",
                 metadataHeaders=["From", "Subject", "Content-Disposition"],
             )
-            .execute()
+            
         )
         messages.extend(detail.get("messages", []))
     messages.sort(key=lambda message: int(message.get("internalDate", "0") or 0))
@@ -290,7 +290,7 @@ def list_sent_messages(gmail) -> list[dict]:
             gmail.users()
             .threads()
             .list(userId="me", q=query, maxResults=100, pageToken=page_token)
-            .execute()
+            
         )
         threads.extend(response.get("threads", []))
         page_token = response.get("nextPageToken")
@@ -308,7 +308,7 @@ def list_sent_messages(gmail) -> list[dict]:
                 format="metadata",
                 metadataHeaders=["From", "Subject", "Content-Disposition"],
             )
-            .execute()
+            
         )
         messages.extend(detail.get("messages", []))
     messages.sort(key=lambda message: int(message.get("internalDate", "0") or 0))
