@@ -90,7 +90,7 @@ jobs:
           assert unresolved == []
           print('M3_PARTITION_OK')
           from pathlib import Path
-          workflow = Path('.github/workflows/client-handwriting-cutover.yml').read_text()
+          workflow = Path('../.github/workflows/client-handwriting-cutover.yml').read_text()
           assert workflow.index('      - name: M4 hardened scheduled production sync') < workflow.index('      - name: M3 archive sent definitive documents scheduled')
           print('M4_BEFORE_ARCHIVE_OK')
           PY
