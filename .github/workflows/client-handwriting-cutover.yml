@@ -78,7 +78,7 @@ jobs:
 
       - name: Compile production adapters
         run: |
-          python -m py_compile python_client_intake/intake_sync.py python_client_intake/intake_sync_safe.py python_client_intake/canary_gate.py python_handwriting/sync.py python_handwriting/sync_safe.py
+          python -m py_compile python_client_intake/intake_readonly.py python_client_intake/intake_sync.py python_client_intake/intake_sync_safe.py python_client_intake/canary_gate.py python_handwriting/sync.py python_handwriting/sync_safe.py
 
       - name: M3 partitioning self-check
         working-directory: python_client_intake
@@ -94,6 +94,9 @@ jobs:
           assert workflow.index('      - name: M4 hardened scheduled production sync') < workflow.index('      - name: M3 archive sent definitive documents scheduled')
           print('M4_BEFORE_ARCHIVE_OK')
           PY
+      - name: Gmail quota regression tests
+        run: python -m unittest discover -s python_client_intake -p 'test_gmail_quota.py'
+
       - name: Read-only preflights
         run: |
           (cd python_client_intake && python runner.py --preflight)
