@@ -28,9 +28,11 @@ HEADERS = {
     "receipt_origin": "Origen fecha recepción",
     "note": "Notas",
     "attachments": "Imágenes anejas",
+    "corel": "Archivo Corel (CDR)",
 }
 
 IMAGE_RE = re.compile(r"\.(jpe?g|png|heic|webp)$", re.IGNORECASE)
+CDR_RE = re.compile(r"\.cdr$", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -144,6 +146,12 @@ def classify_names(order_id: str, names: list[str]) -> tuple[str | None, list[st
         note = names[0]
         images = []
     return note, images
+
+
+def unique_corel_name(names: list[str]) -> str | None:
+    """Return the CDR only when exactly one candidate exists for this order."""
+    candidates = [name for name in names if CDR_RE.search(name)]
+    return candidates[0] if len(candidates) == 1 else None
 
 
 def _header_value(headers: list[dict], name: str) -> str:
@@ -400,6 +408,7 @@ def build_read_only_plan(services, allowed_sender: str | None = None) -> dict:
                 for index, attachment in enumerate(grouped)
             ]
             note_name, image_names = classify_names(order_id, expected_names)
+            corel_name = unique_corel_name(expected_names)
             row = snapshot.row_by_id.get(order_id)
 
             if order_id not in order_folder_cache:
@@ -428,6 +437,8 @@ def build_read_only_plan(services, allowed_sender: str | None = None) -> dict:
                             missing_fields.append(header)
                 if image_names and not row_value(snapshot, row, HEADERS["attachments"]):
                     missing_fields.append(HEADERS["attachments"])
+                if corel_name and not row_value(snapshot, row, HEADERS["corel"]):
+                    missing_fields.append(HEADERS["corel"])
 
             if row is None:
                 action = "would_create_order"
