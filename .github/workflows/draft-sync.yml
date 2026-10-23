@@ -69,6 +69,9 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Source-item absence and quantity regression tests
+        run: python -m unittest test_source_item_guard -v
+
       - name: Certified fail-closed preflight
         run: python runner.py --preflight
 
