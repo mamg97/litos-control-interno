@@ -28,7 +28,7 @@ def _truthy(value: str | None) -> bool:
 def _apply_declared_item_quantities(xlsx_bytes: bytes, source_row: dict) -> tuple[bytes, list[dict]]:
     """Preserve explicit source quantities that the certified semantic builder can undercount."""
     specs = str(source_row.get("Especificaciones", "") or "")
-    match = re.search(r"(?i)\\bflorero(?:s)?\\s*:\\s*(\\d+)\\s*(?:ud\\.?|uds\\.?|unidades?)\\b", specs)
+    match = re.search(r"(?i)\bflorero(?:s)?\s*:\s*(\d+)\s*(?:ud\.?|uds\.?|unidades?)\b", specs)
     if not match:
         return xlsx_bytes, []
 
@@ -137,6 +137,10 @@ def _planner_api():
 
     if _truthy(os.getenv("LITOS_DRAFT_CORPORATE_STYLE", "false")):
         try:
+            from .source_item_guard import apply_explicit_absences, has_unrequested_rows
+        except ImportError:
+            from source_item_guard import apply_explicit_absences, has_unrequested_rows
+        try:
             from .corporate_style import LOGO_SHA256, STYLE_VERSION, apply_corporate_a4
             from .client_header import CUSTOMER_PROFILE_VERSION, apply_client_header, load_private_header_profile
         except ImportError:
@@ -158,6 +162,7 @@ def _planner_api():
                     customer=private_profile["customer"],
                     issuer=private_profile["issuer"],
                 )
+                styled, absent_rows = apply_explicit_absences(styled, source_row)
                 styled, quantity_corrections = _apply_declared_item_quantities(styled, source_row)
                 out = dict(target)
                 out["xlsx_bytes"] = styled
@@ -166,6 +171,8 @@ def _planner_api():
                 out["customer_profile_version"] = CUSTOMER_PROFILE_VERSION
                 if quantity_corrections:
                     out["source_quantity_corrections"] = quantity_corrections
+                if absent_rows:
+                    out["source_absent_rows"] = absent_rows
                 return out
 
             plan = original_build_plan(services)
@@ -196,9 +203,13 @@ def _planner_api():
                     item["comparison"] = styled_cmp
                     item["action"] = "unchanged"
                     item["corporate_style_applied"] = True
-                elif semantic_action == "updated":
-                    # When business data really changed, write the new content using
-                    # the approved corporate A4/customer presentation at the same time.
+                elif semantic_action == "updated" or (
+                    styled_target.get("source_absent_rows")
+                    and has_unrequested_rows(actual, styled_target["source_absent_rows"])
+                ):
+                    # Existing drafts with demonstrably unrequested items are a
+                    # semantic correction, not an optional cosmetic restyle.
+                    item["action"] = "updated"
                     item["target"] = styled_target
                     item["comparison"] = styled_cmp
                     item["corporate_style_applied"] = True
