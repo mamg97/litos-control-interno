@@ -3,12 +3,15 @@ from __future__ import annotations
 import hashlib
 import os
 import re
+import time
 from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime
 from email.utils import parseaddr
 from typing import Iterable
 from zoneinfo import ZoneInfo
+
+from googleapiclient.errors import HttpError
 
 MASTER_ID = os.environ.get("LITOS_SPREADSHEET_ID", "1ZS-L0eJmfukNr0rmc8ZvC3UxdVKw7Rnggx5TlRydZ2Q")
 ROOT_FOLDER_ID = os.environ.get("LITOS_CLIENT_FOLDER_ID", "1eUAupqLzfBhkiEexWqpI3JtYReT8c9A_")
@@ -218,12 +221,38 @@ def row_value(snapshot: SheetSnapshot, row: list[str], header: str) -> str:
     return clean(row[index]) if index < len(row) else ""
 
 
+
+def _transient_gmail_quota_error(exc: HttpError) -> bool:
+    """Only retry transient Gmail quota failures, never auth/permission failures."""
+    status = int(getattr(exc.resp, "status", 0))
+    if status == 429:
+        return True
+    if status != 403:
+        return False
+    detail = getattr(exc, "content", b"")
+    if isinstance(detail, bytes):
+        detail = detail.decode("utf-8", errors="replace")
+    return "rateLimitExceeded" in detail or "userRateLimitExceeded" in detail
+
+
+def execute_gmail_read(request):
+    """Bounded read-only retry for Gmail per-user minute quotas (max four calls)."""
+    for attempt, wait_seconds in enumerate((20, 40, 60), start=1):
+        try:
+            return request.execute()
+        except HttpError as exc:
+            if not _transient_gmail_quota_error(exc):
+                raise
+            print(f"GMAIL_TRANSIENT_QUOTA_RETRY attempt={attempt}")
+            time.sleep(wait_seconds)
+    return request.execute()
+
 def list_candidate_messages(gmail, allowed_sender: str) -> list[dict]:
     query = f"from:{allowed_sender} newer_than:{LOOKBACK_DAYS}d"
     threads: list[dict] = []
     page_token = None
     while True:
-        response = (
+        response = execute_gmail_read(
             gmail.users()
             .threads()
             .list(userId="me", q=query, maxResults=100, pageToken=page_token)
@@ -236,7 +265,7 @@ def list_candidate_messages(gmail, allowed_sender: str) -> list[dict]:
 
     messages: list[dict] = []
     for thread in threads[:100]:
-        detail = (
+        detail = execute_gmail_read(
             gmail.users()
             .threads()
             .get(
@@ -257,7 +286,7 @@ def list_sent_messages(gmail) -> list[dict]:
     threads: list[dict] = []
     page_token = None
     while True:
-        response = (
+        response = execute_gmail_read(
             gmail.users()
             .threads()
             .list(userId="me", q=query, maxResults=100, pageToken=page_token)
@@ -270,7 +299,7 @@ def list_sent_messages(gmail) -> list[dict]:
 
     messages: list[dict] = []
     for thread in threads[:100]:
-        detail = (
+        detail = execute_gmail_read(
             gmail.users()
             .threads()
             .get(
