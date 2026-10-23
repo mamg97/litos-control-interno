@@ -28,7 +28,7 @@ def _truthy(value: str | None) -> bool:
 def _apply_declared_item_quantities(xlsx_bytes: bytes, source_row: dict) -> tuple[bytes, list[dict]]:
     """Preserve explicit source quantities that the certified semantic builder can undercount."""
     specs = str(source_row.get("Especificaciones", "") or "")
-    match = re.search(r"(?i)\bflorero(?:s)?\s*:\s*(\d+)\s*(?:ud\.?|uds\.?|unidades?)\b", specs)
+    match = re.search(r"(?i)\bflorero(?:s)?\s*:\s*(\d+)\s*(?:ud\.?|uds\.?|unidades?|floreros?)\b", specs)
     if not match:
         return xlsx_bytes, []
 
