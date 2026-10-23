@@ -23,6 +23,45 @@ def _explicitly_absent(specifications: str, field: str) -> bool:
     return len(matches) == 1 and matches[0].strip() == "-"
 
 
+def _clean_absence_warning(value: str, absent: set[str]) -> str:
+    """Remove only source-confirmed absent items from draft warning lists."""
+    if not value.startswith("REVISAR DATOS"):
+        return value
+    parts = value.split(" · ")
+    kept_parts = [parts[0]]
+    for part in parts[1:]:
+        if ":" not in part:
+            kept_parts.append(part)
+            continue
+        label, items = part.split(":", 1)
+        if label.strip().casefold() not in {"sin precio automático", "faltan medidas para"}:
+            kept_parts.append(part)
+            continue
+        kept = [
+            item.strip() for item in items.split(",")
+            if item.strip() and item.strip().upper() not in absent
+        ]
+        if kept:
+            kept_parts.append(f"{label}: {', '.join(kept)}")
+    return " · ".join(kept_parts) if len(kept_parts) > 1 else "BORRADOR · REVISAR ANTES DE USAR"
+
+
+def has_stale_absence_warnings(xlsx_bytes: bytes, absent_labels: list[str]) -> bool:
+    """Detect a stale warning even when all unrequested charge rows were cleared."""
+    if not absent_labels:
+        return False
+    workbook = openpyxl.load_workbook(BytesIO(xlsx_bytes), read_only=True)
+    try:
+        absent = {label.upper() for label in absent_labels}
+        for row in workbook.active.iter_rows(min_row=1, max_row=12, max_col=7, values_only=True):
+            for value in row:
+                if isinstance(value, str) and _clean_absence_warning(value, absent) != value:
+                    return True
+        return False
+    finally:
+        workbook.close()
+
+
 def apply_explicit_absences(xlsx_bytes: bytes, source_row: dict) -> tuple[bytes, list[str]]:
     """Clear only template lines explicitly marked absent in the private source."""
     specifications = str(source_row.get("Especificaciones", "") or "")
@@ -49,6 +88,15 @@ def apply_explicit_absences(xlsx_bytes: bytes, source_row: dict) -> tuple[bytes,
                     if not isinstance(cell, MergedCell):
                         cell.value = None
                 removed.append(label)
+        # Template warnings are generated before source-absence cleanup.
+        # They must not demand measurements/prices for expressly absent items.
+        for row in sheet.iter_rows(min_row=1, max_row=min(sheet.max_row, 12), max_col=7):
+            for cell in row:
+                if isinstance(cell, MergedCell) or not isinstance(cell.value, str):
+                    continue
+                cleaned = _clean_absence_warning(cell.value, absent)
+                if cleaned != cell.value:
+                    cell.value = cleaned
         if not removed:
             return xlsx_bytes, []
         output = BytesIO()
