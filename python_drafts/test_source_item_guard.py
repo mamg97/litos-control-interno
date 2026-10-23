@@ -69,15 +69,16 @@ class SourceAbsenceTests(unittest.TestCase):
     def test_explicit_quantity_is_not_erased(self):
         from runner import _apply_declared_item_quantities
         original = workbook_bytes()
-        changed, corrections = _apply_declared_item_quantities(
-            original, {"Especificaciones": "FLORERO: 2 unidades."}
-        )
-        self.assertEqual(len(corrections), 1)
-        workbook = openpyxl.load_workbook(BytesIO(changed))
-        try:
-            self.assertEqual(workbook.active.cell(4, 5).value, 2)
-        finally:
-            workbook.close()
+        for specifications in ["FLORERO: 2 unidades.", "FLORERO: 2 floreros de referencia."]:
+            changed, corrections = _apply_declared_item_quantities(
+                original, {"Especificaciones": specifications}
+            )
+            self.assertEqual(len(corrections), 1)
+            workbook = openpyxl.load_workbook(BytesIO(changed))
+            try:
+                self.assertEqual(workbook.active.cell(4, 5).value, 2)
+            finally:
+                workbook.close()
 
 
 if __name__ == "__main__":
