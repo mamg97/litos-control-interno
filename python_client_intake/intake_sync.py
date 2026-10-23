@@ -24,6 +24,7 @@ from intake_readonly import (
     classify_names,
     clean,
     extension_from_mime,
+    execute_gmail_read,
     extract_order_id,
     group_attachment_indexes_by_order,
     find_order_folder,
@@ -184,9 +185,9 @@ def attachment_bytes(gmail, message_id: str, attachment: dict) -> bytes:
     attachment_id = clean(attachment.get("attachment_id"))
     inline_data = clean(attachment.get("data"))
     if attachment_id:
-        payload = gmail.users().messages().attachments().get(
+        payload = execute_gmail_read(gmail.users().messages().attachments().get(
             userId="me", messageId=message_id, id=attachment_id
-        ).execute()
+        ))
         return _decode_attachment_data(payload.get("data", ""))
     if inline_data:
         return _decode_attachment_data(inline_data)
@@ -194,7 +195,7 @@ def attachment_bytes(gmail, message_id: str, attachment: dict) -> bytes:
 
 
 def full_attachment_descriptors(gmail, message_id: str) -> list[dict]:
-    message = gmail.users().messages().get(userId="me", id=message_id, format="full").execute()
+    message = execute_gmail_read(gmail.users().messages().get(userId="me", id=message_id, format="full"))
     result = []
 
     def visit(part: dict) -> None:
