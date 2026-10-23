@@ -54,6 +54,31 @@ class SourceAbsenceTests(unittest.TestCase):
         finally:
             workbook.close()
 
+    def test_explicit_absence_with_merged_detail_cells(self):
+        workbook = openpyxl.Workbook()
+        sheet = workbook.active
+        sheet["A4"] = "FLORERO"
+        sheet["B4"] = "Synthetic optional item"
+        sheet["E4"] = 1
+        sheet["F4"] = 25
+        sheet["G4"] = "=E4*F4"
+        sheet.merge_cells("B4:D4")
+        before = BytesIO()
+        workbook.save(before)
+        workbook.close()
+
+        changed, removed = apply_explicit_absences(
+            before.getvalue(), {"Especificaciones": "FLORERO: -."}
+        )
+        self.assertEqual(removed, ["FLORERO"])
+        verified = openpyxl.load_workbook(BytesIO(changed))
+        try:
+            ws = verified.active
+            self.assertIn("B4:D4", {str(x) for x in ws.merged_cells.ranges})
+            self.assertTrue(all(ws.cell(4, col).value is None for col in range(1, 8)))
+        finally:
+            verified.close()
+
     def test_missing_or_conflicting_absence_is_not_inferred(self):
         original = workbook_bytes()
         for specs in [
