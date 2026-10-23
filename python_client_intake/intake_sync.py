@@ -34,6 +34,7 @@ from intake_readonly import (
     list_sent_messages,
     sender_address,
     stored_attachment_name,
+    unique_corel_name,
 )
 
 TIMEZONE = ZoneInfo("Europe/Madrid")
@@ -412,6 +413,8 @@ def sync_intake(
                 name_to_file = {clean(item.get("name")): item for item in all_files}
                 note_name, image_names = classify_names(order_id, expected_names)
                 note_file = name_to_file.get(note_name) if note_name else None
+                corel_name = unique_corel_name(expected_names)
+                corel_file = name_to_file.get(corel_name) if corel_name else None
 
                 row_no = orders["row_by_id"].get(order_id)
                 if row_no is None:
@@ -462,6 +465,14 @@ def sync_intake(
                         hyperlink_formula(drive_url(folder["id"], folder=True), "Ver adjuntos"),
                     )
                     counters["sheet_cells"] += 1
+
+                # The Corel column links to the actual CDR, never to the note JPG.
+                # Ambiguous multi-CDR orders require human review; existing links win.
+                if corel_file:
+                    set_if_blank(
+                        services.sheets, orders, row_no, HEADERS["corel"],
+                        hyperlink_formula(drive_url(corel_file["id"]), "Abrir"), counters,
+                    )
 
             except Exception:
                 counters["errors"] += 1
