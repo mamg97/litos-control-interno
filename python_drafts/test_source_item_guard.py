@@ -5,7 +5,7 @@ import unittest
 
 import openpyxl
 
-from source_item_guard import apply_explicit_absences, has_unrequested_rows
+from source_item_guard import apply_explicit_absences, has_unrequested_rows, has_stale_absence_warnings
 
 
 def workbook_bytes():
@@ -90,6 +90,42 @@ class SourceAbsenceTests(unittest.TestCase):
             changed, removed = apply_explicit_absences(original, {"Especificaciones": specs})
             self.assertEqual(removed, [])
             self.assertEqual(changed, original)
+
+    def test_absent_items_are_removed_from_warning_lists_and_regenerated(self):
+        workbook = openpyxl.Workbook()
+        sheet = workbook.active
+        sheet["A1"] = "CORNISA"
+        sheet["E1"] = 1
+        sheet["F1"] = 20
+        sheet["A2"] = "TABICA / TACOS"
+        sheet["E2"] = 1
+        sheet["F2"] = 20
+        sheet["A7"] = (
+            "REVISAR DATOS · sin precio automático: CORNISA, TABICA / TACOS"
+            " · faltan medidas para: REPISA, CORNISA, TABICA / TACOS"
+        )
+        buffer = BytesIO()
+        workbook.save(buffer)
+        workbook.close()
+        original = buffer.getvalue()
+        absent = ["CORNISA", "TABICA / TACOS"]
+        self.assertTrue(has_stale_absence_warnings(original, absent))
+        changed, removed = apply_explicit_absences(
+            original, {"Especificaciones": "CORNISA: -. TABICA Y TACOS: -."}
+        )
+        self.assertEqual(removed, absent)
+        self.assertFalse(has_unrequested_rows(changed, absent))
+        self.assertFalse(has_stale_absence_warnings(changed, absent))
+        verified = openpyxl.load_workbook(BytesIO(changed))
+        try:
+            self.assertEqual(verified.active["A7"].value, "REVISAR DATOS · faltan medidas para: REPISA")
+        finally:
+            verified.close()
+        again, again_removed = apply_explicit_absences(
+            changed, {"Especificaciones": "CORNISA: -. TABICA Y TACOS: -."}
+        )
+        self.assertEqual(again, changed)
+        self.assertEqual(again_removed, [])
 
     def test_explicit_quantity_is_not_erased(self):
         from runner import _apply_declared_item_quantities
