@@ -28,3 +28,10 @@ Production safety:
 - `Catálogo operativo` remains the manually curated pricing dictionary and is read, not rebuilt, by this component.
 
 M6 and M7 are currently bridged from successful scheduled `LITOS Draft Sync` executions through restricted `workflow_run` triggers. See `MIGRATION_STATUS.md` for current cutover state.
+
+## Source-explicit line safeguards
+
+- The corporate draft renderer suppresses chargeable template rows only when the private source specifications explicitly mark the component as absent (e.g. a field with a literal dash). Missing or contradictory fields are never interpreted as absence.
+- The safeguard also repairs existing drafts containing those unrequested lines; the existing guarded synchronizer backs up the workbook, preserves its Drive ID and master link, and checks parity after replacement. No definitive document or price is promoted from a draft.
+- Declared positive quantities (such as multiple vases) are preserved rather than silently reverting to one unit.
+- Regression tests run in the existing Draft Sync workflow, including PR validation, without additional schedules, services or costs. Source documents and private identities remain outside this public repository.
