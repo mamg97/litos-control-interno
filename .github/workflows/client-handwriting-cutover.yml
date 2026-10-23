@@ -89,6 +89,10 @@ jobs:
           assert sorted(groups) == ['1001', '1002']
           assert unresolved == []
           print('M3_PARTITION_OK')
+          from pathlib import Path
+          workflow = Path('.github/workflows/client-handwriting-cutover.yml').read_text()
+          assert workflow.index('      - name: M4 hardened scheduled production sync') < workflow.index('      - name: M3 archive sent definitive documents scheduled')
+          print('M4_BEFORE_ARCHIVE_OK')
           PY
       - name: Read-only preflights
         run: |
@@ -184,15 +188,6 @@ jobs:
           LITOS_CLIENT_WRITE_ENABLED: "true"
         run: python intake_sync_safe.py
 
-      - name: M3 archive sent definitive documents scheduled
-        # Sent-mail archival is less latency-sensitive than inbound order intake.
-        # Keep it on the lower-frequency production clock to avoid Gmail API quota bursts.
-        if: ${{ github.event_name == 'schedule' && github.event.schedule == '7 7,11,15,19 * * *' }}
-        working-directory: python_client_intake
-        env:
-          LITOS_CLIENT_WRITE_ENABLED: "true"
-        run: python intake_sync.py --delivery-batches-only
-
       - name: Scheduled handwriting sync blocked by kill switch
         if: ${{ github.event_name == 'schedule' && github.event.schedule == '7 7,11,15,19 * * *' && vars.LITOS_HANDWRITING_KILL_SWITCH == 'true' }}
         run: echo "Scheduled M4 handwriting sync is disabled by its repository kill switch."
@@ -203,6 +198,15 @@ jobs:
         env:
           LITOS_HANDWRITING_WRITE_ENABLED: "true"
         run: python sync_safe.py --max-items 4
+
+      - name: M3 archive sent definitive documents scheduled
+        # Sent-mail archival is less latency-sensitive than inbound order intake.
+        # Keep it on the lower-frequency production clock to avoid Gmail API quota bursts.
+        if: ${{ github.event_name == 'schedule' && github.event.schedule == '7 7,11,15,19 * * *' }}
+        working-directory: python_client_intake
+        env:
+          LITOS_CLIENT_WRITE_ENABLED: "true"
+        run: python intake_sync.py --delivery-batches-only
 
       - name: Post-M3 read-only verification
         # Manual full-sync verification only. Scheduled M3 already performs
