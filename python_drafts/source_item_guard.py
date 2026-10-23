@@ -4,6 +4,7 @@ from io import BytesIO
 import re
 
 import openpyxl
+from openpyxl.cell.cell import MergedCell
 
 # Only source-explicit absences qualify. Missing source fields are not absences.
 _SOURCE_ABSENCES = {
@@ -42,7 +43,11 @@ def apply_explicit_absences(xlsx_bytes: bytes, source_row: dict) -> tuple[bytes,
                 continue
             if any(sheet.cell(row_idx, col).value is not None for col in range(1, 8)):
                 for col in range(1, 8):
-                    sheet.cell(row_idx, col).value = None
+                    cell = sheet.cell(row_idx, col)
+                    # Merged placeholders are read-only; clear only real anchor cells.
+                    # Never unmerge or shift other source rows to satisfy a draft.
+                    if not isinstance(cell, MergedCell):
+                        cell.value = None
                 removed.append(label)
         if not removed:
             return xlsx_bytes, []
