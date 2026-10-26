@@ -170,12 +170,13 @@ def normalize_material(value: str) -> str:
     n = normalize_ascii(raw).lower()
     if re.search(r"\bsuy[oa]\b", n):
         return "Suyo"
+    # An explicit Italia/Italiano/IT alias outranks the generic "blanco" token.
+    if re.search(r"\bitalia(no)?\b|\bit\b", n):
+        return "Mármol blanco Italia"
     if re.search(r"\b(blanco|blanco\s*ab|macael)\b", n):
         return "Mármol blanco macael"
     if re.search(r"\b(negro\s+)?absoluto\b", n):
         return "Granito negro absoluto"
-    if re.search(r"\bitalia(no)?\b|\bit\b", n):
-        return "Mármol blanco Italia"
     if re.search(r"\bchampan|champagne\b", n):
         return "Granito blanco champán"
     if re.search(r"\bsudafrica\b", n):
