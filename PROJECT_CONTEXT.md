@@ -160,3 +160,7 @@ Any local clone created before that history rewrite must be re-synchronized or f
 - One-time repair workflows for 2020/2026 delivery dates, final-price repair and sent-recovery are now manual-only; ordinary source/workflow pushes can no longer launch those write-capable repair jobs.
 - During the credential migration, the legacy 2020 backfill workflow produced one transitional failed run because historical writes are intentionally paused while the active phase is 2026. Its dry-run had `planned_rows=0` and the write step aborted before any mutation. Other transitional 2026 repair runs were idempotent and reported 0 writes.
 - A subsequent M7 Pages deployment completed successfully after the migration.
+
+## M4 inscription line-break normalization (2026-10-26)
+
+M4 converts literal escaped newline separators (`\\n`, `\\r\\n`) into real line breaks only when the extracted inscription contains no real line breaks already. Mixed input remains unchanged to avoid guessing. The conversion changes formatting, not names, dates or other text, and is covered by synthetic regression tests in the existing M3+M4 workflow. Manual-review and write-safety gates remain unchanged.
