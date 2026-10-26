@@ -12,6 +12,7 @@ from google import genai
 from google.genai import types
 
 from reader import MASTER_ID, REVIEW_SHEET, build_services, clean
+from text_format import normalize_inscription_linebreaks
 
 TIMEZONE = ZoneInfo("Europe/Madrid")
 MODEL = os.environ.get("LITOS_GEMINI_MODEL", "gemini-3.8-flash").strip() or "gemini-3.8-flash"
@@ -300,7 +301,7 @@ def validate(proposal: dict) -> dict:
         "Voleo (cm) propuesto": positive_number(proposal.get("voleo"), "voleo"),
         "Notas de medidas y croquis propuesta": clean(proposal.get("medidasYCroquis")),
         "Especificaciones propuesta": clean(proposal.get("especificaciones")),
-        "Texto conmemorativo propuesto": clean(proposal.get("textoConmemorativo")),
+        "Texto conmemorativo propuesto": normalize_inscription_linebreaks(proposal.get("textoConmemorativo")),
         "Confianza global (0-100)": global_conf,
     }
     for json_field, review_header in JSON_TO_REVIEW.items():
