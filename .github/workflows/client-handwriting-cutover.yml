@@ -97,6 +97,9 @@ jobs:
       - name: Gmail quota regression tests
         run: python -m unittest discover -s python_client_intake -p 'test_gmail_quota.py'
 
+      - name: M4 inscription newline regression tests
+        run: python -m unittest discover -s python_handwriting -p 'test_text_format.py'
+
       - name: Read-only preflights
         run: |
           (cd python_client_intake && python runner.py --preflight)
