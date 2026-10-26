@@ -164,3 +164,5 @@ Any local clone created before that history rewrite must be re-synchronized or f
 ## M4 inscription line-break normalization (2026-10-26)
 
 M4 converts literal escaped newline separators (`\\n`, `\\r\\n`) into real line breaks only when the extracted inscription contains no real line breaks already. Mixed input remains unchanged to avoid guessing. The conversion changes formatting, not names, dates or other text, and is covered by synthetic regression tests in the existing M3+M4 workflow. Manual-review and write-safety gates remain unchanged.
+
+- 2026-10-26: M4 material normalization prioritizes the explicit Italia/Italiano/IT aliases (canonical `Mármol blanco Italia`) over the generic `Blanco` token (canonical `Mármol blanco macael`). Previously `Mármol blanco Italia` could be misclassified as Macael. Synthetic regression tests run in the existing M3/M4 workflow; no historical master prices or materials are automatically rewritten.
