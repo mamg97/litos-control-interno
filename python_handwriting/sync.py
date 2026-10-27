@@ -173,6 +173,9 @@ def normalize_material(value: str) -> str:
     # An explicit Italia/Italiano/IT alias outranks the generic "blanco" token.
     if re.search(r"\bitalia(no)?\b|\bit\b", n):
         return "Mármol blanco Italia"
+    # Unknown B/C is not the documented B/BC alias; retain the literal value.
+    if re.search(r"\bblanco\s+b\s*/\s*c\b", n):
+        return raw
     if re.search(r"\b(blanco|blanco\s*ab|macael)\b", n):
         return "Mármol blanco macael"
     if re.search(r"\b(negro\s+)?absoluto\b", n):
@@ -281,6 +284,13 @@ def validate(proposal: dict) -> dict:
     doubtful = [clean(x) for x in (proposal.get("camposDudosos") or []) if clean(x)]
     model = normalize_model(proposal.get("modelo", ""))
     material = normalize_material(proposal.get("material", ""))
+    # Fail closed even when a model has already normalized an unsupported Corte.
+    source_material = normalize_ascii(" ".join(
+        clean(proposal.get(k, "")) for k in ("material", "especificaciones")
+    )).lower()
+    unresolved_blanco_bc = bool(re.search(r"\bblanco\s+b\s*/\s*c\b", source_material))
+    if unresolved_blanco_bc:
+        material = "BLANCO B/C"
     evidence = " ".join(normalize_ascii(clean(proposal.get(k, ""))).lower() for k in ("material", "especificaciones", "medidasYCroquis"))
     deterministic_reform = model == "Reforma" and bool(re.search(r"\bsuy[oa]s?\b", evidence))
     if deterministic_reform:
@@ -322,6 +332,8 @@ def validate(proposal: dict) -> dict:
     }
     low = [f for f in critical if critical_values.get(f) in (None, "") or confidence(field_conf.get(f)) < FIELD_THRESHOLD]
     critical_doubts = [f for f in doubtful if f in critical and not (deterministic_reform and f in {"modelo", "material"})]
+    if unresolved_blanco_bc and not deterministic_reform and "material" not in critical_doubts:
+        critical_doubts.append("material")
     if not low and not critical_doubts:
         global_conf = max(global_conf, min(confidence(field_conf.get(f)) for f in critical))
         values["Confianza global (0-100)"] = global_conf
@@ -331,6 +343,8 @@ def validate(proposal: dict) -> dict:
         issues.append("Campos críticos incompletos o con confianza insuficiente.")
     if critical_doubts:
         issues.append("Campos críticos dudosos.")
+    if unresolved_blanco_bc and not deterministic_reform:
+        issues.append("Alias de material no confirmado: BLANCO B/C. Requiere revisión humana.")
     if clean(proposal.get("dudas")):
         issues.append(clean(proposal.get("dudas")))
     return {
