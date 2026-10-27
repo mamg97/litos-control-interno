@@ -6,7 +6,8 @@ import unittest
 import openpyxl
 
 from source_item_guard import (apply_explicit_absences, explicit_absent_labels,
-                               has_explicit_absence_conflict, has_unrequested_rows,\n                               has_stale_absence_warnings)
+                               has_explicit_absence_conflict, has_unrequested_rows,
+                               has_stale_absence_warnings)
 
 
 def workbook_bytes():
