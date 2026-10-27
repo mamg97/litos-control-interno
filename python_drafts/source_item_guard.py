@@ -37,10 +37,18 @@ def _clean_absence_warning(value: str, absent: set[str]) -> str:
         if label.strip().casefold() not in {"sin precio automático", "faltan medidas para"}:
             kept_parts.append(part)
             continue
+        raw_items = [item.strip() for item in items.split(",") if item.strip()]
+        # A trailing ellipsis denotes a truncated list, not part of a label.
+        # Preserve that uncertainty when removing an explicitly absent item.
+        truncated = bool(raw_items and raw_items[-1].endswith("…"))
         kept = [
-            item.strip() for item in items.split(",")
-            if item.strip() and item.strip().upper() not in absent
+            item for item in raw_items
+            if item.rstrip("…").strip().upper() not in absent
         ]
+        if truncated and kept and not kept[-1].endswith("…"):
+            kept[-1] += "…"
+        elif truncated and not kept:
+            kept = ["…"]
         if kept:
             kept_parts.append(f"{label}: {', '.join(kept)}")
     return " · ".join(kept_parts) if len(kept_parts) > 1 else "BORRADOR · REVISAR ANTES DE USAR"
