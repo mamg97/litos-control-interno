@@ -62,14 +62,27 @@ def has_stale_absence_warnings(xlsx_bytes: bytes, absent_labels: list[str]) -> b
         workbook.close()
 
 
+def explicit_absent_labels(source_row: dict) -> list[str]:
+    """Source-proven absences, independent of whether a newly built draft is already clean."""
+    specifications = str(source_row.get("Especificaciones", "") or "")
+    return sorted(
+        label for label, keys in _SOURCE_ABSENCES.items()
+        if all(_explicitly_absent(specifications, key) for key in keys)
+    )
+
+
+def has_explicit_absence_conflict(xlsx_bytes: bytes, source_row: dict) -> bool:
+    """Detect a stale existing draft even when semantic XLSX parity ignores warnings."""
+    absent = explicit_absent_labels(source_row)
+    return bool(absent) and (
+        has_unrequested_rows(xlsx_bytes, absent)
+        or has_stale_absence_warnings(xlsx_bytes, absent)
+    )
+
+
 def apply_explicit_absences(xlsx_bytes: bytes, source_row: dict) -> tuple[bytes, list[str]]:
     """Clear only template lines explicitly marked absent in the private source."""
-    specifications = str(source_row.get("Especificaciones", "") or "")
-    absent = {
-        label
-        for label, keys in _SOURCE_ABSENCES.items()
-        if all(_explicitly_absent(specifications, key) for key in keys)
-    }
+    absent = set(explicit_absent_labels(source_row))
     if not absent:
         return xlsx_bytes, []
     workbook = openpyxl.load_workbook(BytesIO(xlsx_bytes))
