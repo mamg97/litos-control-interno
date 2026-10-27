@@ -137,9 +137,9 @@ def _planner_api():
 
     if _truthy(os.getenv("LITOS_DRAFT_CORPORATE_STYLE", "false")):
         try:
-            from .source_item_guard import apply_explicit_absences, has_unrequested_rows, has_stale_absence_warnings
+            from .source_item_guard import apply_explicit_absences, has_explicit_absence_conflict
         except ImportError:
-            from source_item_guard import apply_explicit_absences, has_unrequested_rows, has_stale_absence_warnings
+            from source_item_guard import apply_explicit_absences, has_explicit_absence_conflict
         try:
             from .corporate_style import LOGO_SHA256, STYLE_VERSION, apply_corporate_a4
             from .client_header import CUSTOMER_PROFILE_VERSION, apply_client_header, load_private_header_profile
@@ -198,17 +198,21 @@ def _planner_api():
                     styled_target["xlsx_bytes"], actual, item["pedido"]
                 )
 
-                if styled_cmp.get("match"):
+                # The freshly generated target can already be free of absent-item
+                # warnings. Inspect the *existing* workbook against the source,
+                # not only the labels changed while styling the new target.
+                # This guard must precede semantic parity, which may ignore A7.
+                source_absence_conflict = has_explicit_absence_conflict(
+                    actual, item.get("row") or {}
+                )
+                if styled_cmp.get("match") and not source_absence_conflict:
                     item["target"] = styled_target
                     item["comparison"] = styled_cmp
                     item["action"] = "unchanged"
                     item["corporate_style_applied"] = True
-                elif semantic_action == "updated" or (
-                    styled_target.get("source_absent_rows")
-                    and (has_unrequested_rows(actual, styled_target["source_absent_rows"]) or has_stale_absence_warnings(actual, styled_target["source_absent_rows"]))
-                ):
-                    # Existing drafts with demonstrably unrequested items are a
-                    # semantic correction, not an optional cosmetic restyle.
+                elif semantic_action == "updated" or source_absence_conflict:
+                    # Existing drafts with source-proven unrequested items or
+                    # stale warnings require repair, not a cosmetic restyle.
                     item["action"] = "updated"
                     item["target"] = styled_target
                     item["comparison"] = styled_cmp

@@ -5,7 +5,9 @@ import unittest
 
 import openpyxl
 
-from source_item_guard import apply_explicit_absences, has_unrequested_rows, has_stale_absence_warnings
+from source_item_guard import (apply_explicit_absences, explicit_absent_labels,
+                               has_explicit_absence_conflict, has_unrequested_rows,
+                               has_stale_absence_warnings)
 
 
 def workbook_bytes():
@@ -116,6 +118,33 @@ class SourceAbsenceTests(unittest.TestCase):
 
         again, again_affected = apply_explicit_absences(changed, source)
         self.assertEqual(again, changed)
+        self.assertEqual(again_affected, [])
+
+    def test_existing_stale_warning_requires_repair_even_when_target_is_clean(self):
+        """The source, not target mutation labels, decides whether an old draft is stale."""
+        source = {"Especificaciones": "CORTE: MATERIAL X; TABICA Y TACOS: -."}
+        workbook = openpyxl.Workbook()
+        sheet = workbook.active
+        sheet["A7"] = "REVISAR DATOS · sin precio automático: CORTE, TABICA / TACOS"
+        sheet["A10"] = "CORTE"
+        buffer = BytesIO()
+        workbook.save(buffer)
+        workbook.close()
+        existing = buffer.getvalue()
+
+        clean_target, affected = apply_explicit_absences(existing, source)
+        self.assertEqual(affected, ["TABICA / TACOS"])
+        self.assertEqual(explicit_absent_labels(source), ["TABICA / TACOS"])
+        self.assertTrue(has_explicit_absence_conflict(existing, source))
+        self.assertFalse(has_explicit_absence_conflict(clean_target, source))
+        self.assertFalse(has_explicit_absence_conflict(existing, {
+            "Especificaciones": "TABICA Y TACOS: existente."
+        }))
+        self.assertFalse(has_explicit_absence_conflict(existing, {
+            "Especificaciones": "TABICA Y TACOS: -; TABICA Y TACOS: existente."
+        }))
+        again, again_affected = apply_explicit_absences(clean_target, source)
+        self.assertEqual(again, clean_target)
         self.assertEqual(again_affected, [])
 
     def test_missing_or_conflicting_absence_is_not_inferred(self):
