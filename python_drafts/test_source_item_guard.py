@@ -79,6 +79,45 @@ class SourceAbsenceTests(unittest.TestCase):
         finally:
             verified.close()
 
+    def test_warning_only_absence_is_persisted_without_charge_row(self):
+        """An absent item must not remain in the warning when its row is already empty."""
+        workbook = openpyxl.Workbook()
+        sheet = workbook.active
+        sheet["A7"] = (
+            "REVISAR DATOS · sin precio automático: CORTE, CORNISA, TABICA / TACOS"
+            " · faltan medidas para: CORNISA"
+        )
+        sheet["A10"] = "CORTE"
+        sheet["A11"] = "CORNISA"
+        buffer = BytesIO()
+        workbook.save(buffer)
+        workbook.close()
+        original = buffer.getvalue()
+        source = {
+            "Especificaciones": "CORTE: MATERIAL X; CORNISA: MATERIAL Y; TABICA Y TACOS: -."
+        }
+
+        self.assertTrue(has_stale_absence_warnings(original, ["TABICA / TACOS"]))
+        changed, affected = apply_explicit_absences(original, source)
+        self.assertEqual(affected, ["TABICA / TACOS"])
+        self.assertFalse(has_stale_absence_warnings(changed, affected))
+        self.assertFalse(has_unrequested_rows(changed, affected))
+        verified = openpyxl.load_workbook(BytesIO(changed))
+        try:
+            self.assertEqual(
+                verified.active["A7"].value,
+                "REVISAR DATOS · sin precio automático: CORTE, CORNISA"
+                " · faltan medidas para: CORNISA",
+            )
+            self.assertEqual(verified.active["A10"].value, "CORTE")
+            self.assertEqual(verified.active["A11"].value, "CORNISA")
+        finally:
+            verified.close()
+
+        again, again_affected = apply_explicit_absences(changed, source)
+        self.assertEqual(again, changed)
+        self.assertEqual(again_affected, [])
+
     def test_missing_or_conflicting_absence_is_not_inferred(self):
         original = workbook_bytes()
         for specs in [

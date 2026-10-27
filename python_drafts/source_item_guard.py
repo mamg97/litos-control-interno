@@ -74,6 +74,7 @@ def apply_explicit_absences(xlsx_bytes: bytes, source_row: dict) -> tuple[bytes,
         return xlsx_bytes, []
     workbook = openpyxl.load_workbook(BytesIO(xlsx_bytes))
     removed = []
+    warning_cleaned = set()
     try:
         sheet = workbook.active
         for row_idx in range(1, sheet.max_row + 1):
@@ -96,12 +97,17 @@ def apply_explicit_absences(xlsx_bytes: bytes, source_row: dict) -> tuple[bytes,
                     continue
                 cleaned = _clean_absence_warning(cell.value, absent)
                 if cleaned != cell.value:
+                    warning_cleaned.update(
+                        label for label in absent
+                        if _clean_absence_warning(cell.value, {label}) != cell.value
+                    )
                     cell.value = cleaned
-        if not removed:
+        affected = sorted(set(removed) | warning_cleaned)
+        if not affected:
             return xlsx_bytes, []
         output = BytesIO()
         workbook.save(output)
-        return output.getvalue(), sorted(set(removed))
+        return output.getvalue(), affected
     finally:
         workbook.close()
 
