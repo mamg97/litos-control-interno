@@ -120,6 +120,53 @@ class SourceAbsenceTests(unittest.TestCase):
         self.assertEqual(again, changed)
         self.assertEqual(again_affected, [])
 
+    def test_truncated_warning_removes_only_explicit_absence_and_preserves_ellipsis(self):
+        source = {"Especificaciones": "CORTE: MATERIAL X; CORNISA: MATERIAL Y; TABICA Y TACOS: -."}
+        workbook = openpyxl.Workbook()
+        sheet = workbook.active
+        sheet["A7"] = (
+            "REVISAR DATOS · sin precio automático: CORTE, CORNISA, TABICA / TACOS…"
+            " · faltan medidas para: CORNISA"
+        )
+        sheet["A10"] = "CORTE"
+        buffer = BytesIO()
+        workbook.save(buffer)
+        workbook.close()
+        original = buffer.getvalue()
+
+        self.assertTrue(has_explicit_absence_conflict(original, source))
+        changed, affected = apply_explicit_absences(original, source)
+        self.assertEqual(affected, ["TABICA / TACOS"])
+        self.assertFalse(has_explicit_absence_conflict(changed, source))
+        verified = openpyxl.load_workbook(BytesIO(changed))
+        try:
+            self.assertEqual(
+                verified.active["A7"].value,
+                "REVISAR DATOS · sin precio automático: CORTE, CORNISA…"
+                " · faltan medidas para: CORNISA",
+            )
+            self.assertEqual(verified.active["A10"].value, "CORTE")
+        finally:
+            verified.close()
+        again, affected_again = apply_explicit_absences(changed, source)
+        self.assertEqual(again, changed)
+        self.assertEqual(affected_again, [])
+
+    def test_truncated_warning_without_other_named_items_retains_uncertainty(self):
+        workbook = openpyxl.Workbook()
+        workbook.active["A7"] = "REVISAR DATOS · sin precio automático: TABICA / TACOS…"
+        buffer = BytesIO()
+        workbook.save(buffer)
+        workbook.close()
+        source = {"Especificaciones": "TABICA Y TACOS: -."}
+        changed, affected = apply_explicit_absences(buffer.getvalue(), source)
+        self.assertEqual(affected, ["TABICA / TACOS"])
+        verified = openpyxl.load_workbook(BytesIO(changed))
+        try:
+            self.assertEqual(verified.active["A7"].value, "REVISAR DATOS · sin precio automático: …")
+        finally:
+            verified.close()
+
     def test_existing_stale_warning_requires_repair_even_when_target_is_clean(self):
         """The source, not target mutation labels, decides whether an old draft is stale."""
         source = {"Especificaciones": "CORTE: MATERIAL X; TABICA Y TACOS: -."}
