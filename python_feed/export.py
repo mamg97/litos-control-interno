@@ -22,6 +22,43 @@ DOCUMENT_LINK_KEYS = frozenset(
     }
 )
 
+
+# The public feed uses a strict positive schema: never copy arbitrary columns
+# (e.g. customer names, commemorative inscriptions, contacts or private notes).
+RECORD_KEYS = frozenset({
+    "id", "date", "orderDate", "receiptDate", "deliveredDate",
+    "deliveryDocumentDate", "deliveryReviewStatus", "amount",
+    "finalPrice", "estimatedPrice", "materialCost", "directCostActual",
+    "status", "model", "material", "materialNormalized",
+    "width", "height", "thickness", "baseWidth", "baseHeight",
+    "topWidth", "stepMeasures", "voleo",
+}) | DOCUMENT_LINK_KEYS
+
+# Explicit direct identifiers are never permitted in plain-text public values.
+# Any suspicious data stops publication rather than silently leaking.
+import re
+EMAIL_PATTERN = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.I)
+IDENTITY_PATTERN = re.compile(
+    r"\b(?:DNI|NIE|NIF|IBAN|TITULAR|CLIENTE\s*:\s*|NOMBRE\s*:\s*|APELLIDOS\s*:\s*)\b",
+    re.I,
+)
+
+def _assert_no_direct_identifiers(obj: Any, *, path: str = "") -> None:
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            if key in (DOCUMENT_LINK_KEYS | EXPENSE_LINK_KEYS):
+                continue
+            _assert_no_direct_identifiers(value, path=f"{path}.{key}")
+    elif isinstance(obj, list):
+        for i, value in enumerate(obj):
+            _assert_no_direct_identifiers(value, path=f"{path}[{i}]")
+    elif isinstance(obj, str) and (
+        EMAIL_PATTERN.search(obj) or IDENTITY_PATTERN.search(obj)
+    ):
+        raise RuntimeError(
+            f"Public feed privacy guard: potential direct identifier at {path}"
+        )
+
 ALLOWED_GOOGLE_DOCUMENT_HOSTS = frozenset(
     {
         "drive.google.com",
@@ -51,12 +88,6 @@ def _is_allowed_google_document_url(value: Any) -> bool:
 
 
 def sanitize_public_payload(payload: dict[str, Any]) -> dict[str, Any]:
-    # Public hosting is unauthenticated. Never serialize workshop records,
-    # supplier expenses, accounting movements or Google Drive links.
-    raise RuntimeError(
-        "M7 public export disabled for privacy: use an authenticated private data service"
-    )
-
     """Publish only the approved operational schema and Google document links.
 
     Document URLs are intentionally retained because the dashboard has always
@@ -67,7 +98,15 @@ def sanitize_public_payload(payload: dict[str, Any]) -> dict[str, Any]:
     """
     sanitized_records: list[dict[str, Any]] = []
     for raw_record in payload.get("records", []) or []:
-        record = dict(raw_record)
+        if not isinstance(raw_record, dict):
+            raise RuntimeError("Public feed privacy guard: invalid order record")
+        extra = set(raw_record) - RECORD_KEYS
+        if extra:
+            raise RuntimeError(
+                "Public feed privacy guard: unexpected order record field(s): "
+                + ", ".join(sorted(extra))
+            )
+        record = {key: raw_record.get(key, "") for key in RECORD_KEYS}
         for key in DOCUMENT_LINK_KEYS:
             value = record.get(key)
             if value in (None, ""):
@@ -117,6 +156,7 @@ def sanitize_public_payload(payload: dict[str, Any]) -> dict[str, Any]:
         "movements": sanitized_movements,
     }
     assert_public_payload_safe(sanitized)
+    _assert_no_direct_identifiers(sanitized)
     return sanitized
 
 
@@ -135,12 +175,7 @@ def _walk_non_document_values(value: Any, *, parent_key: str | None = None):
 
 
 def assert_public_payload_safe(payload: dict[str, Any]) -> None:
-    # Security boundary: even a syntactically valid legacy v12 payload is private.
-    if any(payload.get(key) for key in ("records", "expenses", "movements")):
-        raise RuntimeError("M7 public privacy guard: private workshop data in public payload")
-    if set(payload) - {"version", "generatedAt", "records", "expenses", "movements"}:
-        raise RuntimeError("M7 public privacy guard: unexpected public fields")
-
+    _assert_no_direct_identifiers(payload)
     records = payload.get("records", []) or []
     for index, record in enumerate(records):
         if not isinstance(record, dict):
@@ -194,11 +229,6 @@ def assert_public_payload_safe(payload: dict[str, Any]) -> None:
 
 
 def export_feed(output: Path) -> dict:
-    # Refuse before reading private OAuth secrets or any canonical master rows.
-    raise RuntimeError(
-        "M7 public feed export is disabled; the private master must not be copied to Pages"
-    )
-
     sheets = build_sheets_service()
     payload = sanitize_public_payload(build_payload(sheets))
     output.parent.mkdir(parents=True, exist_ok=True)
