@@ -51,6 +51,12 @@ def _is_allowed_google_document_url(value: Any) -> bool:
 
 
 def sanitize_public_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    # Public hosting is unauthenticated. Never serialize workshop records,
+    # supplier expenses, accounting movements or Google Drive links.
+    raise RuntimeError(
+        "M7 public export disabled for privacy: use an authenticated private data service"
+    )
+
     """Publish only the approved operational schema and Google document links.
 
     Document URLs are intentionally retained because the dashboard has always
@@ -129,6 +135,12 @@ def _walk_non_document_values(value: Any, *, parent_key: str | None = None):
 
 
 def assert_public_payload_safe(payload: dict[str, Any]) -> None:
+    # Security boundary: even a syntactically valid legacy v12 payload is private.
+    if any(payload.get(key) for key in ("records", "expenses", "movements")):
+        raise RuntimeError("M7 public privacy guard: private workshop data in public payload")
+    if set(payload) - {"version", "generatedAt", "records", "expenses", "movements"}:
+        raise RuntimeError("M7 public privacy guard: unexpected public fields")
+
     records = payload.get("records", []) or []
     for index, record in enumerate(records):
         if not isinstance(record, dict):
@@ -182,6 +194,11 @@ def assert_public_payload_safe(payload: dict[str, Any]) -> None:
 
 
 def export_feed(output: Path) -> dict:
+    # Refuse before reading private OAuth secrets or any canonical master rows.
+    raise RuntimeError(
+        "M7 public feed export is disabled; the private master must not be copied to Pages"
+    )
+
     sheets = build_sheets_service()
     payload = sanitize_public_payload(build_payload(sheets))
     output.parent.mkdir(parents=True, exist_ok=True)
