@@ -29,11 +29,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Checkout public OAuth policy documents only
+        uses: actions/checkout@v4
       - name: Stage a public-safe site, without private data or credentials
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p _site/data
+          mkdir -p _site/data _site/oauth/privacy
+          cp privacy.html _site/privacy.html
+          cp oauth/index.html _site/oauth/index.html
+          cp oauth/privacy/index.html _site/oauth/privacy/index.html
           cat > _site/index.html <<'HTML'
           <!doctype html>
           <html lang="es">
@@ -64,14 +69,14 @@ jobs:
           import json
           from pathlib import Path
           site = Path('_site')
-          expected = {'index.html', 'data/feed.json', '.nojekyll'}
+          expected = {'index.html', 'data/feed.json', '.nojekyll', 'privacy.html', 'oauth/index.html', 'oauth/privacy/index.html'}
           actual = {str(p.relative_to(site)) for p in site.rglob('*') if p.is_file()}
           assert actual == expected, f'Unexpected files: {actual ^ expected}'
           data = json.loads((site / 'data/feed.json').read_text())
           assert set(data) == {'version', 'generatedAt', 'records', 'expenses', 'movements'}
           assert data['records'] == data['expenses'] == data['movements'] == []
           assert data['generatedAt'] is None
-          assert '<script' not in (site / 'index.html').read_text().lower()
+          assert all('<script' not in p.read_text().lower() for p in site.rglob('*.html'))
           print('PUBLIC_SECURITY_CONTAINMENT_OK')
           PY
       - name: Upload safe GitHub Pages artifact
