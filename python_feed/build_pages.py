@@ -213,6 +213,14 @@ def build_pages(output: Path, feed_file: Path) -> dict:
     if not feed_file.is_file():
         raise RuntimeError(f"Feed file does not exist: {feed_file}")
     payload = json.loads(feed_file.read_text(encoding="utf-8"))
+    # A Pages artifact is anonymous. Block historical accounting feeds even
+    # when an alternate workflow bypasses export.py.
+    if not isinstance(payload, dict) or any(
+        payload.get(key) for key in ("records", "expenses", "movements")
+    ):
+        raise RuntimeError(
+            "M7 public Pages build blocked: a private workshop dataset cannot be published"
+        )
     if not isinstance(payload, dict) or not isinstance(payload.get("records"), list):
         raise RuntimeError("Generated feed is invalid")
     if not isinstance(payload.get("expenses"), list):
