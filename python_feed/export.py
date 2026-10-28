@@ -135,7 +135,15 @@ def sanitize_public_payload(payload: dict[str, Any]) -> dict[str, Any]:
                 raise RuntimeError(
                     f"Public feed privacy guard: non-Google supplier link at expense {index}, field {key}"
                 )
-        sanitized_expenses.append({key: raw_expense.get(key) for key in EXPENSE_KEYS})
+        public_expense = {key: raw_expense.get(key) for key in EXPENSE_KEYS}
+        # Source labels and email evidence are free text from private documents.
+        # They can contain natural-person names even without an email or ID.
+        # Preserve financial amounts and operational metadata, not identities.
+        if public_expense.get("source"):
+            public_expense["source"] = "Proveedor/servicio (identidad reservada)"
+        if public_expense.get("emailEvidence"):
+            public_expense["emailEvidence"] = "Evidencia documental privada"
+        sanitized_expenses.append(public_expense)
 
     sanitized_movements: list[dict[str, Any]] = []
     for index, raw_movement in enumerate(payload.get("movements", []) or []):

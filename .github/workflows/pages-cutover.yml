@@ -131,6 +131,7 @@ jobs:
           python -m py_compile python_feed/feed.py
           python -m py_compile python_feed/export.py
           python -m py_compile python_feed/build_pages.py
+          PYTHONPATH=python_feed python -m unittest discover -s python_feed -p 'test_public_expense_privacy.py'
 
       - name: Validate public-feed privacy sanitizer
         shell: bash
@@ -246,6 +247,7 @@ jobs:
           python -m py_compile python_feed/feed.py
           python -m py_compile python_feed/export.py
           python -m py_compile python_feed/build_pages.py
+          PYTHONPATH=python_feed python -m unittest discover -s python_feed -p 'test_public_expense_privacy.py'
 
       - name: Read-only preflight
         run: python python_feed/feed.py --preflight
